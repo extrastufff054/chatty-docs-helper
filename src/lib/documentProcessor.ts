@@ -7,7 +7,12 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { Ollama } from "@langchain/community/llms/ollama";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { RunnableSequence } from "@langchain/core/runnables";
+
+// API endpoints for the Python backend
+const API_BASE_URL = "http://localhost:5000/api";
+const MODELS_ENDPOINT = `${API_BASE_URL}/models`;
+const UPLOAD_ENDPOINT = `${API_BASE_URL}/upload`;
+const QUERY_ENDPOINT = `${API_BASE_URL}/query`;
 
 // Custom prompt template for synthesized, coherent output
 const customPromptTemplate = PromptTemplate.fromTemplate(`You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
@@ -21,97 +26,40 @@ Question: {question}
 Answer:`);
 
 /**
- * Load and process a PDF file
- * @param file - The PDF file to process
- * @returns An array of document objects with text content
- */
-const loadPdfFile = async (file: File): Promise<any[]> => {
-  try {
-    // Convert file to ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
-    
-    // Use dynamic import for pdf-parse to ensure it's only loaded in the browser when needed
-    const pdfParse = await import('pdf-parse');
-    const data = await pdfParse.default(new Uint8Array(arrayBuffer));
-    
-    // Create a document object with the text content
-    return [{ pageContent: data.text, metadata: { source: file.name } }];
-  } catch (error) {
-    console.error("Error loading PDF:", error);
-    throw new Error("Failed to load the PDF document. Please ensure the file is valid.");
-  }
-};
-
-/**
- * Initialize the QA chain with the uploaded PDF file and selected model
+ * Load and process a PDF file via the Python backend
  * @param file - The PDF file to process
  * @param modelName - The name of the Ollama model to use
- * @returns A QA chain that can answer questions about the document
+ * @returns A session ID for future queries
  */
 export const initializeQAChain = async (file: File, modelName: string) => {
   try {
-    // Load the PDF document
-    const documents = await loadPdfFile(file);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('model', modelName);
     
-    // Split the document into chunks
-    const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 500,
-      chunkOverlap: 50
+    const response = await fetch(UPLOAD_ENDPOINT, {
+      method: 'POST',
+      body: formData,
     });
-    const splits = await textSplitter.splitDocuments(documents);
     
-    if (splits.length === 0) {
-      throw new Error("No text content found in the PDF document.");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to upload and process the document");
     }
     
-    // Create embeddings
-    const embeddings = new HuggingFaceTransformersEmbeddings({
-      modelName: "Xenova/all-MiniLM-L6-v2"
-    });
+    const data = await response.json();
     
-    // Create a vector store from the document chunks
-    const vectorStore = await FaissStore.fromDocuments(splits, embeddings);
-    
-    // Initialize the Ollama LLM
-    const llm = new Ollama({
+    // Return an object with the session ID and model name for future queries
+    return {
+      sessionId: data.session_id,
       model: modelName,
-      baseUrl: "http://localhost:11434" // Default Ollama API endpoint
-    });
-    
-    // Create output parser
-    const outputParser = new StringOutputParser();
-    
-    // Create the document chain
-    const documentChain = await createStuffDocumentsChain({
-      llm,
-      prompt: customPromptTemplate,
-      outputParser
-    });
-    
-    // Create the retriever
-    const retriever = vectorStore.asRetriever();
-    
-    // Create the retrieval chain
-    const retrievalChain = await createRetrievalChain({
-      combineDocsChain: documentChain,
-      retriever
-    });
-    
-    // Return a callable object that processes queries
-    const qaChain = {
       call: async ({ query, callbacks }: { query: string; callbacks?: any[] }) => {
-        const result = await retrievalChain.invoke(
-          { 
-            input: query,
-          }, 
-          { callbacks }
-        );
-        return { result: result.answer || "No answer found." };
+        const result = await processQuery(query, { sessionId: data.session_id, model: modelName }, 
+          callbacks && callbacks.length > 0 ? callbacks[0].handleLLMNewToken : null);
+        return { result };
       },
-      llm
+      llm: { model: modelName }
     };
-    
-    return qaChain;
   } catch (error: any) {
     console.error("Error initializing QA chain:", error);
     throw new Error(error.message || "Failed to initialize the QA chain.");
@@ -119,40 +67,53 @@ export const initializeQAChain = async (file: File, modelName: string) => {
 };
 
 /**
- * Process a query using the QA chain
+ * Process a query using the Python backend
  * @param query - The question to ask
- * @param qaChain - The QA chain to use
+ * @param qaChain - The QA chain object with sessionId
  * @param streamCallback - A callback function that receives streaming tokens
  * @returns The final answer to the question
  */
 export const processQuery = async (
   query: string, 
   qaChain: any, 
-  streamCallback: (token: string) => void
+  streamCallback?: (token: string) => void
 ) => {
   try {
-    // Create a callback handler for streaming tokens
-    const callbackHandler = {
-      handleLLMNewToken: (token: string) => {
-        streamCallback(token);
-      }
-    };
-    
-    // Process the query using the QA chain
-    const result = await qaChain.call({
-      query: query,
-      callbacks: [callbackHandler]
+    // Send the query to the backend
+    const response = await fetch(QUERY_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: qaChain.sessionId,
+        query: query
+      }),
     });
     
-    return result.result || result.text || "No answer found.";
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to process the query");
+    }
+    
+    const data = await response.json();
+    
+    // If streaming callback is provided and tokens are available, stream them
+    if (streamCallback && data.tokens) {
+      for (const token of data.tokens) {
+        streamCallback(token);
+      }
+    }
+    
+    return data.answer || "No answer found.";
   } catch (error: any) {
     console.error("Error processing query:", error);
     
     // Check for specific Ollama errors
     if (error.message && error.message.includes("Failed to fetch")) {
-      return "Could not connect to Ollama. Please ensure the Ollama service is running on your machine.";
+      return "Could not connect to the backend. Please ensure the Python server is running.";
     } else if (error.message && error.message.includes("model not found")) {
-      return `The model "${qaChain.llm.model}" was not found. Please ensure it is pulled locally using the Ollama CLI: "ollama pull ${qaChain.llm.model}"`;
+      return `The model "${qaChain.model}" was not found. Please ensure it is pulled locally using the Ollama CLI: "ollama pull ${qaChain.model}"`;
     }
     
     return error.message || "An error occurred while processing your query.";
@@ -160,21 +121,19 @@ export const processQuery = async (
 };
 
 /**
- * Get available Ollama models
+ * Get available Ollama models from the Python backend
  * @returns A list of available Ollama models
  */
 export const getOllamaModels = async (): Promise<string[]> => {
   try {
-    // In a real implementation, you would make an API call to Ollama
-    // For now, we'll simulate fetching models
-    const response = await fetch("http://localhost:11434/api/tags");
+    const response = await fetch(MODELS_ENDPOINT);
     
     if (!response.ok) {
-      throw new Error("Failed to fetch models from Ollama");
+      throw new Error("Failed to fetch models from the backend");
     }
     
     const data = await response.json();
-    return data.models?.map((model: any) => model.name) || [];
+    return data.models || [];
   } catch (error) {
     console.error("Error fetching Ollama models:", error);
     // Return some default models as fallback

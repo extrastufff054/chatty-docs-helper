@@ -1,7 +1,7 @@
 
 # PDF Chatbot
 
-A React-based PDF chatbot that allows users to upload PDFs and ask questions about their content using local Ollama AI models.
+A React-based PDF chatbot with Python backend that allows users to upload PDFs and ask questions about their content using local Ollama AI models.
 
 ## Features
 
@@ -12,18 +12,49 @@ A React-based PDF chatbot that allows users to upload PDFs and ask questions abo
 - Dark/light mode support
 - Responsive design
 
+## Architecture
+
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **Backend**: Python, Flask, LangChain
+- **AI Models**: Ollama (local models)
+
 ## Requirements
 
 - Node.js 16+
+- Python 3.9+
 - Ollama installed and running locally
 - At least one Ollama model downloaded
 
 ## Installation
 
-1. Clone the repository:
+### Backend Setup
+
+1. Navigate to the backend directory:
 ```bash
-git clone https://github.com/yourusername/pdf-chatbot.git
-cd pdf-chatbot
+cd backend
+```
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Start the backend server:
+```bash
+python app.py
+```
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+```bash
+cd frontend
 ```
 
 2. Install dependencies:
@@ -31,19 +62,21 @@ cd pdf-chatbot
 npm install
 ```
 
-3. Install Ollama from [ollama.ai](https://ollama.ai)
-
-4. Pull at least one model:
-```bash
-ollama pull llama3
-```
-
-5. Start the development server:
+3. Start the development server:
 ```bash
 npm run dev
 ```
 
-6. Open your browser and navigate to `http://localhost:5173`
+4. Open your browser and navigate to `http://localhost:5173`
+
+## Docker Setup (Optional)
+
+To run the backend in Docker:
+
+```bash
+docker build -t pdf-chatbot-backend .
+docker run -p 5000:5000 --name pdf-chatbot-backend pdf-chatbot-backend
+```
 
 ## Usage
 
@@ -54,7 +87,7 @@ npm run dev
 
 ## How It Works
 
-1. PDF documents are loaded and parsed in the browser
+1. PDF documents are uploaded to the Python backend
 2. Text is split into chunks and embedded using sentence transformers
 3. Embeddings are stored in a FAISS vector store
 4. User queries are processed against the vector store to find relevant chunks
@@ -63,30 +96,19 @@ npm run dev
 
 ## Technology Stack
 
+### Frontend
 - React
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
+
+### Backend
+- Python
+- Flask
 - LangChain
 - FAISS
 - Ollama
-- pdf-parse
-- SentenceTransformer
-
-## Architecture
-
-```
-src/
-├── components/         # Reusable UI components
-│   └── ChatMessage.tsx # Chat message component
-├── lib/                # Utility functions and business logic
-│   └── documentProcessor.ts # PDF processing and QA logic
-├── pages/              # Application pages
-│   ├── Index.tsx       # Main chatbot interface
-│   ├── Documentation.tsx # Documentation page
-│   └── NotFound.tsx    # 404 page
-└── App.tsx             # Application entry point
-```
+- PyPDF
 
 ## Documentation
 
@@ -96,22 +118,6 @@ The application includes built-in documentation accessible at `/documentation`, 
 - **Developer Guide**: Technical details and customization
 - **Admin Guide**: Installation, troubleshooting, and maintenance
 
-## Customization
-
-You can customize the application by:
-
-- Modifying the prompt template in `src/lib/documentProcessor.ts`
-- Adjusting the chunk size and overlap for document processing
-- Adding support for additional file types
-- Implementing persistence for chat history and processed documents
-
 ## License
 
 MIT
-
-## Acknowledgements
-
-- [LangChain](https://js.langchain.com) for document processing and QA capabilities
-- [Ollama](https://ollama.ai) for local AI model inference
-- [shadcn/ui](https://ui.shadcn.com) for UI components
-- [pdf-parse](https://www.npmjs.com/package/pdf-parse) for PDF parsing

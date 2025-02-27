@@ -196,19 +196,48 @@ const Index = () => {
     setIsLoading(true);
     setStreamingContent("");
 
-    let responseText = "";
-    
     try {
-      // Process the query and stream the response
-      await processQuery(prompt, { sessionId }, (token) => {
-        responseText += token;
-        setStreamingContent(responseText);
+      // Start streaming response immediately
+      const response = await fetch(`${API_BASE_URL}/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          query: prompt
+        }),
       });
       
-      // After streaming is complete, add the full message
-      const assistantMessage: Message = { role: "assistant", content: responseText };
-      setMessages(prev => [...prev, assistantMessage]);
-      setStreamingContent("");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to process the query");
+      }
+      
+      const data = await response.json();
+      
+      // If tokens are available, stream them to the UI
+      if (data.tokens && Array.isArray(data.tokens)) {
+        let accumulatedText = "";
+        
+        // Process tokens one by one with a slight delay to simulate typing
+        for (const token of data.tokens) {
+          accumulatedText += token;
+          setStreamingContent(accumulatedText);
+          
+          // Small delay to make streaming visible (adjust as needed)
+          await new Promise(resolve => setTimeout(resolve, 15));
+        }
+        
+        // After streaming is complete, add the full message
+        const assistantMessage: Message = { role: "assistant", content: accumulatedText };
+        setMessages(prev => [...prev, assistantMessage]);
+        setStreamingContent("");
+      } else {
+        // Fallback if tokens aren't available
+        const assistantMessage: Message = { role: "assistant", content: data.answer || "No answer found." };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (error: any) {
       toast({
         title: "Error processing query",
@@ -225,6 +254,7 @@ const Index = () => {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setStreamingContent("");
     }
   };
 

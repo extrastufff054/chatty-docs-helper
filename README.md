@@ -1,69 +1,117 @@
-# Welcome to your Lovable project
 
-## Project info
+# PDF Chatbot
 
-**URL**: https://lovable.dev/projects/603067e7-ce51-4ae2-bd44-72ccd2c5cca0
+A React-based PDF chatbot that allows users to upload PDFs and ask questions about their content using local Ollama AI models.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Upload and process PDF documents
+- Chat interface with streaming responses
+- Integration with Ollama for local AI model inference
+- Multiple model support
+- Dark/light mode support
+- Responsive design
 
-**Use Lovable**
+## Requirements
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/603067e7-ce51-4ae2-bd44-72ccd2c5cca0) and start prompting.
+- Node.js 16+
+- Ollama installed and running locally
+- At least one Ollama model downloaded
 
-Changes made via Lovable will be committed automatically to this repo.
+## Installation
 
-**Use your preferred IDE**
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/pdf-chatbot.git
+cd pdf-chatbot
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. Install dependencies:
+```bash
+npm install
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. Install Ollama from [ollama.ai](https://ollama.ai)
 
-Follow these steps:
+4. Pull at least one model:
+```bash
+ollama pull llama3
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+5. Start the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+6. Open your browser and navigate to `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Usage
 
-**Use GitHub Codespaces**
+1. Select an Ollama model from the sidebar
+2. Upload a PDF document
+3. Wait for the document to be processed
+4. Type your questions in the chat input and press Enter
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## How It Works
 
-## What technologies are used for this project?
+1. PDF documents are loaded and parsed in the browser
+2. Text is split into chunks and embedded using sentence transformers
+3. Embeddings are stored in a FAISS vector store
+4. User queries are processed against the vector store to find relevant chunks
+5. Relevant chunks and the query are sent to the Ollama model
+6. Model responses are streamed back to the UI
 
-This project is built with .
+## Technology Stack
 
-- Vite
-- TypeScript
 - React
-- shadcn-ui
+- TypeScript
 - Tailwind CSS
+- shadcn/ui
+- LangChain
+- FAISS
+- Ollama
+- pdf-parse
+- SentenceTransformer
 
-## How can I deploy this project?
+## Architecture
 
-Simply open [Lovable](https://lovable.dev/projects/603067e7-ce51-4ae2-bd44-72ccd2c5cca0) and click on Share -> Publish.
+```
+src/
+├── components/         # Reusable UI components
+│   └── ChatMessage.tsx # Chat message component
+├── lib/                # Utility functions and business logic
+│   └── documentProcessor.ts # PDF processing and QA logic
+├── pages/              # Application pages
+│   ├── Index.tsx       # Main chatbot interface
+│   ├── Documentation.tsx # Documentation page
+│   └── NotFound.tsx    # 404 page
+└── App.tsx             # Application entry point
+```
 
-## I want to use a custom domain - is that possible?
+## Documentation
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+The application includes built-in documentation accessible at `/documentation`, with separate sections for:
+
+- **User Guide**: How to use the application
+- **Developer Guide**: Technical details and customization
+- **Admin Guide**: Installation, troubleshooting, and maintenance
+
+## Customization
+
+You can customize the application by:
+
+- Modifying the prompt template in `src/lib/documentProcessor.ts`
+- Adjusting the chunk size and overlap for document processing
+- Adding support for additional file types
+- Implementing persistence for chat history and processed documents
+
+## License
+
+MIT
+
+## Acknowledgements
+
+- [LangChain](https://js.langchain.com) for document processing and QA capabilities
+- [Ollama](https://ollama.ai) for local AI model inference
+- [shadcn/ui](https://ui.shadcn.com) for UI components
+- [pdf-parse](https://www.npmjs.com/package/pdf-parse) for PDF parsing

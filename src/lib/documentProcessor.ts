@@ -1,15 +1,16 @@
 
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { SentenceTransformerEmbeddings } from "langchain-community/embeddings/sentence_transformer";
-import { FAISS } from "langchain-community/vectorstores/faiss";
-import { RetrievalQA } from "langchain/chains";
-import { Ollama } from "langchain-community/llms/ollama";
-import { PromptTemplate } from "langchain/prompts";
+import { RecursiveCharacterTextSplitter } from "@langchain/core/text_splitter";
+import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
+import { FaissStore } from "@langchain/community/vectorstores/faiss";
+import { createRetrievalChain } from "langchain/chains/retrieval";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
+import { Ollama } from "@langchain/community/llms/ollama";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { RunnableSequence } from "@langchain/core/runnables";
 
 // Custom prompt template for synthesized, coherent output
-const customPromptTemplate = new PromptTemplate({
-  inputVariables: ["context", "question"],
-  template: `You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
+const customPromptTemplate = PromptTemplate.fromTemplate(`You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
 Given the following document excerpts and a question, synthesize a well-rounded answer that provides full context and continuity.
 Do not simply return isolated fragments; instead, integrate the information into a unified, context-rich response.
 
@@ -17,8 +18,7 @@ Document Excerpts:
 {context}
 
 Question: {question}
-Answer:`
-});
+Answer:`);
 
 /**
  * Load and process a PDF file
@@ -31,7 +31,7 @@ const loadPdfFile = async (file: File): Promise<any[]> => {
     const arrayBuffer = await file.arrayBuffer();
     
     // Use dynamic import for pdf-parse to ensure it's only loaded in the browser when needed
-    const pdfParse = await import('pdf-parse/lib/pdf.js');
+    const pdfParse = await import('pdf-parse');
     const data = await pdfParse.default(new Uint8Array(arrayBuffer));
     
     // Create a document object with the text content
@@ -65,12 +65,12 @@ export const initializeQAChain = async (file: File, modelName: string) => {
     }
     
     // Create embeddings
-    const embeddings = new SentenceTransformerEmbeddings({
-      modelName: "all-MiniLM-L6-v2"
+    const embeddings = new HuggingFaceTransformersEmbeddings({
+      modelName: "Xenova/all-MiniLM-L6-v2"
     });
     
     // Create a vector store from the document chunks
-    const vectorStore = await FAISS.fromDocuments(splits, embeddings);
+    const vectorStore = await FaissStore.fromDocuments(splits, embeddings);
     
     // Initialize the Ollama LLM
     const llm = new Ollama({
@@ -78,14 +78,38 @@ export const initializeQAChain = async (file: File, modelName: string) => {
       baseUrl: "http://localhost:11434" // Default Ollama API endpoint
     });
     
-    // Create the QA chain
-    const qaChain = RetrievalQA.fromChainType({
+    // Create output parser
+    const outputParser = new StringOutputParser();
+    
+    // Create the document chain
+    const documentChain = await createStuffDocumentsChain({
       llm,
-      chainType: "stuff",
-      retriever: vectorStore.asRetriever(),
-      returnSourceDocuments: false,
-      prompt: customPromptTemplate
+      prompt: customPromptTemplate,
+      outputParser
     });
+    
+    // Create the retriever
+    const retriever = vectorStore.asRetriever();
+    
+    // Create the retrieval chain
+    const retrievalChain = await createRetrievalChain({
+      combineDocsChain: documentChain,
+      retriever
+    });
+    
+    // Return a callable object that processes queries
+    const qaChain = {
+      call: async ({ query, callbacks }: { query: string; callbacks?: any[] }) => {
+        const result = await retrievalChain.invoke(
+          { 
+            input: query,
+          }, 
+          { callbacks }
+        );
+        return { result: result.answer || "No answer found." };
+      },
+      llm
+    };
     
     return qaChain;
   } catch (error: any) {

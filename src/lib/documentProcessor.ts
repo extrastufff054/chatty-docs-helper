@@ -1,5 +1,5 @@
 
-import { RecursiveCharacterTextSplitter } from "@langchain/core/text_splitter";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
 import { FaissStore } from "@langchain/community/vectorstores/faiss";
 import { createRetrievalChain } from "langchain/chains/retrieval";

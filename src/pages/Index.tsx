@@ -7,8 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Send, FileText, List, Download, Folder, FolderOpen } from "lucide-react";
+import { Loader2, Send, FileText, List, Folder, FolderOpen } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { processQuery, getOllamaModels } from "@/lib/documentProcessor";
 import { 
   Tooltip,
@@ -57,6 +58,7 @@ const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [streamingContent, setStreamingContent] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -93,6 +95,7 @@ const Index = () => {
   // Fetch available documents
   useEffect(() => {
     const fetchDocuments = async () => {
+      setIsLoadingDocuments(true);
       try {
         const response = await fetch(`${API_BASE_URL}/documents`);
         if (!response.ok) {
@@ -108,6 +111,8 @@ const Index = () => {
           description: "Failed to retrieve available documents.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoadingDocuments(false);
       }
     };
 
@@ -260,97 +265,117 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full transition-colors duration-300">
         {/* Document Sidebar */}
-        <Sidebar>
-          <SidebarContent>
+        <Sidebar className="border-r border-border/40">
+          <SidebarContent className="animate-slide-in-left">
             <SidebarGroup>
-              <SidebarGroupLabel>Documents</SidebarGroupLabel>
+              <SidebarGroupLabel className="font-medium">Documents</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {documents.length > 0 ? (
-                    documents.map(doc => (
-                      <SidebarMenuItem key={doc.id}>
-                        <SidebarMenuButton asChild onClick={() => handleDocumentSelect(doc)}>
-                          <div className="flex items-center space-x-2 cursor-pointer">
-                            {selectedDocument?.id === doc.id ? (
-                              <FolderOpen className="h-4 w-4" />
-                            ) : (
-                              <Folder className="h-4 w-4" />
-                            )}
-                            <span>{doc.title}</span>
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))
-                  ) : (
-                    <div className="text-sm text-muted-foreground p-2">
-                      No documents available
-                    </div>
-                  )}
-                </SidebarMenu>
+                {isLoadingDocuments ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <SidebarMenu>
+                    {documents.length > 0 ? (
+                      documents.map(doc => (
+                        <SidebarMenuItem key={doc.id} className="transition-all">
+                          <SidebarMenuButton asChild onClick={() => handleDocumentSelect(doc)}>
+                            <div className={`flex items-center space-x-2 cursor-pointer p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-all ${
+                              selectedDocument?.id === doc.id ? 'bg-accent/70' : ''
+                            }`}>
+                              {selectedDocument?.id === doc.id ? (
+                                <FolderOpen className="h-4 w-4 transition-transform" />
+                              ) : (
+                                <Folder className="h-4 w-4 transition-transform" />
+                              )}
+                              <span className="truncate">{doc.title}</span>
+                            </div>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground p-4 text-center">
+                        No documents available
+                      </div>
+                    )}
+                  </SidebarMenu>
+                )}
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
         </Sidebar>
 
-        <div className="flex flex-col flex-1 p-4">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-              <h1 className="text-3xl font-bold">PDF Chatbot</h1>
+        <div className="flex flex-col flex-1 p-6">
+          <div className="flex items-center justify-between mb-8 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="hover-scale">
+                <Button variant="ghost" size="icon" className="rounded-full transition-all">
+                  <List className="h-5 w-5" />
+                </Button>
+              </SidebarTrigger>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                PDF Chatbot
+              </h1>
             </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" onClick={() => window.open("/documentation", "_blank")}>
-                    <List className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Open Documentation</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={() => window.open("/documentation", "_blank")} className="hover-scale rounded-full">
+                      <FileText className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Open Documentation</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
           
-          <p className="text-muted-foreground mb-6">Local Ollama Models Only</p>
+          <p className="text-muted-foreground mb-8 animate-fade-in">Ask anything about your documents using local Ollama models</p>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Settings Card */}
-            <Card className="p-4 md:col-span-1 h-fit">
-              <h2 className="font-semibold mb-4">Settings</h2>
+            <Card className="p-5 md:col-span-1 h-fit glass-card animate-scale-in border-border/50">
+              <h2 className="font-semibold mb-5 text-lg">Settings</h2>
               
               {/* Model Selection */}
-              <div className="mb-4">
-                <h3 className="text-sm font-medium mb-2">Choose Ollama Model</h3>
+              <div className="mb-5">
+                <h3 className="text-sm font-medium mb-3">Choose Ollama Model</h3>
                 <RadioGroup 
                   value={selectedModel} 
                   onValueChange={setSelectedModel}
-                  className="flex flex-col space-y-1"
+                  className="flex flex-col space-y-2"
                 >
                   {availableModels.length > 0 ? (
                     availableModels.map(model => (
-                      <div key={model} className="flex items-center space-x-2">
+                      <div key={model} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent transition-colors">
                         <RadioGroupItem value={model} id={model} />
-                        <Label htmlFor={model}>{model}</Label>
+                        <Label htmlFor={model} className="cursor-pointer">{model}</Label>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">No models available</p>
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
+                      <p className="text-sm text-muted-foreground">Loading models...</p>
+                    </div>
                   )}
                 </RadioGroup>
               </div>
               
-              <Separator className="my-4" />
+              <Separator className="my-5" />
               
               {/* Selected Document */}
               <div>
-                <h3 className="text-sm font-medium mb-2">Selected Document</h3>
+                <h3 className="text-sm font-medium mb-3">Selected Document</h3>
                 {selectedDocument ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3 p-3 bg-accent/50 rounded-md animate-scale-in">
                     <div className="flex items-center">
-                      <FileText className="h-4 w-4 mr-2" />
+                      <FileText className="h-4 w-4 mr-2 text-primary" />
                       <span className="text-sm font-medium">{selectedDocument.title}</span>
                     </div>
                     {selectedDocument.description && (
@@ -358,11 +383,11 @@ const Index = () => {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No document selected</p>
+                  <p className="text-sm text-muted-foreground p-3">Select a document from the sidebar</p>
                 )}
                 
                 {isProcessing && (
-                  <div className="mt-2 flex items-center text-sm text-muted-foreground">
+                  <div className="mt-3 flex items-center text-sm text-primary p-2 bg-primary/10 rounded-md animate-pulse-light">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     <span>Processing document...</span>
                   </div>
@@ -371,13 +396,16 @@ const Index = () => {
             </Card>
             
             {/* Chat Container */}
-            <div className="md:col-span-3 flex flex-col h-[70vh]">
+            <div className="md:col-span-3 flex flex-col h-[70vh] animate-slide-in-right">
               {/* Chat Messages */}
-              <div className="flex-1 overflow-auto mb-4 pr-2">
+              <div className="flex-1 overflow-auto mb-4 pr-2 scrollbar-track rounded-md">
                 {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                    <div className="max-w-md space-y-2">
-                      <h3 className="text-lg font-medium">Welcome to PDF Chatbot</h3>
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8 animate-fade-in">
+                    <div className="max-w-md space-y-4">
+                      <div className="rounded-full bg-primary/10 p-3 inline-block">
+                        <FileText className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-medium">Welcome to PDF Chatbot</h3>
                       <p className="text-muted-foreground">
                         Select a document from the sidebar and choose an Ollama model to get started.
                         Then ask any questions about the document.
@@ -385,7 +413,7 @@ const Index = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 p-2">
                     {messages.map((message, index) => (
                       <ChatMessage 
                         key={index} 
@@ -410,18 +438,19 @@ const Index = () => {
               </div>
               
               {/* Chat Input */}
-              <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+              <form onSubmit={handleSubmit} className="flex items-center space-x-2 bg-card/50 p-2 rounded-lg backdrop-blur-sm border border-border/30">
                 <Input
                   placeholder="Type your question here..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   disabled={isLoading || !qaChain}
-                  className="flex-1"
+                  className="flex-1 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base px-4"
                 />
                 <Button 
                   type="submit" 
                   disabled={isLoading || !qaChain || !prompt.trim()}
-                  className="shrink-0"
+                  className="shrink-0 rounded-full transition-all hover:scale-105"
+                  variant="default"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -434,7 +463,7 @@ const Index = () => {
               
               {/* Status when no document is selected */}
               {!qaChain && !isProcessing && (
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-muted-foreground mt-2 text-center">
                   Select a document from the sidebar to start chatting
                 </p>
               )}

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useDropzone } from 'react-dropzone';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, Trash, FileText, List } from "lucide-react";
+import { Loader2, Upload, Trash, FileText, ArrowLeft } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Table,
   TableBody,
@@ -301,10 +302,13 @@ const Admin = () => {
 
   if (!isTokenValid) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Card className="w-[400px]">
+      <div className="flex items-center justify-center min-h-screen bg-background transition-colors duration-300">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <Card className="w-[400px] glass-card animate-scale-in">
           <CardHeader>
-            <CardTitle>Admin Authentication</CardTitle>
+            <CardTitle className="text-2xl">Admin Authentication</CardTitle>
             <CardDescription>
               Enter the admin token to access the document management interface.
             </CardDescription>
@@ -320,15 +324,16 @@ const Admin = () => {
                     value={adminToken}
                     onChange={(e) => setAdminToken(e.target.value)}
                     required
+                    className="transition-colors"
                   />
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => window.location.href = "/"}>
+              <Button variant="outline" onClick={() => window.location.href = "/"} className="hover-scale">
                 Back to Home
               </Button>
-              <Button type="submit" disabled={isChecking || !adminToken}>
+              <Button type="submit" disabled={isChecking || !adminToken} className="hover-scale">
                 {isChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Login
               </Button>
@@ -340,48 +345,57 @@ const Admin = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Document Management</h1>
-        <Button variant="outline" onClick={() => window.location.href = "/"}>
-          Back to Home
-        </Button>
+    <div className="container mx-auto py-8 space-y-8 transition-colors duration-300">
+      <div className="flex justify-between items-center animate-fade-in">
+        <div className="flex items-center space-x-3">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Document Management</h1>
+        </div>
+        <div className="flex gap-2">
+          <ThemeToggle />
+          <Button variant="outline" onClick={() => window.location.href = "/"} className="hover-scale">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Upload Form */}
-        <Card>
+        <Card className="glass-card animate-slide-in-left">
           <CardHeader>
-            <CardTitle>Upload Document</CardTitle>
+            <CardTitle className="text-xl">Upload Document</CardTitle>
             <CardDescription>
               Upload a PDF document for users to query
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleUpload}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               {/* PDF Upload */}
               <div className="space-y-2">
                 <Label>PDF Document</Label>
                 <div 
                   {...getRootProps()} 
-                  className={`border-2 border-dashed rounded-md p-6 transition-colors cursor-pointer hover:bg-muted ${
+                  className={`border-2 border-dashed rounded-lg p-8 transition-colors cursor-pointer hover-scale ${
                     isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30'
                   }`}
                 >
                   <input {...getInputProps()} />
                   <div className="flex flex-col items-center justify-center text-center">
-                    <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
+                    <Upload className="h-10 w-10 mb-4 text-muted-foreground" />
+                    <p className="text-base text-muted-foreground font-medium">
                       {isDragActive
                         ? "Drop the PDF here ..."
-                        : "Drag & drop a PDF file here, or click to select"}
+                        : "Drag & drop a PDF file here"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      or click to select
                     </p>
                   </div>
                 </div>
                 
                 {uploadedFile && (
-                  <div className="mt-2 flex items-center">
-                    <FileText className="h-4 w-4 mr-2" />
+                  <div className="mt-3 flex items-center p-3 bg-accent/50 rounded-md animate-scale-in">
+                    <FileText className="h-4 w-4 mr-2 text-primary" />
                     <span className="text-sm truncate">{uploadedFile.name}</span>
                   </div>
                 )}
@@ -396,6 +410,7 @@ const Admin = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
+                  className="transition-colors"
                 />
               </div>
               
@@ -408,6 +423,7 @@ const Admin = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
+                  className="resize-none transition-colors"
                 />
               </div>
               
@@ -421,9 +437,9 @@ const Admin = () => {
                 >
                   {availableModels.length > 0 ? (
                     availableModels.map(model => (
-                      <div key={model} className="flex items-center space-x-2">
+                      <div key={model} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent transition-colors">
                         <RadioGroupItem value={model} id={`model-${model}`} />
-                        <Label htmlFor={`model-${model}`}>{model}</Label>
+                        <Label htmlFor={`model-${model}`} className="cursor-pointer">{model}</Label>
                       </div>
                     ))
                   ) : (
@@ -435,7 +451,7 @@ const Admin = () => {
             <CardFooter>
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full hover-scale"
                 disabled={isUploading || !uploadedFile || !selectedModel || !title}
               >
                 {isUploading ? (
@@ -455,65 +471,69 @@ const Admin = () => {
         </Card>
         
         {/* Documents Table */}
-        <Card>
+        <Card className="glass-card animate-slide-in-right">
           <CardHeader>
-            <CardTitle>Uploaded Documents</CardTitle>
+            <CardTitle className="text-xl">Uploaded Documents</CardTitle>
             <CardDescription>
               Manage your uploaded documents
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingDocuments ? (
-              <div className="flex justify-center py-8">
+              <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : documents.length > 0 ? (
-              <Table>
-                <TableCaption>List of uploaded documents</TableCaption>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {documents.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="font-medium">{doc.title}</TableCell>
-                      <TableCell>{doc.model}</TableCell>
-                      <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Confirm Deletion</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to delete "{doc.title}"? This action cannot be undone.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => {}}>Cancel</Button>
-                              <Button 
-                                variant="destructive" 
-                                onClick={() => handleDeleteDocument(doc.id)}
-                              >
-                                Delete
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
+              <div className="rounded-md border">
+                <Table>
+                  <TableCaption>List of uploaded documents</TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {documents.map((doc) => (
+                      <TableRow key={doc.id} className="hover-scale">
+                        <TableCell className="font-medium">{doc.title}</TableCell>
+                        <TableCell>{doc.model}</TableCell>
+                        <TableCell className="text-right">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="rounded-full transition-all hover:bg-destructive/10">
+                                <Trash className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="glass-card animate-scale-in">
+                              <DialogHeader>
+                                <DialogTitle>Confirm Deletion</DialogTitle>
+                                <DialogDescription>
+                                  Are you sure you want to delete "{doc.title}"? This action cannot be undone.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter className="gap-2">
+                                <Button variant="outline" onClick={() => {}}>Cancel</Button>
+                                <Button 
+                                  variant="destructive" 
+                                  onClick={() => handleDeleteDocument(doc.id)}
+                                  className="hover-scale"
+                                >
+                                  Delete
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 No documents uploaded yet
               </div>
             )}

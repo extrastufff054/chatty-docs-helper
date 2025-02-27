@@ -1,4 +1,3 @@
-
 import logging
 import os
 import subprocess
@@ -106,13 +105,19 @@ def initialize_qa_chain(filepath, model_checkpoint):
         raise ValueError("Failed to load the PDF document. Please ensure the file is valid.")
 
     try:
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+        # Optimize chunking parameters for better balance between speed and context
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,  # Increased chunk size for faster processing
+            chunk_overlap=100, # Reduced overlap to speed up processing
+            separators=["\n\n", "\n", " ", ""]
+        )
         splits = text_splitter.split_documents(documents)
     except Exception as e:
         logger.exception("Error splitting document: %s", str(e))
         raise ValueError("Failed to split the PDF document for processing.")
 
     try:
+        # Use simpler, faster embeddings
         embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
         vectordb = FAISS.from_documents(splits, embeddings)
     except Exception as e:

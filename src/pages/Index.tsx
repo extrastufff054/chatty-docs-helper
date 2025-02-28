@@ -3,11 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, List, Send, Loader2, FileUp, Settings, ChevronUp, ChevronDown } from "lucide-react";
+import { FileText, List, Send, Loader2, FileUp, Settings, ChevronUp, ChevronDown, MessageSquare, Plus, X, RefreshCcw } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getOllamaModels } from "@/lib/documentProcessor";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
 import { 
   Tooltip,
   TooltipContent,
@@ -38,6 +38,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Message {
   role: "user" | "assistant";
@@ -61,10 +67,37 @@ interface SystemPrompt {
   description: string;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  documentId: string;
+  documentTitle: string;
+  messages: Message[];
+  createdAt: Date;
+  lastMessageAt: Date;
+  systemPromptId: string;
+  temperature: number;
+}
+
 const API_BASE_URL = "http://localhost:5000/api";
 
+// Generate a unique chat ID
+const generateChatId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
+
+// Get a truncated title from the first user message or use default title
+const getChatTitle = (messages: Message[]) => {
+  if (messages.length === 0) return "New Chat";
+  
+  const firstUserMessage = messages.find(m => m.role === "user");
+  if (!firstUserMessage) return "New Chat";
+  
+  const title = firstUserMessage.content.substring(0, 30);
+  return title.length < firstUserMessage.content.length ? `${title}...` : title;
+};
+
 const Index = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -78,9 +111,85 @@ const Index = () => {
   const [selectedPrompt, setSelectedPrompt] = useState<string>("default");
   const [temperature, setTemperature] = useState<number>(0.7);
   const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
+  const [showRightSidebar, setShowRightSidebar] = useState(false);
+  
+  // Chat history management
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Get current active chat
+  const activeChat = chatSessions.find(chat => chat.id === activeChatId) || null;
+  const messages = activeChat?.messages || [];
+
+  // Create new chat session
+  const createNewChat = (documentId: string, documentTitle: string) => {
+    const newChatId = generateChatId();
+    const newChat: ChatSession = {
+      id: newChatId,
+      title: "New Chat",
+      documentId,
+      documentTitle,
+      messages: [],
+      createdAt: new Date(),
+      lastMessageAt: new Date(),
+      systemPromptId: selectedPrompt,
+      temperature: temperature
+    };
+    
+    setChatSessions(prev => [newChat, ...prev]);
+    setActiveChatId(newChatId);
+    return newChatId;
+  };
+
+  // Update chat title based on first message
+  useEffect(() => {
+    if (activeChatId && messages.length > 0) {
+      setChatSessions(prev => prev.map(chat => {
+        if (chat.id === activeChatId) {
+          return {
+            ...chat,
+            title: getChatTitle(messages),
+            lastMessageAt: new Date()
+          };
+        }
+        return chat;
+      }));
+    }
+  }, [messages, activeChatId]);
+
+  // Persist chat sessions to local storage
+  useEffect(() => {
+    if (chatSessions.length > 0) {
+      localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+    }
+  }, [chatSessions]);
+
+  // Load chat sessions from local storage
+  useEffect(() => {
+    const savedChats = localStorage.getItem('chatSessions');
+    if (savedChats) {
+      try {
+        const parsedChats = JSON.parse(savedChats);
+        // Convert date strings back to Date objects
+        const chats = parsedChats.map((chat: any) => ({
+          ...chat,
+          createdAt: new Date(chat.createdAt),
+          lastMessageAt: new Date(chat.lastMessageAt)
+        }));
+        setChatSessions(chats);
+        
+        // If there are chats, set the most recent one as active
+        if (chats.length > 0) {
+          setActiveChatId(chats[0].id);
+        }
+      } catch (error) {
+        console.error("Error loading saved chats:", error);
+      }
+    }
+  }, []);
 
   // Fetch available documents
   useEffect(() => {
@@ -95,8 +204,8 @@ const Index = () => {
         const data = await response.json();
         setDocuments(data.documents || []);
         
-        // Auto-select the first document if available
-        if (data.documents && data.documents.length > 0 && !selectedDocument) {
+        // Auto-select the first document if available and no active chat exists
+        if (data.documents && data.documents.length > 0 && !selectedDocument && !activeChatId) {
           handleDocumentSelect(data.documents[0]);
         }
       } catch (error) {
@@ -157,6 +266,9 @@ const Index = () => {
     setIsProcessing(true);
     setSelectedDocument(document);
     
+    // Create a new chat when selecting a different document
+    const chatId = createNewChat(document.id, document.title);
+    
     try {
       const response = await fetch(`${API_BASE_URL}/select-document`, {
         method: 'POST',
@@ -183,8 +295,6 @@ const Index = () => {
         description: `${document.title} has been selected for querying.`,
       });
       
-      // Reset chat
-      setMessages([]);
       setQaChain({ sessionId: data.session_id });
     } catch (error: any) {
       console.error("Error selecting document:", error);
@@ -196,6 +306,68 @@ const Index = () => {
       setSelectedDocument(null);
       setSessionId(null);
       setQaChain(null);
+      
+      // Remove the chat we just created since it failed
+      setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
+      setActiveChatId(null);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle creating a new chat for the current document
+  const handleNewChat = async () => {
+    if (!selectedDocument) {
+      toast({
+        title: "No document selected",
+        description: "Please select a document first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    // Create a new chat session
+    const chatId = createNewChat(selectedDocument.id, selectedDocument.title);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/select-document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_id: selectedDocument.id,
+          model: selectedDocument.model,
+          prompt_id: selectedPrompt,
+          temperature: temperature
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to initialize new chat");
+      }
+      
+      const data = await response.json();
+      setSessionId(data.session_id);
+      
+      toast({
+        title: "New chat created",
+        description: "You can now start a new conversation.",
+      });
+      
+      setQaChain({ sessionId: data.session_id });
+    } catch (error: any) {
+      console.error("Error initializing new chat:", error);
+      toast({
+        title: "Error creating new chat",
+        description: error.message || "Failed to initialize new chat.",
+        variant: "destructive",
+      });
+      
+      // Remove the chat we just created since it failed
+      setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
     } finally {
       setIsProcessing(false);
     }
@@ -213,6 +385,9 @@ const Index = () => {
     }
     
     setIsProcessing(true);
+    
+    // Create a new chat with updated settings
+    const chatId = createNewChat(selectedDocument.id, selectedDocument.title);
     
     try {
       const response = await fetch(`${API_BASE_URL}/select-document`, {
@@ -237,11 +412,21 @@ const Index = () => {
       
       toast({
         title: "Settings updated",
-        description: "The AI behavior settings have been updated.",
+        description: "New chat created with updated AI behavior settings.",
       });
       
-      // Reset chat
-      setMessages([]);
+      // Update the chat settings
+      setChatSessions(prev => prev.map(chat => {
+        if (chat.id === chatId) {
+          return {
+            ...chat,
+            systemPromptId: selectedPrompt,
+            temperature: temperature
+          };
+        }
+        return chat;
+      }));
+      
       setQaChain({ sessionId: data.session_id });
     } catch (error: any) {
       console.error("Error updating settings:", error);
@@ -250,9 +435,92 @@ const Index = () => {
         description: error.message || "Failed to update settings.",
         variant: "destructive",
       });
+      
+      // Remove the chat we just created since it failed
+      setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Switch to a different chat
+  const handleSwitchChat = async (chatId: string) => {
+    const chat = chatSessions.find(c => c.id === chatId);
+    if (!chat) return;
+    
+    setActiveChatId(chatId);
+    
+    // Find the document that belongs to this chat
+    const document = documents.find(d => d.id === chat.documentId);
+    if (!document) {
+      toast({
+        title: "Document not found",
+        description: "The document for this chat is no longer available.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Set the current document and system prompt
+    setSelectedDocument(document);
+    setSelectedPrompt(chat.systemPromptId);
+    setTemperature(chat.temperature);
+    
+    // Reinitialize the QA chain
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/select-document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_id: document.id,
+          model: document.model,
+          prompt_id: chat.systemPromptId,
+          temperature: chat.temperature
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to load chat");
+      }
+      
+      const data = await response.json();
+      setSessionId(data.session_id);
+      setQaChain({ sessionId: data.session_id });
+    } catch (error: any) {
+      console.error("Error loading chat:", error);
+      toast({
+        title: "Error loading chat",
+        description: error.message || "Failed to load chat session.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Delete a chat session
+  const handleDeleteChat = (chatId: string) => {
+    setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
+    
+    // If the active chat was deleted, select the first chat or create a new one
+    if (activeChatId === chatId) {
+      const remainingChats = chatSessions.filter(chat => chat.id !== chatId);
+      if (remainingChats.length > 0) {
+        handleSwitchChat(remainingChats[0].id);
+      } else if (selectedDocument) {
+        handleNewChat();
+      } else {
+        setActiveChatId(null);
+      }
+    }
+    
+    toast({
+      title: "Chat deleted",
+      description: "The chat session has been removed.",
+    });
   };
 
   // Handle form submission
@@ -271,7 +539,21 @@ const Index = () => {
 
     // Add user message
     const userMessage: Message = { role: "user", content: prompt };
-    setMessages(prev => [...prev, userMessage]);
+    
+    // Update the active chat with the new message
+    if (activeChatId) {
+      setChatSessions(prev => prev.map(chat => {
+        if (chat.id === activeChatId) {
+          return {
+            ...chat,
+            messages: [...chat.messages, userMessage],
+            lastMessageAt: new Date()
+          };
+        }
+        return chat;
+      }));
+    }
+    
     setPrompt("");
     setIsLoading(true);
     setStreamingContent("");
@@ -311,12 +593,39 @@ const Index = () => {
         
         // After streaming is complete, add the full message
         const assistantMessage: Message = { role: "assistant", content: accumulatedText };
-        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Update the active chat with the assistant's response
+        if (activeChatId) {
+          setChatSessions(prev => prev.map(chat => {
+            if (chat.id === activeChatId) {
+              return {
+                ...chat,
+                messages: [...chat.messages, assistantMessage],
+                lastMessageAt: new Date()
+              };
+            }
+            return chat;
+          }));
+        }
+        
         setStreamingContent("");
       } else {
         // Fallback if tokens aren't available
         const assistantMessage: Message = { role: "assistant", content: data.answer || "No answer found." };
-        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Update the active chat with the assistant's response
+        if (activeChatId) {
+          setChatSessions(prev => prev.map(chat => {
+            if (chat.id === activeChatId) {
+              return {
+                ...chat,
+                messages: [...chat.messages, assistantMessage],
+                lastMessageAt: new Date()
+              };
+            }
+            return chat;
+          }));
+        }
       }
     } catch (error: any) {
       toast({
@@ -331,18 +640,41 @@ const Index = () => {
         role: "assistant",
         content: error.message || "An error occurred while processing your query."
       };
-      setMessages(prev => [...prev, errorMessage]);
+      
+      // Update the active chat with the error message
+      if (activeChatId) {
+        setChatSessions(prev => prev.map(chat => {
+          if (chat.id === activeChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, errorMessage],
+              lastMessageAt: new Date()
+            };
+          }
+          return chat;
+        }));
+      }
     } finally {
       setIsLoading(false);
       setStreamingContent("");
     }
   };
 
+  // Format date for display
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full transition-colors duration-300">
-        {/* Document Sidebar */}
-        <Sidebar className="border-r border-border/40">
+        {/* Document Sidebar (Left) */}
+        <Sidebar side="left" className="border-r border-border/40">
           <SidebarContent className="animate-slide-in-left">
             <SidebarGroup>
               <SidebarGroupLabel className="font-medium">Documents</SidebarGroupLabel>
@@ -493,6 +825,24 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleNewChat}
+                className="hover-scale hidden md:flex"
+                disabled={!selectedDocument}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                New Chat
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowRightSidebar(!showRightSidebar)}
+                className="hover-scale rounded-full"
+              >
+                <MessageSquare className="h-5 w-5" />
+              </Button>
               <ThemeToggle />
               <TooltipProvider>
                 <Tooltip>
@@ -521,7 +871,7 @@ const Index = () => {
             </div>
           )}
 
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-1 gap-4">
             {/* Chat Container */}
             <div className="flex flex-col flex-1 animate-slide-in-right">
               {/* Chat Messages */}
@@ -542,11 +892,22 @@ const Index = () => {
                             "No documents available. Please ask an admin to upload documents."
                         )}
                       </p>
+                      {selectedDocument && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleNewChat}
+                          className="hover-scale"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          New Chat
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4 p-2">
-                    {messages.map((message, index) => (
+                    {activeChat?.messages.map((message, index) => (
                       <ChatMessage 
                         key={index} 
                         role={message.role} 
@@ -595,6 +956,78 @@ const Index = () => {
                 </form>
               </div>
             </div>
+            
+            {/* Chat History Sidebar (Right) */}
+            {showRightSidebar && (
+              <div className="w-80 bg-background border-l border-border/40 p-3 overflow-y-auto animate-slide-in-right hidden md:block">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium">Chat History</h3>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full" 
+                      onClick={handleNewChat}
+                      disabled={!selectedDocument}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full" 
+                      onClick={() => setShowRightSidebar(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  {chatSessions.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No chats yet</p>
+                    </div>
+                  ) : (
+                    chatSessions.map(chat => (
+                      <div 
+                        key={chat.id} 
+                        className={`p-3 rounded-md cursor-pointer transition-all hover:bg-accent/50 ${
+                          activeChatId === chat.id ? 'bg-accent/70' : ''
+                        }`}
+                        onClick={() => handleSwitchChat(chat.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-sm line-clamp-1">{chat.title}</h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
+                                <Settings className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => handleDeleteChat(chat.id)}>
+                                <Trash className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <Badge variant="outline" className="text-xs font-normal">
+                            {chat.documentTitle}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(chat.lastMessageAt)}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

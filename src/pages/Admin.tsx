@@ -307,8 +307,15 @@ const Admin = () => {
           <ThemeToggle />
         </div>
         <Card className="w-[400px] glass-card animate-scale-in">
-          <CardHeader>
-            <CardTitle className="text-2xl">Admin Authentication</CardTitle>
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
+                alt="I4C Logo" 
+                className="h-16 w-auto"
+              />
+            </div>
+            <CardTitle className="text-2xl">I4C Chatbot Admin</CardTitle>
             <CardDescription>
               Enter the admin token to access the document management interface.
             </CardDescription>
@@ -348,7 +355,14 @@ const Admin = () => {
     <div className="container mx-auto py-8 space-y-8 transition-colors duration-300">
       <div className="flex justify-between items-center animate-fade-in">
         <div className="flex items-center space-x-3">
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Document Management</h1>
+          <img 
+            src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
+            alt="I4C Logo" 
+            className="app-logo mr-2"
+          />
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            I4C Chatbot Admin
+          </h1>
         </div>
         <div className="flex gap-2">
           <ThemeToggle />

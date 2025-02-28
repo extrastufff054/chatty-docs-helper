@@ -293,9 +293,16 @@ const Index = () => {
                   <List className="h-5 w-5" />
                 </Button>
               </SidebarTrigger>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                PDF Chatbot
-              </h1>
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
+                  alt="I4C Logo" 
+                  className="app-logo"
+                />
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  I4C Chatbot
+                </h1>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
@@ -337,7 +344,7 @@ const Index = () => {
                       <div className="rounded-full bg-primary/10 p-3 inline-block">
                         <FileText className="h-8 w-8 text-primary" />
                       </div>
-                      <h3 className="text-xl font-medium">Welcome to PDF Chatbot</h3>
+                      <h3 className="text-xl font-medium">Welcome to I4C Chatbot</h3>
                       <p className="text-muted-foreground">
                         {selectedDocument ? (
                           `You're now chatting with "${selectedDocument.title}". Ask any questions about the document.`

@@ -3,11 +3,12 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, List, Send, Loader2, FileUp, Settings, ChevronUp, ChevronDown, MessageSquare, Plus, X, RefreshCcw } from "lucide-react";
+import { FileText, List, Send, Loader2, FileUp, Settings, ChevronUp, ChevronDown, MessageSquare, Plus, X, RefreshCcw, Trash } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   Tooltip,
   TooltipContent,
@@ -44,6 +45,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface Message {
   role: "user" | "assistant";
@@ -112,6 +121,7 @@ const Index = () => {
   const [temperature, setTemperature] = useState<number>(0.7);
   const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
+  const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   
   // Chat history management
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
@@ -119,6 +129,7 @@ const Index = () => {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Get current active chat
   const activeChat = chatSessions.find(chat => chat.id === activeChatId) || null;
@@ -296,6 +307,11 @@ const Index = () => {
       });
       
       setQaChain({ sessionId: data.session_id });
+      
+      // Close mobile sidebar after selection
+      if (isMobile) {
+        setIsHistorySheetOpen(false);
+      }
     } catch (error: any) {
       console.error("Error selecting document:", error);
       toast({
@@ -358,6 +374,11 @@ const Index = () => {
       });
       
       setQaChain({ sessionId: data.session_id });
+      
+      // Close mobile sidebar after selection
+      if (isMobile) {
+        setIsHistorySheetOpen(false);
+      }
     } catch (error: any) {
       console.error("Error initializing new chat:", error);
       toast({
@@ -489,6 +510,12 @@ const Index = () => {
       const data = await response.json();
       setSessionId(data.session_id);
       setQaChain({ sessionId: data.session_id });
+      
+      // Close mobile sidebar after selection
+      if (isMobile) {
+        setIsHistorySheetOpen(false);
+        setShowRightSidebar(false);
+      }
     } catch (error: any) {
       console.error("Error loading chat:", error);
       toast({
@@ -502,7 +529,11 @@ const Index = () => {
   };
 
   // Delete a chat session
-  const handleDeleteChat = (chatId: string) => {
+  const handleDeleteChat = (chatId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation(); // Prevent triggering the chat selection
+    }
+    
     setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
     
     // If the active chat was deleted, select the first chat or create a new one
@@ -670,6 +701,48 @@ const Index = () => {
     });
   };
 
+  // Render chat history component
+  const renderChatHistory = () => (
+    <div className="space-y-2">
+      {chatSessions.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">No chats yet</p>
+        </div>
+      ) : (
+        chatSessions.map(chat => (
+          <div 
+            key={chat.id} 
+            className={`p-3 rounded-md cursor-pointer transition-all hover:bg-accent/50 ${
+              activeChatId === chat.id ? 'bg-accent/70' : ''
+            }`}
+            onClick={() => handleSwitchChat(chat.id)}
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm line-clamp-1">{chat.title}</h4>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full"
+                onClick={(e) => handleDeleteChat(chat.id, e)}
+              >
+                <Trash className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <Badge variant="outline" className="text-xs font-normal truncate max-w-[120px]">
+                {chat.documentTitle}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {formatDate(chat.lastMessageAt)}
+              </span>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full transition-colors duration-300">
@@ -819,12 +892,13 @@ const Index = () => {
                   alt="I4C Logo" 
                   className="app-logo"
                 />
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   I4C Chatbot
                 </h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Desktop New Chat Button */}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -835,14 +909,53 @@ const Index = () => {
                 <Plus className="h-4 w-4 mr-1" />
                 New Chat
               </Button>
+              
+              {/* Desktop Chat History Button */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowRightSidebar(!showRightSidebar)}
-                className="hover-scale rounded-full"
+                className="hover-scale rounded-full hidden md:flex"
               >
                 <MessageSquare className="h-5 w-5" />
               </Button>
+              
+              {/* Mobile Chat History Sheet */}
+              {isMobile && (
+                <Sheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="hover-scale rounded-full"
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[85vw] p-4 overflow-y-auto">
+                    <SheetHeader className="mb-4">
+                      <SheetTitle>Chat History</SheetTitle>
+                      <SheetDescription>
+                        <div className="flex justify-between items-center mt-2">
+                          <span>Your previous conversations</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleNewChat}
+                            disabled={!selectedDocument}
+                            className="hover-scale"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            New Chat
+                          </Button>
+                        </div>
+                      </SheetDescription>
+                    </SheetHeader>
+                    {renderChatHistory()}
+                  </SheetContent>
+                </Sheet>
+              )}
+              
               <ThemeToggle />
               <TooltipProvider>
                 <Tooltip>
@@ -957,8 +1070,8 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Chat History Sidebar (Right) */}
-            {showRightSidebar && (
+            {/* Chat History Sidebar (Right) - Desktop only */}
+            {showRightSidebar && !isMobile && (
               <div className="w-80 bg-background border-l border-border/40 p-3 overflow-y-auto animate-slide-in-right hidden md:block">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Chat History</h3>
@@ -983,49 +1096,7 @@ const Index = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  {chatSessions.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No chats yet</p>
-                    </div>
-                  ) : (
-                    chatSessions.map(chat => (
-                      <div 
-                        key={chat.id} 
-                        className={`p-3 rounded-md cursor-pointer transition-all hover:bg-accent/50 ${
-                          activeChatId === chat.id ? 'bg-accent/70' : ''
-                        }`}
-                        onClick={() => handleSwitchChat(chat.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-sm line-clamp-1">{chat.title}</h4>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
-                                <Settings className="h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem onClick={() => handleDeleteChat(chat.id)}>
-                                <Trash className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        <div className="flex items-center justify-between mt-1">
-                          <Badge variant="outline" className="text-xs font-normal">
-                            {chat.documentTitle}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(chat.lastMessageAt)}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                {renderChatHistory()}
               </div>
             )}
           </div>

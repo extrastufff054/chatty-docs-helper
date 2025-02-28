@@ -3,14 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Card } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Loader2, Send, FileText, List, Folder, FolderOpen } from "lucide-react";
+import { FileText, List, Send, Loader2, FileUp } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { processQuery, getOllamaModels } from "@/lib/documentProcessor";
+import { getOllamaModels } from "@/lib/documentProcessor";
 import { 
   Tooltip,
   TooltipContent,
@@ -52,8 +48,6 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [qaChain, setQaChain] = useState<any>(null);
-  const [selectedModel, setSelectedModel] = useState<string>("");
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [streamingContent, setStreamingContent] = useState("");
@@ -62,35 +56,6 @@ const Index = () => {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Fetch available Ollama models
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const models = await getOllamaModels();
-        setAvailableModels(models);
-        
-        if (models.length > 0) {
-          setSelectedModel(models[0]);
-        } else {
-          toast({
-            title: "No models found",
-            description: "Ensure Ollama is running and models are installed.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching models:", error);
-        toast({
-          title: "Error fetching models",
-          description: "Please ensure Ollama is installed and running.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchModels();
-  }, [toast]);
 
   // Fetch available documents
   useEffect(() => {
@@ -104,6 +69,11 @@ const Index = () => {
         
         const data = await response.json();
         setDocuments(data.documents || []);
+        
+        // Auto-select the first document if available
+        if (data.documents && data.documents.length > 0 && !selectedDocument) {
+          handleDocumentSelect(data.documents[0]);
+        }
       } catch (error) {
         console.error("Error fetching documents:", error);
         toast({
@@ -126,15 +96,6 @@ const Index = () => {
 
   // Handle document selection
   const handleDocumentSelect = async (document: Document) => {
-    if (!selectedModel) {
-      toast({
-        title: "No model selected",
-        description: "Please select an Ollama model first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsProcessing(true);
     setSelectedDocument(document);
     
@@ -146,7 +107,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           document_id: document.id,
-          model: selectedModel,
+          model: document.model,
         }),
       });
       
@@ -273,49 +234,66 @@ const Index = () => {
               <SidebarGroupLabel className="font-medium">Documents</SidebarGroupLabel>
               <SidebarGroupContent>
                 {isLoadingDocuments ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <SidebarMenu>
-                    {documents.length > 0 ? (
-                      documents.map(doc => (
-                        <SidebarMenuItem key={doc.id} className="transition-all">
-                          <SidebarMenuButton asChild onClick={() => handleDocumentSelect(doc)}>
-                            <div className={`flex items-center space-x-2 cursor-pointer p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-all ${
-                              selectedDocument?.id === doc.id ? 'bg-accent/70' : ''
-                            }`}>
-                              {selectedDocument?.id === doc.id ? (
-                                <FolderOpen className="h-4 w-4 transition-transform" />
-                              ) : (
-                                <Folder className="h-4 w-4 transition-transform" />
-                              )}
-                              <span className="truncate">{doc.title}</span>
-                            </div>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))
-                    ) : (
-                      <div className="text-sm text-muted-foreground p-4 text-center">
-                        No documents available
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div className="relative h-16 w-16">
+                      <div className="absolute animate-float">
+                        <FileUp className="h-12 w-12 text-primary" />
                       </div>
-                    )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Loading documents...</p>
+                  </div>
+                ) : documents.length > 0 ? (
+                  <SidebarMenu>
+                    {documents.map(doc => (
+                      <SidebarMenuItem key={doc.id} className="transition-all">
+                        <SidebarMenuButton asChild onClick={() => handleDocumentSelect(doc)}>
+                          <div className={`flex items-center space-x-2 cursor-pointer p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-all ${
+                            selectedDocument?.id === doc.id ? 'bg-accent/70' : ''
+                          }`}>
+                            <FileText className="h-4 w-4 transition-transform" />
+                            <span className="truncate">{doc.title}</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
+                ) : (
+                  <div className="text-sm text-muted-foreground p-4 text-center">
+                    No documents available
+                  </div>
                 )}
               </SidebarGroupContent>
             </SidebarGroup>
+
+            {selectedDocument && (
+              <SidebarGroup>
+                <SidebarGroupLabel className="font-medium">Current Document</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <div className="p-3 bg-accent/30 rounded-md">
+                    <h3 className="text-sm font-medium mb-1">{selectedDocument.title}</h3>
+                    {selectedDocument.description && (
+                      <p className="text-xs text-muted-foreground">{selectedDocument.description}</p>
+                    )}
+                    <div className="mt-2 text-xs flex items-center">
+                      <span className="text-muted-foreground">Model:</span>
+                      <span className="ml-1 text-primary font-medium">{selectedDocument.model}</span>
+                    </div>
+                  </div>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
           </SidebarContent>
         </Sidebar>
 
-        <div className="flex flex-col flex-1 p-6">
-          <div className="flex items-center justify-between mb-8 animate-fade-in">
+        <div className="flex flex-col flex-1 p-4 md:p-6">
+          <div className="flex items-center justify-between mb-6 md:mb-8 animate-fade-in">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="hover-scale">
                 <Button variant="ghost" size="icon" className="rounded-full transition-all">
                   <List className="h-5 w-5" />
                 </Button>
               </SidebarTrigger>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 PDF Chatbot
               </h1>
             </div>
@@ -336,79 +314,38 @@ const Index = () => {
             </div>
           </div>
           
-          <p className="text-muted-foreground mb-8 animate-fade-in">Ask anything about your documents using local Ollama models</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Settings Card */}
-            <Card className="p-5 md:col-span-1 h-fit glass-card animate-scale-in border-border/50">
-              <h2 className="font-semibold mb-5 text-lg">Settings</h2>
-              
-              {/* Model Selection */}
-              <div className="mb-5">
-                <h3 className="text-sm font-medium mb-3">Choose Ollama Model</h3>
-                <RadioGroup 
-                  value={selectedModel} 
-                  onValueChange={setSelectedModel}
-                  className="flex flex-col space-y-2"
-                >
-                  {availableModels.length > 0 ? (
-                    availableModels.map(model => (
-                      <div key={model} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent transition-colors">
-                        <RadioGroupItem value={model} id={model} />
-                        <Label htmlFor={model} className="cursor-pointer">{model}</Label>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex items-center justify-center p-4">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
-                      <p className="text-sm text-muted-foreground">Loading models...</p>
-                    </div>
-                  )}
-                </RadioGroup>
+          {/* Processing Animation */}
+          {isProcessing && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+              <div className="relative h-20 w-20">
+                <div className="absolute animate-float">
+                  <FileText className="h-16 w-16 text-primary" />
+                </div>
               </div>
-              
-              <Separator className="my-5" />
-              
-              {/* Selected Document */}
-              <div>
-                <h3 className="text-sm font-medium mb-3">Selected Document</h3>
-                {selectedDocument ? (
-                  <div className="space-y-3 p-3 bg-accent/50 rounded-md animate-scale-in">
-                    <div className="flex items-center">
-                      <FileText className="h-4 w-4 mr-2 text-primary" />
-                      <span className="text-sm font-medium">{selectedDocument.title}</span>
-                    </div>
-                    {selectedDocument.description && (
-                      <p className="text-xs text-muted-foreground">{selectedDocument.description}</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground p-3">Select a document from the sidebar</p>
-                )}
-                
-                {isProcessing && (
-                  <div className="mt-3 flex items-center text-sm text-primary p-2 bg-primary/10 rounded-md animate-pulse-light">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    <span>Processing document...</span>
-                  </div>
-                )}
-              </div>
-            </Card>
-            
+              <p className="mt-4 text-primary font-medium">Processing document...</p>
+            </div>
+          )}
+
+          <div className="flex flex-col flex-1">
             {/* Chat Container */}
-            <div className="md:col-span-3 flex flex-col h-[70vh] animate-slide-in-right">
+            <div className="flex flex-col flex-1 animate-slide-in-right">
               {/* Chat Messages */}
               <div className="flex-1 overflow-auto mb-4 pr-2 scrollbar-track rounded-md">
                 {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-8 animate-fade-in">
+                  <div className="h-full flex flex-col items-center justify-center text-center p-4 md:p-8 animate-fade-in">
                     <div className="max-w-md space-y-4">
                       <div className="rounded-full bg-primary/10 p-3 inline-block">
                         <FileText className="h-8 w-8 text-primary" />
                       </div>
                       <h3 className="text-xl font-medium">Welcome to PDF Chatbot</h3>
                       <p className="text-muted-foreground">
-                        Select a document from the sidebar and choose an Ollama model to get started.
-                        Then ask any questions about the document.
+                        {selectedDocument ? (
+                          `You're now chatting with "${selectedDocument.title}". Ask any questions about the document.`
+                        ) : (
+                          documents.length > 0 ? 
+                            "Select a document from the sidebar to start chatting." : 
+                            "No documents available. Please ask an admin to upload documents."
+                        )}
                       </p>
                     </div>
                   </div>
@@ -438,35 +375,30 @@ const Index = () => {
               </div>
               
               {/* Chat Input */}
-              <form onSubmit={handleSubmit} className="flex items-center space-x-2 bg-card/50 p-2 rounded-lg backdrop-blur-sm border border-border/30">
-                <Input
-                  placeholder="Type your question here..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  disabled={isLoading || !qaChain}
-                  className="flex-1 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base px-4"
-                />
-                <Button 
-                  type="submit" 
-                  disabled={isLoading || !qaChain || !prompt.trim()}
-                  className="shrink-0 rounded-full transition-all hover:scale-105"
-                  variant="default"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">Send</span>
-                </Button>
-              </form>
-              
-              {/* Status when no document is selected */}
-              {!qaChain && !isProcessing && (
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  Select a document from the sidebar to start chatting
-                </p>
-              )}
+              <div className="sticky bottom-0 pb-2 pt-1 bg-background">
+                <form onSubmit={handleSubmit} className="flex items-center space-x-2 bg-card/50 p-2 rounded-lg backdrop-blur-sm border border-border/30">
+                  <Input
+                    placeholder="Type your question here..."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    disabled={isLoading || !qaChain}
+                    className="flex-1 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base px-4"
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || !qaChain || !prompt.trim()}
+                    className="shrink-0 rounded-full transition-all hover:scale-105"
+                    variant="default"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">Send</span>
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
         </div>

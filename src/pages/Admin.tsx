@@ -348,7 +348,7 @@ const Admin = () => {
     <div className="container mx-auto py-8 space-y-8 transition-colors duration-300">
       <div className="flex justify-between items-center animate-fade-in">
         <div className="flex items-center space-x-3">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Document Management</h1>
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Document Management</h1>
         </div>
         <div className="flex gap-2">
           <ThemeToggle />
@@ -429,11 +429,12 @@ const Admin = () => {
               
               {/* Model Selection */}
               <div className="space-y-2">
-                <Label>Model</Label>
+                <Label>Model (Required)</Label>
                 <RadioGroup 
                   value={selectedModel} 
                   onValueChange={setSelectedModel}
                   className="flex flex-col space-y-1"
+                  required
                 >
                   {availableModels.length > 0 ? (
                     availableModels.map(model => (
@@ -443,7 +444,10 @@ const Admin = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">No models available</p>
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
+                      <p className="text-sm text-muted-foreground">Loading models...</p>
+                    </div>
                   )}
                 </RadioGroup>
               </div>
@@ -484,7 +488,7 @@ const Admin = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : documents.length > 0 ? (
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableCaption>List of uploaded documents</TableCaption>
                   <TableHeader>

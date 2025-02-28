@@ -3,10 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, List, Send, Loader2, FileUp } from "lucide-react";
+import { FileText, List, Send, Loader2, FileUp, Settings, ChevronUp, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getOllamaModels } from "@/lib/documentProcessor";
+import { Slider } from "@/components/ui/slider";
 import { 
   Tooltip,
   TooltipContent,
@@ -25,6 +26,18 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface Message {
   role: "user" | "assistant";
@@ -40,6 +53,14 @@ interface Document {
   created_at: string;
 }
 
+interface SystemPrompt {
+  id: string;
+  name: string;
+  prompt: string;
+  temperature: number;
+  description: string;
+}
+
 const API_BASE_URL = "http://localhost:5000/api";
 
 const Index = () => {
@@ -53,6 +74,10 @@ const Index = () => {
   const [streamingContent, setStreamingContent] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
+  const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
+  const [selectedPrompt, setSelectedPrompt] = useState<string>("default");
+  const [temperature, setTemperature] = useState<number>(0.7);
+  const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -89,6 +114,39 @@ const Index = () => {
     fetchDocuments();
   }, [toast]);
 
+  // Fetch system prompts
+  useEffect(() => {
+    const fetchSystemPrompts = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/system-prompts`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch system prompts");
+        }
+        
+        const data = await response.json();
+        setSystemPrompts(data.prompts || []);
+        
+        // Set the temperature to match the default prompt
+        const defaultPrompt = data.prompts.find((p: SystemPrompt) => p.id === "default");
+        if (defaultPrompt) {
+          setTemperature(defaultPrompt.temperature);
+        }
+      } catch (error) {
+        console.error("Error fetching system prompts:", error);
+      }
+    };
+
+    fetchSystemPrompts();
+  }, []);
+
+  // Update temperature when prompt changes
+  useEffect(() => {
+    const prompt = systemPrompts.find((p) => p.id === selectedPrompt);
+    if (prompt) {
+      setTemperature(prompt.temperature);
+    }
+  }, [selectedPrompt, systemPrompts]);
+
   // Scroll to bottom of chat on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -108,6 +166,8 @@ const Index = () => {
         body: JSON.stringify({
           document_id: document.id,
           model: document.model,
+          prompt_id: selectedPrompt,
+          temperature: temperature
         }),
       });
       
@@ -136,6 +196,60 @@ const Index = () => {
       setSelectedDocument(null);
       setSessionId(null);
       setQaChain(null);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle changing the system prompt or temperature
+  const handleSettingsChange = async () => {
+    if (!selectedDocument) {
+      toast({
+        title: "No document selected",
+        description: "Please select a document first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/select-document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_id: selectedDocument.id,
+          model: selectedDocument.model,
+          prompt_id: selectedPrompt,
+          temperature: temperature
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update settings");
+      }
+      
+      const data = await response.json();
+      setSessionId(data.session_id);
+      
+      toast({
+        title: "Settings updated",
+        description: "The AI behavior settings have been updated.",
+      });
+      
+      // Reset chat
+      setMessages([]);
+      setQaChain({ sessionId: data.session_id });
+    } catch (error: any) {
+      console.error("Error updating settings:", error);
+      toast({
+        title: "Error updating settings",
+        description: error.message || "Failed to update settings.",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -266,21 +380,95 @@ const Index = () => {
             </SidebarGroup>
 
             {selectedDocument && (
-              <SidebarGroup>
-                <SidebarGroupLabel className="font-medium">Current Document</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <div className="p-3 bg-accent/30 rounded-md">
-                    <h3 className="text-sm font-medium mb-1">{selectedDocument.title}</h3>
-                    {selectedDocument.description && (
-                      <p className="text-xs text-muted-foreground">{selectedDocument.description}</p>
-                    )}
-                    <div className="mt-2 text-xs flex items-center">
-                      <span className="text-muted-foreground">Model:</span>
-                      <span className="ml-1 text-primary font-medium">{selectedDocument.model}</span>
+              <>
+                <SidebarGroup>
+                  <SidebarGroupLabel className="font-medium">Current Document</SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <div className="p-3 bg-accent/30 rounded-md">
+                      <h3 className="text-sm font-medium mb-1">{selectedDocument.title}</h3>
+                      {selectedDocument.description && (
+                        <p className="text-xs text-muted-foreground">{selectedDocument.description}</p>
+                      )}
+                      <div className="mt-2 text-xs flex items-center">
+                        <span className="text-muted-foreground">Model:</span>
+                        <span className="ml-1 text-primary font-medium">{selectedDocument.model}</span>
+                      </div>
                     </div>
-                  </div>
-                </SidebarGroupContent>
-              </SidebarGroup>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                  <Collapsible 
+                    open={isAdvancedSettingsOpen} 
+                    onOpenChange={setIsAdvancedSettingsOpen}
+                    className="w-full"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between cursor-pointer p-2 hover:bg-accent/50 rounded-md mt-4 mb-1">
+                        <div className="flex items-center gap-2">
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                          <SidebarGroupLabel className="font-medium m-0">AI Behavior</SidebarGroupLabel>
+                        </div>
+                        {isAdvancedSettingsOpen ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-2 pt-2 space-y-3">
+                      {/* System Prompt Selection */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium">Response Style</label>
+                        <Select
+                          value={selectedPrompt}
+                          onValueChange={setSelectedPrompt}
+                        >
+                          <SelectTrigger className="w-full text-xs">
+                            <SelectValue placeholder="Select a system prompt" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {systemPrompts.map((prompt) => (
+                              <SelectItem key={prompt.id} value={prompt.id}>
+                                <div className="flex flex-col">
+                                  <span>{prompt.name}</span>
+                                  <span className="text-xs text-muted-foreground">{prompt.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Temperature Selection */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-medium">Temperature</label>
+                          <span className="text-xs">{temperature.toFixed(1)}</span>
+                        </div>
+                        <Slider
+                          value={[temperature]}
+                          min={0}
+                          max={1}
+                          step={0.1}
+                          onValueChange={(val) => setTemperature(val[0])}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Lower: precise, Higher: creative
+                        </p>
+                      </div>
+                      
+                      <Button 
+                        size="sm"
+                        className="w-full text-xs mt-2 hover-scale"
+                        onClick={handleSettingsChange}
+                      >
+                        Apply Settings
+                      </Button>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </SidebarGroup>
+              </>
             )}
           </SidebarContent>
         </Sidebar>

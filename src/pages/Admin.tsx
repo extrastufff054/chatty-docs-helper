@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useDropzone } from 'react-dropzone';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, Trash, FileText, ArrowLeft } from "lucide-react";
+import { Loader2, Upload, Trash, FileText, ArrowLeft, Settings } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import SystemPromptManagement from "@/components/SystemPromptManagement";
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Document {
   id: string;
@@ -54,6 +56,7 @@ const Admin = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("documents");
   
   const { toast } = useToast();
 
@@ -373,191 +376,220 @@ const Admin = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Upload Form */}
-        <Card className="glass-card animate-slide-in-left">
-          <CardHeader>
-            <CardTitle className="text-xl">Upload Document</CardTitle>
-            <CardDescription>
-              Upload a PDF document for users to query
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleUpload}>
-            <CardContent className="space-y-5">
-              {/* PDF Upload */}
-              <div className="space-y-2">
-                <Label>PDF Document</Label>
-                <div 
-                  {...getRootProps()} 
-                  className={`border-2 border-dashed rounded-lg p-8 transition-colors cursor-pointer hover-scale ${
-                    isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30'
-                  }`}
-                >
-                  <input {...getInputProps()} />
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <Upload className="h-10 w-10 mb-4 text-muted-foreground" />
-                    <p className="text-base text-muted-foreground font-medium">
-                      {isDragActive
-                        ? "Drop the PDF here ..."
-                        : "Drag & drop a PDF file here"}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      or click to select
-                    </p>
-                  </div>
-                </div>
-                
-                {uploadedFile && (
-                  <div className="mt-3 flex items-center p-3 bg-accent/50 rounded-md animate-scale-in">
-                    <FileText className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm truncate">{uploadedFile.name}</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Document title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  className="transition-colors"
-                />
-              </div>
-              
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Brief description of the document"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  className="resize-none transition-colors"
-                />
-              </div>
-              
-              {/* Model Selection */}
-              <div className="space-y-2">
-                <Label>Model (Required)</Label>
-                <RadioGroup 
-                  value={selectedModel} 
-                  onValueChange={setSelectedModel}
-                  className="flex flex-col space-y-1"
-                  required
-                >
-                  {availableModels.length > 0 ? (
-                    availableModels.map(model => (
-                      <div key={model} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent transition-colors">
-                        <RadioGroupItem value={model} id={`model-${model}`} />
-                        <Label htmlFor={`model-${model}`} className="cursor-pointer">{model}</Label>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex items-center justify-center p-4">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
-                      <p className="text-sm text-muted-foreground">Loading models...</p>
-                    </div>
-                  )}
-                </RadioGroup>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                type="submit" 
-                className="w-full hover-scale"
-                disabled={isUploading || !uploadedFile || !selectedModel || !title}
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Document
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-2">
+          <TabsTrigger value="documents" className="flex gap-2 items-center">
+            <FileText className="h-4 w-4" />
+            Documents
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex gap-2 items-center">
+            <Settings className="h-4 w-4" />
+            Advanced Settings
+          </TabsTrigger>
+        </TabsList>
         
-        {/* Documents Table */}
-        <Card className="glass-card animate-slide-in-right">
-          <CardHeader>
-            <CardTitle className="text-xl">Uploaded Documents</CardTitle>
-            <CardDescription>
-              Manage your uploaded documents
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingDocuments ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : documents.length > 0 ? (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableCaption>List of uploaded documents</TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Model</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {documents.map((doc) => (
-                      <TableRow key={doc.id} className="hover-scale">
-                        <TableCell className="font-medium">{doc.title}</TableCell>
-                        <TableCell>{doc.model}</TableCell>
-                        <TableCell className="text-right">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="rounded-full transition-all hover:bg-destructive/10">
-                                <Trash className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="glass-card animate-scale-in">
-                              <DialogHeader>
-                                <DialogTitle>Confirm Deletion</DialogTitle>
-                                <DialogDescription>
-                                  Are you sure you want to delete "{doc.title}"? This action cannot be undone.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <DialogFooter className="gap-2">
-                                <Button variant="outline" onClick={() => {}}>Cancel</Button>
-                                <Button 
-                                  variant="destructive" 
-                                  onClick={() => handleDeleteDocument(doc.id)}
-                                  className="hover-scale"
-                                >
-                                  Delete
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                No documents uploaded yet
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="documents" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Upload Form */}
+            <Card className="glass-card animate-slide-in-left">
+              <CardHeader>
+                <CardTitle className="text-xl">Upload Document</CardTitle>
+                <CardDescription>
+                  Upload a PDF document for users to query
+                </CardDescription>
+              </CardHeader>
+              <form onSubmit={handleUpload}>
+                <CardContent className="space-y-5">
+                  {/* PDF Upload */}
+                  <div className="space-y-2">
+                    <Label>PDF Document</Label>
+                    <div 
+                      {...getRootProps()} 
+                      className={`border-2 border-dashed rounded-lg p-8 transition-colors cursor-pointer hover-scale ${
+                        isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30'
+                      }`}
+                    >
+                      <input {...getInputProps()} />
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <Upload className="h-10 w-10 mb-4 text-muted-foreground" />
+                        <p className="text-base text-muted-foreground font-medium">
+                          {isDragActive
+                            ? "Drop the PDF here ..."
+                            : "Drag & drop a PDF file here"}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          or click to select
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {uploadedFile && (
+                      <div className="mt-3 flex items-center p-3 bg-accent/50 rounded-md animate-scale-in">
+                        <FileText className="h-4 w-4 mr-2 text-primary" />
+                        <span className="text-sm truncate">{uploadedFile.name}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      placeholder="Document title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                      className="transition-colors"
+                    />
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Brief description of the document"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
+                      className="resize-none transition-colors"
+                    />
+                  </div>
+                  
+                  {/* Model Selection */}
+                  <div className="space-y-2">
+                    <Label>Model (Required)</Label>
+                    <RadioGroup 
+                      value={selectedModel} 
+                      onValueChange={setSelectedModel}
+                      className="flex flex-col space-y-1"
+                      required
+                    >
+                      {availableModels.length > 0 ? (
+                        availableModels.map(model => (
+                          <div key={model} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent transition-colors">
+                            <RadioGroupItem value={model} id={`model-${model}`} />
+                            <Label htmlFor={`model-${model}`} className="cursor-pointer">{model}</Label>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
+                          <p className="text-sm text-muted-foreground">Loading models...</p>
+                        </div>
+                      )}
+                    </RadioGroup>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    type="submit" 
+                    className="w-full hover-scale"
+                    disabled={isUploading || !uploadedFile || !selectedModel || !title}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Document
+                      </>
+                    )}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Card>
+            
+            {/* Documents Table */}
+            <Card className="glass-card animate-slide-in-right">
+              <CardHeader>
+                <CardTitle className="text-xl">Uploaded Documents</CardTitle>
+                <CardDescription>
+                  Manage your uploaded documents
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingDocuments ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : documents.length > 0 ? (
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                      <TableCaption>List of uploaded documents</TableCaption>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Model</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {documents.map((doc) => (
+                          <TableRow key={doc.id} className="hover-scale">
+                            <TableCell className="font-medium">{doc.title}</TableCell>
+                            <TableCell>{doc.model}</TableCell>
+                            <TableCell className="text-right">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="rounded-full transition-all hover:bg-destructive/10">
+                                    <Trash className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="glass-card animate-scale-in">
+                                  <DialogHeader>
+                                    <DialogTitle>Confirm Deletion</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to delete "{doc.title}"? This action cannot be undone.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <DialogFooter className="gap-2">
+                                    <Button variant="outline" onClick={() => {}}>Cancel</Button>
+                                    <Button 
+                                      variant="destructive" 
+                                      onClick={() => handleDeleteDocument(doc.id)}
+                                      className="hover-scale"
+                                    >
+                                      Delete
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    No documents uploaded yet
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="advanced" className="animate-fade-in">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-xl">Advanced Settings</CardTitle>
+              <CardDescription>
+                Configure system prompts and response parameters
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SystemPromptManagement adminToken={adminToken} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

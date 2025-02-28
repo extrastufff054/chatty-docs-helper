@@ -1,3 +1,4 @@
+
 import logging
 import os
 import subprocess
@@ -42,6 +43,39 @@ os.makedirs(uploads_dir, exist_ok=True)
 # Document metadata storage
 documents = {}
 
+# System prompts storage
+system_prompts = {
+    "default": {
+        "id": "default",
+        "name": "Default Analysis",
+        "prompt": """You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
+Given the following document excerpts and a question, synthesize a well-rounded answer that provides full context and continuity.
+Do not simply return isolated fragments; instead, integrate the information into a unified, context-rich response.
+
+Document Excerpts:
+{context}
+
+Question: {question}
+Answer:""",
+        "temperature": 0.7,
+        "description": "Balanced analysis with context and synthesis"
+    },
+    "concise": {
+        "id": "concise",
+        "name": "Concise Summary",
+        "prompt": """You are a precise assistant that provides brief, direct answers.
+Based on these document excerpts, give a concise response with just the essential information.
+
+Document Excerpts:
+{context}
+
+Question: {question}
+Answer with only the necessary facts:""",
+        "temperature": 0.3,
+        "description": "Short, direct answers with lower creativity"
+    }
+}
+
 # =============================================================================
 # Callback handler for streaming output
 # =============================================================================
@@ -52,22 +86,6 @@ class StreamingCallbackHandler(BaseCallbackHandler):
         
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         self.tokens.append(token)
-
-# =============================================================================
-# Custom Prompt Template for Synthesized, Coherent Output
-# =============================================================================
-custom_prompt_template = PromptTemplate(
-    input_variables=["context", "question"],
-    template="""You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
-Given the following document excerpts and a question, synthesize a well-rounded answer that provides full context and continuity.
-Do not simply return isolated fragments; instead, integrate the information into a unified, context-rich response.
-
-Document Excerpts:
-{context}
-
-Question: {question}
-Answer:"""
-)
 
 # =============================================================================
 # Utility: Get available Ollama models via the Ollama CLI.
@@ -96,7 +114,7 @@ def get_ollama_models():
 # =============================================================================
 # Initialize the QA Chain using only the local Ollama model.
 # =============================================================================
-def initialize_qa_chain(filepath, model_checkpoint):
+def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", temperature=0.7):
     try:
         loader = PyPDFLoader(filepath)
         documents = loader.load()
@@ -125,8 +143,17 @@ def initialize_qa_chain(filepath, model_checkpoint):
         raise ValueError("Failed to create embeddings or vector store.")
 
     try:
-        # Initialize the Ollama LLM using the selected local model.
-        llm = Ollama(model=model_checkpoint)
+        # Get the system prompt
+        prompt_template = system_prompts.get(prompt_id, system_prompts["default"])
+        
+        # Create prompt template
+        custom_prompt = PromptTemplate(
+            input_variables=["context", "question"],
+            template=prompt_template["prompt"]
+        )
+        
+        # Initialize the Ollama LLM using the selected local model with temperature
+        llm = Ollama(model=model_checkpoint, temperature=float(temperature))
     except Exception as e:
         logger.exception("Error initializing the Ollama LLM: %s", str(e))
         raise ValueError("Failed to initialize the language model. Check your model configuration.")
@@ -136,7 +163,7 @@ def initialize_qa_chain(filepath, model_checkpoint):
             llm=llm,
             chain_type="stuff",
             retriever=vectordb.as_retriever(),
-            chain_type_kwargs={"prompt": custom_prompt_template}
+            chain_type_kwargs={"prompt": custom_prompt}
         )
         return qa_chain
     except Exception as e:
@@ -203,12 +230,23 @@ def get_document(document_id):
         logger.exception("Error fetching document: %s", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/system-prompts', methods=['GET'])
+def get_system_prompts():
+    """Get all available system prompts."""
+    try:
+        return jsonify({"prompts": list(system_prompts.values())})
+    except Exception as e:
+        logger.exception("Error fetching system prompts: %s", str(e))
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/select-document', methods=['POST'])
 def select_document():
     """Select a document and initialize QA chain for it."""
     data = request.json
     document_id = data.get('document_id')
     model = data.get('model')
+    prompt_id = data.get('prompt_id', 'default')
+    temperature = data.get('temperature', 0.7)
     
     if not document_id:
         return jsonify({"error": "Missing document_id"}), 400
@@ -223,8 +261,8 @@ def select_document():
         document = documents[document_id]
         filepath = os.path.join(uploads_dir, document['filename'])
         
-        # Initialize QA chain
-        qa_chain = initialize_qa_chain(filepath, model)
+        # Initialize QA chain with prompt and temperature
+        qa_chain = initialize_qa_chain(filepath, model, prompt_id, temperature)
         qa_chains[document_id] = qa_chain
         
         return jsonify({
@@ -321,6 +359,121 @@ def admin_upload():
         })
     except Exception as e:
         logger.exception("Error processing file: %s", str(e))
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/admin/system-prompts', methods=['GET'])
+def admin_get_system_prompts():
+    """Admin route to get all system prompts."""
+    # Validate admin token
+    token = request.headers.get('Authorization')
+    if not token or not validate_admin_token(token.replace('Bearer ', '')):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    return jsonify({"prompts": list(system_prompts.values())})
+
+@app.route('/admin/system-prompts', methods=['POST'])
+def admin_create_system_prompt():
+    """Admin route to create a new system prompt."""
+    # Validate admin token
+    token = request.headers.get('Authorization')
+    if not token or not validate_admin_token(token.replace('Bearer ', '')):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    name = data.get('name')
+    prompt_template = data.get('prompt')
+    temperature = data.get('temperature', 0.7)
+    description = data.get('description', '')
+    
+    if not name or not prompt_template:
+        return jsonify({"error": "Missing name or prompt template"}), 400
+    
+    try:
+        # Generate a unique prompt ID
+        prompt_id = name.lower().replace(' ', '_') + '_' + secrets.token_hex(4)
+        
+        # Store prompt
+        system_prompts[prompt_id] = {
+            "id": prompt_id,
+            "name": name,
+            "prompt": prompt_template,
+            "temperature": float(temperature),
+            "description": description
+        }
+        
+        return jsonify({
+            "success": True,
+            "message": "System prompt created successfully",
+            "prompt": system_prompts[prompt_id]
+        })
+    except Exception as e:
+        logger.exception("Error creating system prompt: %s", str(e))
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/admin/system-prompts/<prompt_id>', methods=['PUT'])
+def admin_update_system_prompt(prompt_id):
+    """Admin route to update a system prompt."""
+    # Validate admin token
+    token = request.headers.get('Authorization')
+    if not token or not validate_admin_token(token.replace('Bearer ', '')):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    if prompt_id not in system_prompts:
+        return jsonify({"error": "System prompt not found"}), 404
+    
+    data = request.json
+    name = data.get('name')
+    prompt_template = data.get('prompt')
+    temperature = data.get('temperature', 0.7)
+    description = data.get('description', '')
+    
+    if not name or not prompt_template:
+        return jsonify({"error": "Missing name or prompt template"}), 400
+    
+    try:
+        # Update prompt
+        system_prompts[prompt_id] = {
+            "id": prompt_id,
+            "name": name,
+            "prompt": prompt_template,
+            "temperature": float(temperature),
+            "description": description
+        }
+        
+        return jsonify({
+            "success": True,
+            "message": "System prompt updated successfully",
+            "prompt": system_prompts[prompt_id]
+        })
+    except Exception as e:
+        logger.exception("Error updating system prompt: %s", str(e))
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/admin/system-prompts/<prompt_id>', methods=['DELETE'])
+def admin_delete_system_prompt(prompt_id):
+    """Admin route to delete a system prompt."""
+    # Validate admin token
+    token = request.headers.get('Authorization')
+    if not token or not validate_admin_token(token.replace('Bearer ', '')):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    if prompt_id not in system_prompts:
+        return jsonify({"error": "System prompt not found"}), 404
+    
+    # Don't allow deleting default prompts
+    if prompt_id in ["default", "concise"]:
+        return jsonify({"error": "Cannot delete default system prompts"}), 400
+    
+    try:
+        # Delete prompt
+        del system_prompts[prompt_id]
+        
+        return jsonify({
+            "success": True,
+            "message": "System prompt deleted successfully"
+        })
+    except Exception as e:
+        logger.exception("Error deleting system prompt: %s", str(e))
         return jsonify({"error": str(e)}), 500
 
 @app.route('/admin/documents', methods=['GET'])

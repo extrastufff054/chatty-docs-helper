@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { FileText, List, Send, Loader2, FileUp, Settings, ChevronUp, ChevronDown, MessageSquare, Plus, X, RefreshCcw, Trash } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
@@ -118,16 +117,18 @@ const Index = () => {
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
   const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
   const [selectedPrompt, setSelectedPrompt] = useState<string>("default");
-  const [temperature, setTemperature] = useState<number>(0.7);
+  const [temperature] = useState<number>(0); // Fixed temperature to 0
   const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
   
   // Chat history management
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -147,7 +148,7 @@ const Index = () => {
       createdAt: new Date(),
       lastMessageAt: new Date(),
       systemPromptId: selectedPrompt,
-      temperature: temperature
+      temperature: temperature // Using fixed temperature of 0
     };
     
     setChatSessions(prev => [newChat, ...prev]);
@@ -202,6 +203,28 @@ const Index = () => {
     }
   }, []);
 
+  // Handle fixed header on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        if (headerRef.current) {
+          headerRef.current.classList.add('fixed-header');
+          document.body.style.paddingTop = `${headerRef.current.offsetHeight}px`;
+        }
+      } else {
+        if (headerRef.current) {
+          headerRef.current.classList.remove('fixed-header');
+          document.body.style.paddingTop = '0';
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   // Fetch available documents
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -246,10 +269,10 @@ const Index = () => {
         const data = await response.json();
         setSystemPrompts(data.prompts || []);
         
-        // Set the temperature to match the default prompt
+        // Set the default prompt
         const defaultPrompt = data.prompts.find((p: SystemPrompt) => p.id === "default");
         if (defaultPrompt) {
-          setTemperature(defaultPrompt.temperature);
+          setSelectedPrompt(defaultPrompt.id);
         }
       } catch (error) {
         console.error("Error fetching system prompts:", error);
@@ -258,14 +281,6 @@ const Index = () => {
 
     fetchSystemPrompts();
   }, []);
-
-  // Update temperature when prompt changes
-  useEffect(() => {
-    const prompt = systemPrompts.find((p) => p.id === selectedPrompt);
-    if (prompt) {
-      setTemperature(prompt.temperature);
-    }
-  }, [selectedPrompt, systemPrompts]);
 
   // Scroll to bottom of chat on new message
   useEffect(() => {
@@ -290,7 +305,7 @@ const Index = () => {
           document_id: document.id,
           model: document.model,
           prompt_id: selectedPrompt,
-          temperature: temperature
+          temperature: temperature // Using fixed temperature
         }),
       });
       
@@ -357,7 +372,7 @@ const Index = () => {
           document_id: selectedDocument.id,
           model: selectedDocument.model,
           prompt_id: selectedPrompt,
-          temperature: temperature
+          temperature: temperature // Using fixed temperature
         }),
       });
       
@@ -394,7 +409,7 @@ const Index = () => {
     }
   };
 
-  // Handle changing the system prompt or temperature
+  // Handle changing the system prompt
   const handleSettingsChange = async () => {
     if (!selectedDocument) {
       toast({
@@ -420,7 +435,7 @@ const Index = () => {
           document_id: selectedDocument.id,
           model: selectedDocument.model,
           prompt_id: selectedPrompt,
-          temperature: temperature
+          temperature: temperature // Using fixed temperature
         }),
       });
       
@@ -442,7 +457,7 @@ const Index = () => {
           return {
             ...chat,
             systemPromptId: selectedPrompt,
-            temperature: temperature
+            temperature: temperature // Using fixed temperature
           };
         }
         return chat;
@@ -485,7 +500,6 @@ const Index = () => {
     // Set the current document and system prompt
     setSelectedDocument(document);
     setSelectedPrompt(chat.systemPromptId);
-    setTemperature(chat.temperature);
     
     // Reinitialize the QA chain
     setIsProcessing(true);
@@ -499,7 +513,7 @@ const Index = () => {
           document_id: document.id,
           model: document.model,
           prompt_id: chat.systemPromptId,
-          temperature: chat.temperature
+          temperature: temperature // Using fixed temperature
         }),
       });
       
@@ -845,24 +859,6 @@ const Index = () => {
                         </Select>
                       </div>
                       
-                      {/* Temperature Selection */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-medium">Temperature</label>
-                          <span className="text-xs">{temperature.toFixed(1)}</span>
-                        </div>
-                        <Slider
-                          value={[temperature]}
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          onValueChange={(val) => setTemperature(val[0])}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Lower: precise, Higher: creative
-                        </p>
-                      </div>
-                      
                       <Button 
                         size="sm"
                         className="w-full text-xs mt-2 hover-scale"
@@ -879,20 +875,24 @@ const Index = () => {
         </Sidebar>
 
         <div className="flex flex-col flex-1 p-4 md:p-6">
-          <div className="flex items-center justify-between mb-6 md:mb-8 animate-fade-in">
+          {/* Fixed Header */}
+          <div 
+            ref={headerRef} 
+            className="flex items-center justify-between mb-6 md:mb-8 animate-fade-in py-2 px-4 transition-all"
+          >
             <div className="flex items-center gap-3">
               <SidebarTrigger className="hover-scale">
                 <Button variant="ghost" size="icon" className="rounded-full transition-all">
                   <List className="h-5 w-5" />
                 </Button>
               </SidebarTrigger>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
                 <img 
                   src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
                   alt="I4C Logo" 
-                  className="h-12 w-auto md:h-16 lg:h-20"
+                  className="h-10 w-auto md:h-12"
                 />
-                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent text-center md:text-left">
                   Indian Cybercrime Coordination Centre
                 </h1>
               </div>
@@ -984,7 +984,7 @@ const Index = () => {
             </div>
           )}
 
-          <div className="flex flex-1 gap-4">
+          <div className="flex flex-1 gap-4 mt-4">
             {/* Chat Container */}
             <div className="flex flex-col flex-1 animate-slide-in-right">
               {/* Chat Messages */}

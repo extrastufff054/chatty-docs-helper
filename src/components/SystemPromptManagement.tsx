@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 interface SystemPrompt {
   id: string;
@@ -45,12 +46,13 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
   }>({
     name: "",
     prompt: "",
-    temperature: 0.7,
+    temperature: 0,
     description: "",
   });
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [useCustomTemperature, setUseCustomTemperature] = useState(false);
 
   const { toast } = useToast();
 
@@ -122,7 +124,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
       setNewPrompt({
         name: "",
         prompt: "",
-        temperature: 0.7,
+        temperature: 0,
         description: "",
       });
       setIsDialogOpen(false);
@@ -304,6 +306,9 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
                           step={0.1}
                           onValueChange={(value) => setEditingPrompt({...editingPrompt, temperature: value[0]})}
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Lower values (0.0) for more precise responses, higher values (1.0) for more creative responses.
+                        </p>
                       </div>
                       
                       <div className="space-y-2">
@@ -443,8 +448,8 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
                 step={0.1}
                 onValueChange={(value) => setNewPrompt({...newPrompt, temperature: value[0]})}
               />
-              <p className="text-xs text-muted-foreground">
-                Lower values (0.0-0.3) for more predictable, focused responses. Higher values (0.7-1.0) for more creative, diverse responses.
+              <p className="text-xs text-muted-foreground mt-1">
+                Temperature 0.0 is recommended for precise responses. Higher values introduce randomness and creativity.
               </p>
             </div>
             

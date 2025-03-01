@@ -140,3 +140,51 @@ export const getOllamaModels = async (): Promise<string[]> => {
     return ["llama3", "mistral", "gemma", "phi"];
   }
 };
+
+/**
+ * Upload multiple files to the backend
+ * @param files - Array of files to upload
+ * @param title - Title for the batch upload
+ * @param description - Description for the batch
+ * @param modelName - Ollama model to use
+ * @param adminToken - Admin token for authentication
+ * @returns The response from the server
+ */
+export const uploadMultipleFiles = async (
+  files: File[],
+  title: string,
+  description: string,
+  modelName: string,
+  adminToken: string
+) => {
+  try {
+    const formData = new FormData();
+    
+    // Append multiple files
+    files.forEach(file => {
+      formData.append('files[]', file);
+    });
+    
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('model', modelName);
+    
+    const response = await fetch(`http://localhost:5000/admin/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${adminToken}`
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to upload documents");
+    }
+    
+    return await response.json();
+  } catch (error: any) {
+    console.error("Error uploading multiple files:", error);
+    throw new Error(error.message || "Failed to upload and process the documents.");
+  }
+};

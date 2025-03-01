@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useDropzone } from 'react-dropzone';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, Trash, FileText, ArrowLeft, Settings } from "lucide-react";
+import { Loader2, Upload, Trash, FileText, ArrowLeft, Settings, FolderUp, FileUp, Archive } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import SystemPromptManagement from "@/components/SystemPromptManagement";
@@ -31,6 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 interface Document {
   id: string;
@@ -53,32 +54,46 @@ const Admin = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("documents");
+  const [enableBatchMode, setEnableBatchMode] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   
   const { toast } = useToast();
 
-  // Dropzone for file upload
+  // Configure Dropzone for file upload with support for folders and multiple files
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'application/pdf': ['.pdf'],
+      'application/zip': ['.zip'],
+      'application/x-zip-compressed': ['.zip'],
     },
-    maxFiles: 1,
+    multiple: true,
+    noClick: false,
     onDrop: acceptedFiles => {
       if (acceptedFiles.length > 0) {
-        setUploadedFile(acceptedFiles[0]);
-        // Set default title to filename without extension
-        if (!title) {
+        setUploadedFiles(prev => [...prev, ...acceptedFiles]);
+        
+        // Set default title to number of files if multiple
+        if (!title && acceptedFiles.length > 1) {
+          setTitle(`Batch Upload (${acceptedFiles.length} files)`);
+        } 
+        // Set to filename if just one
+        else if (!title && acceptedFiles.length === 1) {
           const filename = acceptedFiles[0].name;
           const nameWithoutExtension = filename.split('.').slice(0, -1).join('.');
           setTitle(nameWithoutExtension || filename);
         }
         
+        const fileMessage = acceptedFiles.length === 1 
+          ? `${acceptedFiles[0].name} has been selected`
+          : `${acceptedFiles.length} files have been selected`;
+        
         toast({
-          title: "File selected",
-          description: `${acceptedFiles[0].name} has been selected for upload.`,
+          title: "Files selected",
+          description: fileMessage,
         });
       }
     }
@@ -214,25 +229,50 @@ const Admin = () => {
     }
   };
 
+  const handleRemoveFile = (indexToRemove: number) => {
+    setUploadedFiles(uploadedFiles.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!uploadedFile || !selectedModel || !title) {
+    if (uploadedFiles.length === 0 || !selectedModel || !title) {
       toast({
         title: "Missing information",
-        description: "Please provide a file, title, and select a model.",
+        description: "Please provide at least one file, a title, and select a model.",
         variant: "destructive",
       });
       return;
     }
     
     setIsUploading(true);
+    setUploadProgress(0);
+    
     try {
       const formData = new FormData();
-      formData.append('file', uploadedFile);
+      
+      // Append files differently based on whether we're using the new multi-file API or not
+      if (uploadedFiles.length > 1 || enableBatchMode) {
+        // Multi-file upload
+        uploadedFiles.forEach(file => {
+          formData.append('files[]', file);
+        });
+      } else {
+        // Single file upload (backwards compatible)
+        formData.append('file', uploadedFiles[0]);
+      }
+      
       formData.append('title', title);
       formData.append('description', description);
       formData.append('model', selectedModel);
+      
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = prev + (100 - prev) * 0.1;
+          return Math.min(95, newProgress); // Cap at 95% until we get the response
+        });
+      }, 300);
       
       const response = await fetch(`${ADMIN_API_BASE_URL}/upload`, {
         method: 'POST',
@@ -242,6 +282,9 @@ const Admin = () => {
         body: formData
       });
       
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to upload document");
@@ -250,14 +293,15 @@ const Admin = () => {
       const data = await response.json();
       
       toast({
-        title: "Document uploaded",
-        description: "The document has been uploaded and processed successfully.",
+        title: "Upload complete",
+        description: data.message || "Document(s) uploaded and processed successfully.",
       });
       
       // Reset form
-      setUploadedFile(null);
+      setUploadedFiles([]);
       setTitle("");
       setDescription("");
+      setUploadProgress(0);
       
       // Refresh documents list
       fetchDocuments();
@@ -303,6 +347,17 @@ const Admin = () => {
     }
   };
 
+  // Helper to render file type icon
+  const getFileIcon = (filename: string) => {
+    if (filename.toLowerCase().endsWith('.zip')) {
+      return <Archive className="h-4 w-4 mr-2 text-amber-500" />;
+    } else if (filename.toLowerCase().endsWith('.pdf')) {
+      return <FileText className="h-4 w-4 mr-2 text-primary" />;
+    } else {
+      return <FileUp className="h-4 w-4 mr-2 text-blue-500" />;
+    }
+  };
+
   if (!isTokenValid) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background transition-colors duration-300">
@@ -315,7 +370,7 @@ const Admin = () => {
               <img 
                 src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
                 alt="I4C Logo" 
-                className="h-16 w-auto"
+                className="h-20 w-auto"
               />
             </div>
             <CardTitle className="text-2xl">I4C Chatbot Admin</CardTitle>
@@ -361,10 +416,10 @@ const Admin = () => {
           <img 
             src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
             alt="I4C Logo" 
-            className="app-logo mr-2"
+            className="app-logo h-20 w-auto mr-2"
           />
           <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            I4C Chatbot Admin
+            Indian Cybercrime Coordination Centre
           </h1>
         </div>
         <div className="flex gap-2">
@@ -393,40 +448,91 @@ const Admin = () => {
             {/* Upload Form */}
             <Card className="glass-card animate-slide-in-left">
               <CardHeader>
-                <CardTitle className="text-xl">Upload Document</CardTitle>
+                <CardTitle className="text-xl">Upload Documents</CardTitle>
                 <CardDescription>
-                  Upload a PDF document for users to query
+                  Upload PDF documents or ZIP archives for users to query
                 </CardDescription>
               </CardHeader>
               <form onSubmit={handleUpload}>
                 <CardContent className="space-y-5">
                   {/* PDF Upload */}
                   <div className="space-y-2">
-                    <Label>PDF Document</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Document Files</Label>
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor="batch-mode" className="text-sm text-muted-foreground">Batch Processing</Label>
+                        <Switch 
+                          id="batch-mode" 
+                          checked={enableBatchMode}
+                          onCheckedChange={setEnableBatchMode}
+                        />
+                      </div>
+                    </div>
                     <div 
                       {...getRootProps()} 
                       className={`border-2 border-dashed rounded-lg p-8 transition-colors cursor-pointer hover-scale ${
                         isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30'
                       }`}
                     >
-                      <input {...getInputProps()} />
+                      <input {...getInputProps()} directory="" webkitdirectory="" />
                       <div className="flex flex-col items-center justify-center text-center">
-                        <Upload className="h-10 w-10 mb-4 text-muted-foreground" />
+                        <div className="flex gap-2 mb-4">
+                          <FileUp className="h-8 w-8 text-muted-foreground" />
+                          <FolderUp className="h-8 w-8 text-muted-foreground" />
+                          <Archive className="h-8 w-8 text-muted-foreground" />
+                        </div>
                         <p className="text-base text-muted-foreground font-medium">
                           {isDragActive
-                            ? "Drop the PDF here ..."
-                            : "Drag & drop a PDF file here"}
+                            ? "Drop the files here ..."
+                            : "Drag & drop files or folders here"}
                         </p>
                         <p className="text-sm text-muted-foreground mt-2">
-                          or click to select
+                          Supports multiple PDFs, ZIP archives, or folders
                         </p>
                       </div>
                     </div>
                     
-                    {uploadedFile && (
-                      <div className="mt-3 flex items-center p-3 bg-accent/50 rounded-md animate-scale-in">
-                        <FileText className="h-4 w-4 mr-2 text-primary" />
-                        <span className="text-sm truncate">{uploadedFile.name}</span>
+                    {uploadedFiles.length > 0 && (
+                      <div className="mt-3 flex flex-col space-y-2 animate-scale-in">
+                        <p className="text-sm font-medium">Selected Files ({uploadedFiles.length})</p>
+                        <div className="max-h-32 overflow-y-auto rounded-md border">
+                          {uploadedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 hover:bg-accent/50 border-b last:border-b-0">
+                              <div className="flex items-center space-x-2 truncate">
+                                {file.name.toLowerCase().endsWith('.pdf') ? (
+                                  <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                                ) : file.name.toLowerCase().endsWith('.zip') ? (
+                                  <Archive className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                                ) : (
+                                  <FileUp className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                )}
+                                <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleRemoveFile(index);
+                                }}
+                                className="h-6 w-6 rounded-full hover:bg-destructive/10"
+                              >
+                                <Trash className="h-3 w-3 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setUploadedFiles([])}
+                          className="self-end"
+                        >
+                          Clear All
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -482,21 +588,35 @@ const Admin = () => {
                     </RadioGroup>
                   </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col space-y-4">
+                  {isUploading && uploadProgress > 0 && (
+                    <div className="w-full">
+                      <div className="h-2 bg-primary/20 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary transition-all duration-500 ease-out"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-right mt-1">
+                        {uploadProgress < 100 ? "Processing..." : "Complete"}
+                      </p>
+                    </div>
+                  )}
+                  
                   <Button 
                     type="submit" 
                     className="w-full hover-scale"
-                    disabled={isUploading || !uploadedFile || !selectedModel || !title}
+                    disabled={isUploading || uploadedFiles.length === 0 || !selectedModel || !title}
                   >
                     {isUploading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
+                        {uploadedFiles.length > 1 ? "Uploading Files..." : "Uploading..."}
                       </>
                     ) : (
                       <>
                         <Upload className="mr-2 h-4 w-4" />
-                        Upload Document
+                        {uploadedFiles.length > 1 ? `Upload ${uploadedFiles.length} Documents` : "Upload Document"}
                       </>
                     )}
                   </Button>
@@ -531,7 +651,12 @@ const Admin = () => {
                       <TableBody>
                         {documents.map((doc) => (
                           <TableRow key={doc.id} className="hover-scale">
-                            <TableCell className="font-medium">{doc.title}</TableCell>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center space-x-2">
+                                {getFileIcon(doc.filename)}
+                                <span className="truncate max-w-[200px]">{doc.title}</span>
+                              </div>
+                            </TableCell>
                             <TableCell>{doc.model}</TableCell>
                             <TableCell className="text-right">
                               <Dialog>

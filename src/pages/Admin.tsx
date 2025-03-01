@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, InputProps } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDropzone } from 'react-dropzone';
@@ -474,7 +473,9 @@ const Admin = () => {
                         isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30'
                       }`}
                     >
-                      <input {...getInputProps()} directory="" webkitdirectory="" />
+                      <input 
+                        {...getInputProps()} 
+                      />
                       <div className="flex flex-col items-center justify-center text-center">
                         <div className="flex gap-2 mb-4">
                           <FileUp className="h-8 w-8 text-muted-foreground" />

@@ -1,8 +1,15 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+// Extended input props interface to include directory attributes
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  directory?: string
+  webkitdirectory?: string
+}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
     return (
       <input

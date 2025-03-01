@@ -5,13 +5,11 @@ import subprocess
 import traceback
 import tempfile
 import secrets
-import zipfile
-import shutil
-from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
-from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader, UnstructuredFileLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -20,6 +18,7 @@ from langchain_community.llms import Ollama
 from langchain_community.llms.ollama import OllamaEndpointNotFoundError
 from langchain.prompts import PromptTemplate
 from langchain.callbacks.base import BaseCallbackHandler
+from datetime import datetime
 
 # Set up logging.
 logging.basicConfig(
@@ -116,38 +115,16 @@ def get_ollama_models():
         return []
 
 # =============================================================================
-# Helper function to extract and process zip files
-# =============================================================================
-def process_zip_file(zip_path, extract_dir):
-    """Extract a zip file and return a list of PDF file paths."""
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_dir)
-    
-    pdf_files = []
-    for root, _, files in os.walk(extract_dir):
-        for file in files:
-            if file.lower().endswith('.pdf'):
-                pdf_files.append(os.path.join(root, file))
-    
-    return pdf_files
-
-# =============================================================================
 # Initialize the QA Chain using only the local Ollama model with optimized parameters.
 # =============================================================================
 def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", temperature=0.0):
     try:
-        # Check if the path is a directory or a file
-        if os.path.isdir(filepath):
-            # Use DirectoryLoader for folders
-            loader = DirectoryLoader(filepath, glob="**/*.pdf", loader_cls=PyPDFLoader)
-            documents = loader.load()
-        else:
-            # Use PyPDFLoader for single files
-            loader = PyPDFLoader(filepath)
-            documents = loader.load()
+        # Load the PDF document
+        loader = PyPDFLoader(filepath)
+        documents = loader.load()
     except Exception as e:
-        logger.exception("Error loading document(s): %s", str(e))
-        raise ValueError("Failed to load the document(s). Please ensure the file(s) are valid.")
+        logger.exception("Error loading document: %s", str(e))
+        raise ValueError("Failed to load the document. Please ensure the file is a valid PDF.")
 
     try:
         # Optimized chunking parameters for better balance between speed and context
@@ -340,6 +317,43 @@ def query():
         logger.exception("Error processing query: %s", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    """Upload a file and initialize QA chain for it."""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    model = request.form.get('model')
+    
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    if not model:
+        return jsonify({"error": "No model selected"}), 400
+    
+    try:
+        # Save the file
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(uploads_dir, filename)
+        file.save(filepath)
+        
+        # Generate a unique session ID
+        session_id = secrets.token_hex(16)
+        
+        # Initialize QA chain
+        qa_chain = initialize_qa_chain(filepath, model)
+        qa_chains[session_id] = qa_chain
+        
+        return jsonify({
+            "success": True,
+            "message": "File uploaded and processed successfully",
+            "session_id": session_id
+        })
+    except Exception as e:
+        logger.exception("Error uploading file: %s", str(e))
+        return jsonify({"error": str(e)}), 500
+
 # =============================================================================
 # Admin Routes
 # =============================================================================
@@ -357,224 +371,60 @@ def admin_upload():
     if not token or not validate_admin_token(token.replace('Bearer ', '')):
         return jsonify({"error": "Unauthorized"}), 401
     
-    # Log entire request for debugging
-    logger.info(f"Upload request files: {request.files}")
-    logger.info(f"Upload request form: {request.form}")
-    
-    # Check if either 'files[]' or 'file' is present in the request
-    if 'files[]' not in request.files and 'file' not in request.files:
+    # Check if file is present in the request
+    if 'file' not in request.files:
         logger.error("No file part in the request")
-        return jsonify({"error": "No files provided"}), 400
+        return jsonify({"error": "No file provided"}), 400
     
+    file = request.files['file']
     title = request.form.get('title', 'Untitled Document')
     description = request.form.get('description', '')
     model = request.form.get('model')
     
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
     if not model:
         return jsonify({"error": "No model selected"}), 400
     
-    processed_documents = []
-    
     try:
-        # Create a session-specific temp directory
-        session_temp_dir = os.path.join(temp_dir, secrets.token_hex(8))
-        os.makedirs(session_temp_dir, exist_ok=True)
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(uploads_dir, filename)
+        file.save(filepath)
+        logger.info(f"Saved file: {filepath}")
         
-        # Handle multiple files upload
-        if 'files[]' in request.files:
-            files = request.files.getlist('files[]')
-            logger.info(f"Processing {len(files)} files from 'files[]'")
+        # Process PDF file
+        if filename.lower().endswith('.pdf'):
+            # Generate a unique document ID
+            document_id = os.path.splitext(filename)[0] + '_' + secrets.token_hex(4)
+            logger.info(f"Processing PDF: {filename}, ID: {document_id}")
             
-            if not files or all(file.filename == '' for file in files):
-                return jsonify({"error": "No selected files"}), 400
+            # Initialize QA chain with temperature 0
+            qa_chain = initialize_qa_chain(filepath, model, "default", 0.0)
+            qa_chains[document_id] = qa_chain
             
-            for file in files:
-                if file.filename == '':
-                    continue
-                
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(uploads_dir, filename)
-                file.save(filepath)
-                logger.info(f"Saved file: {filepath}")
-                
-                # Process based on file type
-                if filename.lower().endswith('.zip'):
-                    # Extract and process zip file
-                    zip_extract_dir = os.path.join(session_temp_dir, os.path.splitext(filename)[0])
-                    os.makedirs(zip_extract_dir, exist_ok=True)
-                    logger.info(f"Extracting ZIP to: {zip_extract_dir}")
-                    
-                    pdf_files = process_zip_file(filepath, zip_extract_dir)
-                    logger.info(f"Found {len(pdf_files)} PDF files in ZIP")
-                    
-                    if not pdf_files:
-                        return jsonify({"error": f"No PDF files found in the ZIP archive: {filename}"}), 400
-                    
-                    # Create a folder in uploads to store the extracted PDFs
-                    zip_folder = os.path.join(uploads_dir, f"zip_{os.path.splitext(filename)[0]}")
-                    os.makedirs(zip_folder, exist_ok=True)
-                    
-                    # Move PDFs to the uploads folder and process each one
-                    for pdf_file in pdf_files:
-                        pdf_filename = os.path.basename(pdf_file)
-                        pdf_filepath = os.path.join(zip_folder, pdf_filename)
-                        shutil.copy2(pdf_file, pdf_filepath)
-                        logger.info(f"Copied PDF from ZIP: {pdf_filepath}")
-                        
-                        # Generate document ID and process PDF
-                        doc_title = f"{title} - {pdf_filename}"
-                        document_id = f"{os.path.splitext(pdf_filename)[0]}_{secrets.token_hex(4)}"
-                        
-                        # Initialize QA chain for this specific PDF
-                        qa_chain = initialize_qa_chain(pdf_filepath, model)
-                        qa_chains[document_id] = qa_chain
-                        
-                        # Store document metadata
-                        documents[document_id] = {
-                            "id": document_id,
-                            "title": doc_title,
-                            "description": f"{description} (from ZIP: {filename})",
-                            "filename": os.path.join(os.path.basename(zip_folder), pdf_filename),
-                            "model": model,
-                            "created_at": str(datetime.now())
-                        }
-                        
-                        processed_documents.append(documents[document_id])
-                    
-                    # We can remove the original zip file after processing
-                    if os.path.exists(filepath):
-                        os.remove(filepath)
-                
-                elif filename.lower().endswith('.pdf'):
-                    # Process single PDF file
-                    # Generate a unique document ID
-                    document_id = os.path.splitext(filename)[0] + '_' + secrets.token_hex(4)
-                    logger.info(f"Processing single PDF: {filename}, ID: {document_id}")
-                    
-                    # Initialize QA chain
-                    qa_chain = initialize_qa_chain(filepath, model)
-                    qa_chains[document_id] = qa_chain
-                    
-                    # Store document metadata
-                    documents[document_id] = {
-                        "id": document_id,
-                        "title": f"{title} - {filename}" if len(files) > 1 else title,
-                        "description": description,
-                        "filename": filename,
-                        "model": model,
-                        "created_at": str(datetime.now())
-                    }
-                    
-                    processed_documents.append(documents[document_id])
-                
-                else:
-                    # Skip non-supported files
-                    logger.warning(f"Skipping unsupported file: {filename}")
-        
-        # Handle single file upload (for backward compatibility)
-        elif 'file' in request.files:
-            file = request.files['file']
-            logger.info(f"Processing single file from 'file'")
+            # Store document metadata
+            documents[document_id] = {
+                "id": document_id,
+                "title": title,
+                "description": description,
+                "filename": filename,
+                "model": model,
+                "created_at": str(datetime.now())
+            }
             
-            if file.filename == '':
-                return jsonify({"error": "No selected file"}), 400
+            return jsonify({
+                "success": True,
+                "message": "Document processed successfully",
+                "document": documents[document_id]
+            })
+        else:
+            # Only support PDF files
+            os.remove(filepath)  # Remove the non-PDF file
+            return jsonify({"error": f"Unsupported file type: {filename}. Only PDF files are supported."}), 400
             
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(uploads_dir, filename)
-            file.save(filepath)
-            logger.info(f"Saved file: {filepath}")
-            
-            # Process based on file type
-            if filename.lower().endswith('.zip'):
-                # Extract and process zip file (same logic as above)
-                zip_extract_dir = os.path.join(session_temp_dir, os.path.splitext(filename)[0])
-                os.makedirs(zip_extract_dir, exist_ok=True)
-                logger.info(f"Extracting ZIP to: {zip_extract_dir}")
-                
-                pdf_files = process_zip_file(filepath, zip_extract_dir)
-                logger.info(f"Found {len(pdf_files)} PDF files in ZIP")
-                
-                if not pdf_files:
-                    return jsonify({"error": f"No PDF files found in the ZIP archive: {filename}"}), 400
-                
-                # Create a folder in uploads to store the extracted PDFs
-                zip_folder = os.path.join(uploads_dir, f"zip_{os.path.splitext(filename)[0]}")
-                os.makedirs(zip_folder, exist_ok=True)
-                
-                # Move PDFs to the uploads folder and process each one
-                for pdf_file in pdf_files:
-                    pdf_filename = os.path.basename(pdf_file)
-                    pdf_filepath = os.path.join(zip_folder, pdf_filename)
-                    shutil.copy2(pdf_file, pdf_filepath)
-                    logger.info(f"Copied PDF from ZIP: {pdf_filepath}")
-                    
-                    # Generate document ID and process PDF
-                    doc_title = f"{title} - {pdf_filename}"
-                    document_id = f"{os.path.splitext(pdf_filename)[0]}_{secrets.token_hex(4)}"
-                    
-                    # Initialize QA chain for this specific PDF
-                    qa_chain = initialize_qa_chain(pdf_filepath, model)
-                    qa_chains[document_id] = qa_chain
-                    
-                    # Store document metadata
-                    documents[document_id] = {
-                        "id": document_id,
-                        "title": doc_title,
-                        "description": f"{description} (from ZIP: {filename})",
-                        "filename": os.path.join(os.path.basename(zip_folder), pdf_filename),
-                        "model": model,
-                        "created_at": str(datetime.now())
-                    }
-                    
-                    processed_documents.append(documents[document_id])
-                
-                # We can remove the original zip file after processing
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                
-            elif filename.lower().endswith('.pdf'):
-                # Process single PDF file
-                # Generate a unique document ID
-                document_id = os.path.splitext(filename)[0] + '_' + secrets.token_hex(4)
-                logger.info(f"Processing single PDF: {filename}, ID: {document_id}")
-                
-                # Initialize QA chain
-                qa_chain = initialize_qa_chain(filepath, model)
-                qa_chains[document_id] = qa_chain
-                
-                # Store document metadata
-                documents[document_id] = {
-                    "id": document_id,
-                    "title": title,
-                    "description": description,
-                    "filename": filename,
-                    "model": model,
-                    "created_at": str(datetime.now())
-                }
-                
-                processed_documents.append(documents[document_id])
-            
-            else:
-                # Skip non-supported files
-                return jsonify({"error": f"Unsupported file type: {filename}"}), 400
-        
-        # Clean up temp directory after processing
-        shutil.rmtree(session_temp_dir, ignore_errors=True)
-        
-        if not processed_documents:
-            return jsonify({"error": "No files were processed"}), 400
-        
-        return jsonify({
-            "success": True,
-            "message": f"{len(processed_documents)} document(s) processed successfully",
-            "documents": processed_documents
-        })
     except Exception as e:
-        # Clean up temp directory in case of error
-        if 'session_temp_dir' in locals():
-            shutil.rmtree(session_temp_dir, ignore_errors=True)
-        
-        logger.exception("Error processing files: %s", str(e))
+        logger.exception("Error processing file: %s", str(e))
         return jsonify({"error": str(e)}), 500
 
 @app.route('/admin/system-prompts', methods=['GET'])
@@ -742,6 +592,4 @@ def serve(path):
     return send_from_directory('public', 'index.html')
 
 if __name__ == '__main__':
-    # Import datetime here to avoid circular import issues
-    from datetime import datetime
     app.run(debug=True, host='0.0.0.0', port=5000)

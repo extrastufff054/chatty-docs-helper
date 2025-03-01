@@ -1,12 +1,10 @@
 
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
-import { FaissStore } from "@langchain/community/vectorstores/faiss";
-import { createRetrievalChain } from "langchain/chains/retrieval";
-import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
-import { Ollama } from "@langchain/community/llms/ollama";
-import { PromptTemplate } from "@langchain/core/prompts";
-import { StringOutputParser } from "@langchain/core/output_parsers";
+/**
+ * Document Processing Module
+ * 
+ * This module provides functionality for processing documents through a Python backend.
+ * It handles file uploads, model selection, and query processing for the document Q&A system.
+ */
 
 // API endpoints for the Python backend
 const API_BASE_URL = "http://localhost:5000/api";
@@ -14,16 +12,15 @@ const MODELS_ENDPOINT = `${API_BASE_URL}/models`;
 const UPLOAD_ENDPOINT = `${API_BASE_URL}/upload`;
 const QUERY_ENDPOINT = `${API_BASE_URL}/query`;
 
-// Custom prompt template for synthesized, coherent output
-const customPromptTemplate = PromptTemplate.fromTemplate(`You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
-Given the following document excerpts and a question, synthesize a well-rounded answer that provides full context and continuity.
-Do not simply return isolated fragments; instead, integrate the information into a unified, context-rich response.
-
-Document Excerpts:
-{context}
-
-Question: {question}
-Answer:`);
+/**
+ * Interface for the QA Chain return object
+ */
+interface QAChainResult {
+  sessionId: string;
+  model: string;
+  call: (params: { query: string; callbacks?: any[] }) => Promise<{ result: string }>;
+  llm: { model: string };
+}
 
 /**
  * Load and process a PDF file via the Python backend
@@ -31,7 +28,7 @@ Answer:`);
  * @param modelName - The name of the Ollama model to use
  * @returns A session ID for future queries
  */
-export const initializeQAChain = async (file: File, modelName: string) => {
+export const initializeQAChain = async (file: File, modelName: string): Promise<QAChainResult> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
@@ -67,6 +64,14 @@ export const initializeQAChain = async (file: File, modelName: string) => {
 };
 
 /**
+ * Interface for the QA Chain session data
+ */
+interface QAChainSession {
+  sessionId: string;
+  model: string;
+}
+
+/**
  * Process a query using the Python backend
  * @param query - The question to ask
  * @param qaChain - The QA chain object with sessionId
@@ -75,9 +80,9 @@ export const initializeQAChain = async (file: File, modelName: string) => {
  */
 export const processQuery = async (
   query: string, 
-  qaChain: any, 
+  qaChain: QAChainSession, 
   streamCallback?: (token: string) => void
-) => {
+): Promise<string> => {
   try {
     // Send the query to the backend
     const response = await fetch(QUERY_ENDPOINT, {
@@ -142,16 +147,16 @@ export const getOllamaModels = async (): Promise<string[]> => {
 };
 
 /**
- * Upload multiple files to the backend
- * @param files - Array of files to upload
- * @param title - Title for the batch upload
- * @param description - Description for the batch
+ * Upload a document to the admin backend
+ * @param file - The file to upload
+ * @param title - Title for the document
+ * @param description - Description for the document
  * @param modelName - Ollama model to use
  * @param adminToken - Admin token for authentication
  * @returns The response from the server
  */
-export const uploadMultipleFiles = async (
-  files: File[],
+export const uploadDocument = async (
+  file: File,
   title: string,
   description: string,
   modelName: string,
@@ -159,18 +164,10 @@ export const uploadMultipleFiles = async (
 ) => {
   try {
     const formData = new FormData();
-    
-    // Append multiple files
-    files.forEach(file => {
-      formData.append('files[]', file);
-    });
-    
+    formData.append('file', file);
     formData.append('title', title);
     formData.append('description', description);
     formData.append('model', modelName);
-    
-    // Log what's being sent
-    console.log("Uploading files:", files.map(f => f.name));
     
     const response = await fetch(`http://localhost:5000/admin/upload`, {
       method: 'POST',
@@ -182,12 +179,12 @@ export const uploadMultipleFiles = async (
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to upload documents");
+      throw new Error(errorData.error || "Failed to upload document");
     }
     
     return await response.json();
   } catch (error: any) {
-    console.error("Error uploading multiple files:", error);
-    throw new Error(error.message || "Failed to upload and process the documents.");
+    console.error("Error uploading document:", error);
+    throw new Error(error.message || "Failed to upload and process the document.");
   }
 };

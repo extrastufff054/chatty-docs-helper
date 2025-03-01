@@ -1,5 +1,5 @@
 
-# PDF Chatbot
+# Indian Cybercrime Coordination Centre (I4C) Chatbot
 
 A React-based PDF chatbot with Python backend that allows users to upload PDFs and ask questions about their content using local Ollama AI models.
 
@@ -11,12 +11,15 @@ A React-based PDF chatbot with Python backend that allows users to upload PDFs a
 - Multiple model support
 - Dark/light mode support
 - Responsive design
+- Chat history management
+- Customizable AI behavior with system prompts
 
 ## Architecture
 
 - **Frontend**: React, TypeScript, Tailwind CSS
 - **Backend**: Python, Flask, LangChain
 - **AI Models**: Ollama (local models)
+- **Vector Database**: FAISS for semantic search
 
 ## Requirements
 
@@ -74,16 +77,18 @@ npm run dev
 To run the backend in Docker:
 
 ```bash
-docker build -t pdf-chatbot-backend .
-docker run -p 5000:5000 --name pdf-chatbot-backend pdf-chatbot-backend
+docker build -t i4c-chatbot-backend .
+docker run -p 5000:5000 --name i4c-chatbot-backend i4c-chatbot-backend
 ```
 
 ## Usage
 
 1. Select an Ollama model from the sidebar
-2. Upload a PDF document
+2. Upload a PDF document through the admin interface
 3. Wait for the document to be processed
-4. Type your questions in the chat input and press Enter
+4. Select the document from the sidebar to start a new chat
+5. Type your questions in the chat input and press Enter
+6. Navigate between different chats using the chat history sidebar
 
 ## How It Works
 
@@ -94,29 +99,80 @@ docker run -p 5000:5000 --name pdf-chatbot-backend pdf-chatbot-backend
 5. Relevant chunks and the query are sent to the Ollama model
 6. Model responses are streamed back to the UI
 
-## Technology Stack
+## Developer Guide
 
-### Frontend
-- React
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
+### Project Structure
 
-### Backend
-- Python
-- Flask
-- LangChain
-- FAISS
-- Ollama
-- PyPDF
+```
+/
+├── frontend/               # React frontend application
+│   ├── src/                
+│   │   ├── components/     # Reusable UI components
+│   │   ├── hooks/          # Custom React hooks
+│   │   ├── lib/            # Utility functions and helpers
+│   │   ├── pages/          # Main application pages
+│   │   └── contexts/       # React context providers
+│   ├── public/             # Static assets
+│   └── package.json        # Frontend dependencies
+├── backend/
+│   ├── app.py              # Main Flask application
+│   ├── requirements.txt    # Python dependencies
+│   └── Dockerfile          # Backend Docker configuration
+└── README.md               # Project documentation
+```
 
-## Documentation
+### Key Technologies
 
-The application includes built-in documentation accessible at `/documentation`, with separate sections for:
+- **Frontend**
+  - React 18 with Hooks
+  - TypeScript for type safety
+  - Tailwind CSS for styling
+  - shadcn/ui component library
+  - React Router for routing
+  - Vite for fast development
 
-- **User Guide**: How to use the application
-- **Developer Guide**: Technical details and customization
-- **Admin Guide**: Installation, troubleshooting, and maintenance
+- **Backend**
+  - Flask for API endpoints
+  - LangChain for LLM integration
+  - FAISS for vector similarity search
+  - PyPDF for document parsing
+  - Ollama for running local AI models
+
+### Local Development
+
+To set up the project for local development:
+
+1. Clone the repository
+2. Set up the backend (see Backend Setup)
+3. Set up the frontend (see Frontend Setup)
+4. Make changes to the code
+5. Run tests to ensure functionality
+
+## Server Configuration
+
+The server can be configured through environment variables:
+
+- `FLASK_ENV`: Set to "development" or "production"
+- `PORT`: Server port (default: 5000)
+- `ADMIN_TOKEN`: Secret token for admin authentication
+- `OLLAMA_BASE_URL`: URL for Ollama API (default: http://localhost:11434)
+- `STORAGE_PATH`: Directory for storing uploads and vector databases
+
+## Contribution Guide
+
+We welcome contributions to the I4C Chatbot project! To contribute:
+
+1. Fork the repository
+2. Create a new branch for your feature or fix
+3. Make your changes
+4. Run tests to ensure functionality
+5. Submit a pull request
+
+Please follow these guidelines:
+- Write clean, readable code
+- Include comments for complex logic
+- Update documentation for new features
+- Follow existing code style and patterns
 
 ## License
 

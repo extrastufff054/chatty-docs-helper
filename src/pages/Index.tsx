@@ -890,10 +890,10 @@ const Index = () => {
                 <img 
                   src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
                   alt="I4C Logo" 
-                  className="app-logo"
+                  className="h-12 w-auto md:h-16 lg:h-20"
                 />
                 <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                  I4C Chatbot
+                  Indian Cybercrime Coordination Centre
                 </h1>
               </div>
             </div>

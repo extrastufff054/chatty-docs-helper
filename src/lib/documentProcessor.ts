@@ -169,6 +169,9 @@ export const uploadMultipleFiles = async (
     formData.append('description', description);
     formData.append('model', modelName);
     
+    // Log what's being sent
+    console.log("Uploading files:", files.map(f => f.name));
+    
     const response = await fetch(`http://localhost:5000/admin/upload`, {
       method: 'POST',
       headers: {

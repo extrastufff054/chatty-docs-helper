@@ -1,14 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input, InputProps } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDropzone } from 'react-dropzone';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Loader2, Upload, Trash, FileText, ArrowLeft, Settings, FolderUp, FileUp, Archive } from "lucide-react";
-import { getOllamaModels } from "@/lib/documentProcessor";
+import { getOllamaModels, uploadMultipleFiles } from "@/lib/documentProcessor";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import SystemPromptManagement from "@/components/SystemPromptManagement";
 import {
@@ -70,7 +71,6 @@ const Admin = () => {
       'application/x-zip-compressed': ['.zip'],
     },
     multiple: true,
-    noClick: false,
     onDrop: acceptedFiles => {
       if (acceptedFiles.length > 0) {
         setUploadedFiles(prev => [...prev, ...acceptedFiles]);
@@ -248,22 +248,7 @@ const Admin = () => {
     setUploadProgress(0);
     
     try {
-      const formData = new FormData();
-      
-      // Append files differently based on whether we're using the new multi-file API or not
-      if (uploadedFiles.length > 1 || enableBatchMode) {
-        // Multi-file upload
-        uploadedFiles.forEach(file => {
-          formData.append('files[]', file);
-        });
-      } else {
-        // Single file upload (backwards compatible)
-        formData.append('file', uploadedFiles[0]);
-      }
-      
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('model', selectedModel);
+      console.log("Starting upload with files:", uploadedFiles);
       
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -273,27 +258,21 @@ const Admin = () => {
         });
       }, 300);
       
-      const response = await fetch(`${ADMIN_API_BASE_URL}/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: formData
-      });
+      // Use the uploadMultipleFiles function for all uploads
+      const result = await uploadMultipleFiles(
+        uploadedFiles,
+        title,
+        description,
+        selectedModel,
+        adminToken
+      );
       
       clearInterval(progressInterval);
       setUploadProgress(100);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to upload document");
-      }
-      
-      const data = await response.json();
-      
       toast({
         title: "Upload complete",
-        description: data.message || "Document(s) uploaded and processed successfully.",
+        description: result.message || "Document(s) uploaded and processed successfully.",
       });
       
       // Reset form
@@ -473,9 +452,7 @@ const Admin = () => {
                         isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30'
                       }`}
                     >
-                      <input 
-                        {...getInputProps()} 
-                      />
+                      <input {...getInputProps()} />
                       <div className="flex flex-col items-center justify-center text-center">
                         <div className="flex gap-2 mb-4">
                           <FileUp className="h-8 w-8 text-muted-foreground" />

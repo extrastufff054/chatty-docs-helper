@@ -61,7 +61,7 @@ Document Excerpts:
 
 Question: {question}
 Answer:""",
-        "temperature": 0.7,
+        "temperature": 0.0,
         "description": "Balanced analysis with context and synthesis"
     },
     "concise": {
@@ -75,7 +75,7 @@ Document Excerpts:
 
 Question: {question}
 Answer with only the necessary facts:""",
-        "temperature": 0.3,
+        "temperature": 0.0,
         "description": "Short, direct answers with lower creativity"
     }
 }
@@ -134,7 +134,7 @@ def process_zip_file(zip_path, extract_dir):
 # =============================================================================
 # Initialize the QA Chain using only the local Ollama model with optimized parameters.
 # =============================================================================
-def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", temperature=0.7):
+def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", temperature=0.0):
     try:
         # Check if the path is a directory or a file
         if os.path.isdir(filepath):
@@ -287,7 +287,7 @@ def select_document():
     document_id = data.get('document_id')
     model = data.get('model')
     prompt_id = data.get('prompt_id', 'default')
-    temperature = data.get('temperature', 0.7)
+    temperature = data.get('temperature', 0.0)
     
     if not document_id:
         return jsonify({"error": "Missing document_id"}), 400
@@ -357,7 +357,13 @@ def admin_upload():
     if not token or not validate_admin_token(token.replace('Bearer ', '')):
         return jsonify({"error": "Unauthorized"}), 401
     
+    # Log entire request for debugging
+    logger.info(f"Upload request files: {request.files}")
+    logger.info(f"Upload request form: {request.form}")
+    
+    # Check if either 'files[]' or 'file' is present in the request
     if 'files[]' not in request.files and 'file' not in request.files:
+        logger.error("No file part in the request")
         return jsonify({"error": "No files provided"}), 400
     
     title = request.form.get('title', 'Untitled Document')
@@ -377,6 +383,7 @@ def admin_upload():
         # Handle multiple files upload
         if 'files[]' in request.files:
             files = request.files.getlist('files[]')
+            logger.info(f"Processing {len(files)} files from 'files[]'")
             
             if not files or all(file.filename == '' for file in files):
                 return jsonify({"error": "No selected files"}), 400
@@ -388,14 +395,17 @@ def admin_upload():
                 filename = secure_filename(file.filename)
                 filepath = os.path.join(uploads_dir, filename)
                 file.save(filepath)
+                logger.info(f"Saved file: {filepath}")
                 
                 # Process based on file type
                 if filename.lower().endswith('.zip'):
                     # Extract and process zip file
                     zip_extract_dir = os.path.join(session_temp_dir, os.path.splitext(filename)[0])
                     os.makedirs(zip_extract_dir, exist_ok=True)
+                    logger.info(f"Extracting ZIP to: {zip_extract_dir}")
                     
                     pdf_files = process_zip_file(filepath, zip_extract_dir)
+                    logger.info(f"Found {len(pdf_files)} PDF files in ZIP")
                     
                     if not pdf_files:
                         return jsonify({"error": f"No PDF files found in the ZIP archive: {filename}"}), 400
@@ -409,6 +419,7 @@ def admin_upload():
                         pdf_filename = os.path.basename(pdf_file)
                         pdf_filepath = os.path.join(zip_folder, pdf_filename)
                         shutil.copy2(pdf_file, pdf_filepath)
+                        logger.info(f"Copied PDF from ZIP: {pdf_filepath}")
                         
                         # Generate document ID and process PDF
                         doc_title = f"{title} - {pdf_filename}"
@@ -438,6 +449,7 @@ def admin_upload():
                     # Process single PDF file
                     # Generate a unique document ID
                     document_id = os.path.splitext(filename)[0] + '_' + secrets.token_hex(4)
+                    logger.info(f"Processing single PDF: {filename}, ID: {document_id}")
                     
                     # Initialize QA chain
                     qa_chain = initialize_qa_chain(filepath, model)
@@ -462,6 +474,7 @@ def admin_upload():
         # Handle single file upload (for backward compatibility)
         elif 'file' in request.files:
             file = request.files['file']
+            logger.info(f"Processing single file from 'file'")
             
             if file.filename == '':
                 return jsonify({"error": "No selected file"}), 400
@@ -469,14 +482,17 @@ def admin_upload():
             filename = secure_filename(file.filename)
             filepath = os.path.join(uploads_dir, filename)
             file.save(filepath)
+            logger.info(f"Saved file: {filepath}")
             
             # Process based on file type
             if filename.lower().endswith('.zip'):
                 # Extract and process zip file (same logic as above)
                 zip_extract_dir = os.path.join(session_temp_dir, os.path.splitext(filename)[0])
                 os.makedirs(zip_extract_dir, exist_ok=True)
+                logger.info(f"Extracting ZIP to: {zip_extract_dir}")
                 
                 pdf_files = process_zip_file(filepath, zip_extract_dir)
+                logger.info(f"Found {len(pdf_files)} PDF files in ZIP")
                 
                 if not pdf_files:
                     return jsonify({"error": f"No PDF files found in the ZIP archive: {filename}"}), 400
@@ -490,6 +506,7 @@ def admin_upload():
                     pdf_filename = os.path.basename(pdf_file)
                     pdf_filepath = os.path.join(zip_folder, pdf_filename)
                     shutil.copy2(pdf_file, pdf_filepath)
+                    logger.info(f"Copied PDF from ZIP: {pdf_filepath}")
                     
                     # Generate document ID and process PDF
                     doc_title = f"{title} - {pdf_filename}"
@@ -519,6 +536,7 @@ def admin_upload():
                 # Process single PDF file
                 # Generate a unique document ID
                 document_id = os.path.splitext(filename)[0] + '_' + secrets.token_hex(4)
+                logger.info(f"Processing single PDF: {filename}, ID: {document_id}")
                 
                 # Initialize QA chain
                 qa_chain = initialize_qa_chain(filepath, model)
@@ -580,7 +598,7 @@ def admin_create_system_prompt():
     data = request.json
     name = data.get('name')
     prompt_template = data.get('prompt')
-    temperature = data.get('temperature', 0.7)
+    temperature = data.get('temperature', 0.0)
     description = data.get('description', '')
     
     if not name or not prompt_template:
@@ -622,7 +640,7 @@ def admin_update_system_prompt(prompt_id):
     data = request.json
     name = data.get('name')
     prompt_template = data.get('prompt')
-    temperature = data.get('temperature', 0.7)
+    temperature = data.get('temperature', 0.0)
     description = data.get('description', '')
     
     if not name or not prompt_template:

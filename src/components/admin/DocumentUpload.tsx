@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,13 @@ const DocumentUpload = ({
   
   const { toast } = useToast();
 
-  // Configure Dropzone for file upload
+  // Configure Dropzone for file upload with expanded file types
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
-      'application/pdf': ['.pdf']
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
     },
     multiple: false,
     onDrop: acceptedFiles => {
@@ -130,17 +132,30 @@ const DocumentUpload = ({
     }
   };
 
+  // Get file type label for display
+  const getFileTypeLabel = (file: File | null) => {
+    if (!file) return '';
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'pdf': return 'PDF';
+      case 'docx': return 'Word';
+      case 'xlsx': 
+      case 'xls': return 'Excel';
+      default: return extension?.toUpperCase() || '';
+    }
+  };
+
   return (
     <Card className="glass-card animate-slide-in-left">
       <CardHeader>
         <CardTitle className="text-xl">Upload Document</CardTitle>
         <CardDescription>
-          Upload a PDF document for users to query
+          Upload PDF, Word, or Excel files for users to query
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleUpload}>
         <CardContent className="space-y-5">
-          {/* PDF Upload */}
+          {/* Document Upload */}
           <div className="space-y-2">
             <Label>Document File</Label>
             <div 
@@ -157,10 +172,10 @@ const DocumentUpload = ({
                 <p className="text-base text-muted-foreground font-medium">
                   {isDragActive
                     ? "Drop the file here ..."
-                    : "Drag & drop a PDF file here"}
+                    : "Drag & drop a file here"}
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Supports single PDF file
+                  Supports PDF, Word (DOCX), and Excel (XLSX/XLS) files
                 </p>
               </div>
             </div>
@@ -175,6 +190,9 @@ const DocumentUpload = ({
                       <span className="text-sm truncate max-w-[200px]">{uploadedFile.name}</span>
                       <span className="text-xs text-muted-foreground">
                         {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                      <span className="text-xs bg-secondary/50 px-2 py-0.5 rounded-full">
+                        {getFileTypeLabel(uploadedFile)}
                       </span>
                     </div>
                     <Button 

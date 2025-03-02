@@ -23,8 +23,8 @@ interface QAChainResult {
 }
 
 /**
- * Load and process a PDF file via the Python backend
- * @param file - The PDF file to process
+ * Load and process a document file via the Python backend
+ * @param file - The document file to process (PDF, DOCX, XLSX, XLS)
  * @param modelName - The name of the Ollama model to use
  * @returns A session ID for future queries
  */
@@ -143,6 +143,22 @@ export const getOllamaModels = async (): Promise<string[]> => {
     console.error("Error fetching Ollama models:", error);
     // Return some default models as fallback
     return ["llama3", "mistral", "gemma", "phi"];
+  }
+};
+
+/**
+ * Get the file type display name
+ * @param filename - The filename to check
+ * @returns The display name for the file type
+ */
+export const getFileTypeDisplay = (filename: string): string => {
+  const extension = filename.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'pdf': return 'PDF';
+    case 'docx': return 'Word';
+    case 'xlsx': 
+    case 'xls': return 'Excel';
+    default: return extension?.toUpperCase() || 'Document';
   }
 };
 

@@ -9,6 +9,8 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import Docx2txtLoader
+from langchain_community.document_loaders import UnstructuredExcelLoader
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -118,16 +120,30 @@ def get_ollama_models():
         return []
 
 # =============================================================================
-# Initialize the QA Chain using only the local Ollama model with optimized parameters.
+# Initialize the QA Chain using document type-specific loaders
 # =============================================================================
 def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", temperature=0.0):
     try:
-        # Load the PDF document
-        loader = PyPDFLoader(filepath)
-        documents = loader.load()
+        # Determine the document type based on file extension
+        file_extension = os.path.splitext(filepath)[1].lower()
+        
+        # Select appropriate loader based on file type
+        if file_extension == '.pdf':
+            loader = PyPDFLoader(filepath)
+            documents = loader.load()
+        elif file_extension == '.docx':
+            loader = Docx2txtLoader(filepath)
+            documents = loader.load()
+        elif file_extension in ['.xlsx', '.xls']:
+            loader = UnstructuredExcelLoader(filepath, mode="elements")
+            documents = loader.load()
+        else:
+            raise ValueError(f"Unsupported file type: {file_extension}. Supported formats are PDF, DOCX, XLSX, and XLS.")
+            
+        logger.info(f"Successfully loaded {file_extension} document from {filepath}")
     except Exception as e:
-        logger.exception("Error loading document: %s", str(e))
-        raise ValueError("Failed to load the document. Please ensure the file is a valid PDF.")
+        logger.exception(f"Error loading document: {str(e)}")
+        raise ValueError(f"Failed to load the document. The error was: {str(e)}")
 
     try:
         # Optimized chunking parameters for better balance between speed and context
@@ -397,11 +413,15 @@ def admin_upload():
         file.save(filepath)
         logger.info(f"Saved file: {filepath}")
         
-        # Process PDF file
-        if filename.lower().endswith('.pdf'):
+        # Get file extension
+        file_extension = os.path.splitext(filename)[1].lower()
+        
+        # Process supported file types
+        supported_extensions = ['.pdf', '.docx', '.xlsx', '.xls']
+        if file_extension in supported_extensions:
             # Generate a unique document ID
             document_id = os.path.splitext(filename)[0] + '_' + secrets.token_hex(4)
-            logger.info(f"Processing PDF: {filename}, ID: {document_id}")
+            logger.info(f"Processing {file_extension} file: {filename}, ID: {document_id}")
             
             # Initialize QA chain with temperature 0
             qa_chain = initialize_qa_chain(filepath, model, "default", 0.0)
@@ -413,19 +433,22 @@ def admin_upload():
                 "title": title,
                 "description": description,
                 "filename": filename,
+                "file_type": file_extension[1:].upper(),  # Store file type without the dot
                 "model": model,
                 "created_at": str(datetime.now())
             }
             
             return jsonify({
                 "success": True,
-                "message": "Document processed successfully",
+                "message": f"{file_extension[1:].upper()} document processed successfully",
                 "document": documents[document_id]
             })
         else:
-            # Only support PDF files
-            os.remove(filepath)  # Remove the non-PDF file
-            return jsonify({"error": f"Unsupported file type: {filename}. Only PDF files are supported."}), 400
+            # Remove unsupported file
+            os.remove(filepath)
+            return jsonify({
+                "error": f"Unsupported file type: {file_extension}. Supported formats are: {', '.join(supported_extensions)}"
+            }), 400
             
     except Exception as e:
         logger.exception("Error processing file: %s", str(e))

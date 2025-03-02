@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, List, Send, Loader2, FileUp, Settings, ChevronUp, ChevronDown, MessageSquare, Plus, X, RefreshCcw, Trash } from "lucide-react";
+import { FileText, List, Send, Loader2, FileUp, ChevronUp, ChevronDown, MessageSquare, Plus, X, RefreshCcw, Trash } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
@@ -27,18 +26,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -52,6 +39,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { API_BASE_URL, fetchDocuments, fetchSystemPrompts, selectDocument, processQuery } from "@/lib/apiClient";
 
 interface Message {
   role: "user" | "assistant";
@@ -84,17 +72,12 @@ interface ChatSession {
   createdAt: Date;
   lastMessageAt: Date;
   systemPromptId: string;
-  temperature: number;
 }
 
-const API_BASE_URL = "http://localhost:5000/api";
-
-// Generate a unique chat ID
 const generateChatId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
-// Get a truncated title from the first user message or use default title
 const getChatTitle = (messages: Message[]) => {
   if (messages.length === 0) return "New Chat";
   
@@ -116,14 +99,10 @@ const Index = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
   const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
-  const [selectedPrompt, setSelectedPrompt] = useState<string>("default");
-  const [temperature] = useState<number>(0); // Fixed temperature to 0
-  const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   
-  // Chat history management
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   
@@ -132,11 +111,9 @@ const Index = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Get current active chat
   const activeChat = chatSessions.find(chat => chat.id === activeChatId) || null;
   const messages = activeChat?.messages || [];
 
-  // Create new chat session
   const createNewChat = (documentId: string, documentTitle: string) => {
     const newChatId = generateChatId();
     const newChat: ChatSession = {
@@ -147,8 +124,7 @@ const Index = () => {
       messages: [],
       createdAt: new Date(),
       lastMessageAt: new Date(),
-      systemPromptId: selectedPrompt,
-      temperature: temperature // Using fixed temperature of 0
+      systemPromptId: "default"
     };
     
     setChatSessions(prev => [newChat, ...prev]);
@@ -156,7 +132,6 @@ const Index = () => {
     return newChatId;
   };
 
-  // Update chat title based on first message
   useEffect(() => {
     if (activeChatId && messages.length > 0) {
       setChatSessions(prev => prev.map(chat => {
@@ -172,20 +147,17 @@ const Index = () => {
     }
   }, [messages, activeChatId]);
 
-  // Persist chat sessions to local storage
   useEffect(() => {
     if (chatSessions.length > 0) {
       localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
     }
   }, [chatSessions]);
 
-  // Load chat sessions from local storage
   useEffect(() => {
     const savedChats = localStorage.getItem('chatSessions');
     if (savedChats) {
       try {
         const parsedChats = JSON.parse(savedChats);
-        // Convert date strings back to Date objects
         const chats = parsedChats.map((chat: any) => ({
           ...chat,
           createdAt: new Date(chat.createdAt),
@@ -193,7 +165,6 @@ const Index = () => {
         }));
         setChatSessions(chats);
         
-        // If there are chats, set the most recent one as active
         if (chats.length > 0) {
           setActiveChatId(chats[0].id);
         }
@@ -203,7 +174,6 @@ const Index = () => {
     }
   }, []);
 
-  // Handle fixed header on scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -225,28 +195,21 @@ const Index = () => {
     };
   }, []);
 
-  // Fetch available documents
   useEffect(() => {
-    const fetchDocuments = async () => {
+    const getDocuments = async () => {
       setIsLoadingDocuments(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/documents`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch documents");
-        }
+        const docs = await fetchDocuments();
+        setDocuments(docs);
         
-        const data = await response.json();
-        setDocuments(data.documents || []);
-        
-        // Auto-select the first document if available and no active chat exists
-        if (data.documents && data.documents.length > 0 && !selectedDocument && !activeChatId) {
-          handleDocumentSelect(data.documents[0]);
+        if (docs.length > 0 && !selectedDocument && !activeChatId) {
+          handleDocumentSelect(docs[0]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching documents:", error);
         toast({
           title: "Error fetching documents",
-          description: "Failed to retrieve available documents.",
+          description: error.message || "Failed to retrieve available documents.",
           variant: "destructive",
         });
       } finally {
@@ -254,66 +217,35 @@ const Index = () => {
       }
     };
 
-    fetchDocuments();
+    getDocuments();
   }, [toast]);
 
-  // Fetch system prompts
   useEffect(() => {
-    const fetchSystemPrompts = async () => {
+    const getSystemPrompts = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/system-prompts`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch system prompts");
-        }
-        
-        const data = await response.json();
-        setSystemPrompts(data.prompts || []);
-        
-        // Set the default prompt
-        const defaultPrompt = data.prompts.find((p: SystemPrompt) => p.id === "default");
-        if (defaultPrompt) {
-          setSelectedPrompt(defaultPrompt.id);
-        }
+        const prompts = await fetchSystemPrompts();
+        setSystemPrompts(prompts);
       } catch (error) {
         console.error("Error fetching system prompts:", error);
       }
     };
 
-    fetchSystemPrompts();
+    getSystemPrompts();
   }, []);
 
-  // Scroll to bottom of chat on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
 
-  // Handle document selection
   const handleDocumentSelect = async (document: Document) => {
     setIsProcessing(true);
     setSelectedDocument(document);
     
-    // Create a new chat when selecting a different document
     const chatId = createNewChat(document.id, document.title);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/select-document`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          document_id: document.id,
-          model: document.model,
-          prompt_id: selectedPrompt,
-          temperature: temperature // Using fixed temperature
-        }),
-      });
+      const data = await selectDocument(document.id, document.model);
       
-      if (!response.ok) {
-        throw new Error("Failed to select document");
-      }
-      
-      const data = await response.json();
       setSessionId(data.session_id);
       
       toast({
@@ -323,7 +255,6 @@ const Index = () => {
       
       setQaChain({ sessionId: data.session_id });
       
-      // Close mobile sidebar after selection
       if (isMobile) {
         setIsHistorySheetOpen(false);
       }
@@ -338,7 +269,6 @@ const Index = () => {
       setSessionId(null);
       setQaChain(null);
       
-      // Remove the chat we just created since it failed
       setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
       setActiveChatId(null);
     } finally {
@@ -346,7 +276,6 @@ const Index = () => {
     }
   };
 
-  // Handle creating a new chat for the current document
   const handleNewChat = async () => {
     if (!selectedDocument) {
       toast({
@@ -359,28 +288,11 @@ const Index = () => {
     
     setIsProcessing(true);
     
-    // Create a new chat session
     const chatId = createNewChat(selectedDocument.id, selectedDocument.title);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/select-document`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          document_id: selectedDocument.id,
-          model: selectedDocument.model,
-          prompt_id: selectedPrompt,
-          temperature: temperature // Using fixed temperature
-        }),
-      });
+      const data = await selectDocument(selectedDocument.id, selectedDocument.model);
       
-      if (!response.ok) {
-        throw new Error("Failed to initialize new chat");
-      }
-      
-      const data = await response.json();
       setSessionId(data.session_id);
       
       toast({
@@ -390,7 +302,6 @@ const Index = () => {
       
       setQaChain({ sessionId: data.session_id });
       
-      // Close mobile sidebar after selection
       if (isMobile) {
         setIsHistorySheetOpen(false);
       }
@@ -402,91 +313,18 @@ const Index = () => {
         variant: "destructive",
       });
       
-      // Remove the chat we just created since it failed
       setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Handle changing the system prompt
-  const handleSettingsChange = async () => {
-    if (!selectedDocument) {
-      toast({
-        title: "No document selected",
-        description: "Please select a document first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsProcessing(true);
-    
-    // Create a new chat with updated settings
-    const chatId = createNewChat(selectedDocument.id, selectedDocument.title);
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/select-document`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          document_id: selectedDocument.id,
-          model: selectedDocument.model,
-          prompt_id: selectedPrompt,
-          temperature: temperature // Using fixed temperature
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to update settings");
-      }
-      
-      const data = await response.json();
-      setSessionId(data.session_id);
-      
-      toast({
-        title: "Settings updated",
-        description: "New chat created with updated AI behavior settings.",
-      });
-      
-      // Update the chat settings
-      setChatSessions(prev => prev.map(chat => {
-        if (chat.id === chatId) {
-          return {
-            ...chat,
-            systemPromptId: selectedPrompt,
-            temperature: temperature // Using fixed temperature
-          };
-        }
-        return chat;
-      }));
-      
-      setQaChain({ sessionId: data.session_id });
-    } catch (error: any) {
-      console.error("Error updating settings:", error);
-      toast({
-        title: "Error updating settings",
-        description: error.message || "Failed to update settings.",
-        variant: "destructive",
-      });
-      
-      // Remove the chat we just created since it failed
-      setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Switch to a different chat
   const handleSwitchChat = async (chatId: string) => {
     const chat = chatSessions.find(c => c.id === chatId);
     if (!chat) return;
     
     setActiveChatId(chatId);
     
-    // Find the document that belongs to this chat
     const document = documents.find(d => d.id === chat.documentId);
     if (!document) {
       toast({
@@ -497,35 +335,15 @@ const Index = () => {
       return;
     }
     
-    // Set the current document and system prompt
     setSelectedDocument(document);
-    setSelectedPrompt(chat.systemPromptId);
     
-    // Reinitialize the QA chain
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/select-document`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          document_id: document.id,
-          model: document.model,
-          prompt_id: chat.systemPromptId,
-          temperature: temperature // Using fixed temperature
-        }),
-      });
+      const data = await selectDocument(document.id, document.model);
       
-      if (!response.ok) {
-        throw new Error("Failed to load chat");
-      }
-      
-      const data = await response.json();
       setSessionId(data.session_id);
       setQaChain({ sessionId: data.session_id });
       
-      // Close mobile sidebar after selection
       if (isMobile) {
         setIsHistorySheetOpen(false);
         setShowRightSidebar(false);
@@ -542,15 +360,13 @@ const Index = () => {
     }
   };
 
-  // Delete a chat session
   const handleDeleteChat = (chatId: string, e?: React.MouseEvent) => {
     if (e) {
-      e.stopPropagation(); // Prevent triggering the chat selection
+      e.stopPropagation();
     }
     
     setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
     
-    // If the active chat was deleted, select the first chat or create a new one
     if (activeChatId === chatId) {
       const remainingChats = chatSessions.filter(chat => chat.id !== chatId);
       if (remainingChats.length > 0) {
@@ -568,7 +384,6 @@ const Index = () => {
     });
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -582,10 +397,8 @@ const Index = () => {
       return;
     }
 
-    // Add user message
     const userMessage: Message = { role: "user", content: prompt };
     
-    // Update the active chat with the new message
     if (activeChatId) {
       setChatSessions(prev => prev.map(chat => {
         if (chat.id === activeChatId) {
@@ -604,42 +417,20 @@ const Index = () => {
     setStreamingContent("");
 
     try {
-      // Start streaming response immediately
-      const response = await fetch(`${API_BASE_URL}/query`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          session_id: sessionId,
-          query: prompt
-        }),
-      });
+      const data = await processQuery(sessionId, prompt);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to process the query");
-      }
-      
-      const data = await response.json();
-      
-      // If tokens are available, stream them to the UI
       if (data.tokens && Array.isArray(data.tokens)) {
         let accumulatedText = "";
         
-        // Process tokens one by one with a slight delay to simulate typing
         for (const token of data.tokens) {
           accumulatedText += token;
           setStreamingContent(accumulatedText);
           
-          // Small delay to make streaming visible (adjust as needed)
           await new Promise(resolve => setTimeout(resolve, 15));
         }
         
-        // After streaming is complete, add the full message
         const assistantMessage: Message = { role: "assistant", content: accumulatedText };
         
-        // Update the active chat with the assistant's response
         if (activeChatId) {
           setChatSessions(prev => prev.map(chat => {
             if (chat.id === activeChatId) {
@@ -655,10 +446,8 @@ const Index = () => {
         
         setStreamingContent("");
       } else {
-        // Fallback if tokens aren't available
         const assistantMessage: Message = { role: "assistant", content: data.answer || "No answer found." };
         
-        // Update the active chat with the assistant's response
         if (activeChatId) {
           setChatSessions(prev => prev.map(chat => {
             if (chat.id === activeChatId) {
@@ -680,13 +469,11 @@ const Index = () => {
       });
       console.error("Error:", error);
       
-      // Add error message to chat
       const errorMessage: Message = {
         role: "assistant",
         content: error.message || "An error occurred while processing your query."
       };
       
-      // Update the active chat with the error message
       if (activeChatId) {
         setChatSessions(prev => prev.map(chat => {
           if (chat.id === activeChatId) {
@@ -705,7 +492,6 @@ const Index = () => {
     }
   };
 
-  // Format date for display
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -715,7 +501,6 @@ const Index = () => {
     });
   };
 
-  // Render chat history component
   const renderChatHistory = () => (
     <div className="space-y-2">
       {chatSessions.length === 0 ? (
@@ -760,7 +545,6 @@ const Index = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full transition-colors duration-300">
-        {/* Document Sidebar (Left) */}
         <Sidebar side="left" className="border-r border-border/40">
           <SidebarContent className="animate-slide-in-left">
             <SidebarGroup>
@@ -799,86 +583,29 @@ const Index = () => {
             </SidebarGroup>
 
             {selectedDocument && (
-              <>
-                <SidebarGroup>
-                  <SidebarGroupLabel className="font-medium">Current Document</SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <div className="p-3 bg-accent/30 rounded-md">
-                      <h3 className="text-sm font-medium mb-1">{selectedDocument.title}</h3>
-                      {selectedDocument.description && (
-                        <p className="text-xs text-muted-foreground">{selectedDocument.description}</p>
-                      )}
-                      <div className="mt-2 text-xs flex items-center">
-                        <span className="text-muted-foreground">Model:</span>
-                        <span className="ml-1 text-primary font-medium">{selectedDocument.model}</span>
-                      </div>
+              <SidebarGroup>
+                <SidebarGroupLabel className="font-medium">Current Document</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <div className="p-3 bg-accent/30 rounded-md">
+                    <h3 className="text-sm font-medium mb-1">{selectedDocument.title}</h3>
+                    {selectedDocument.description && (
+                      <p className="text-xs text-muted-foreground">{selectedDocument.description}</p>
+                    )}
+                    <div className="mt-2 text-xs flex items-center">
+                      <span className="text-muted-foreground">Model:</span>
+                      <span className="ml-1 text-primary font-medium">{selectedDocument.model}</span>
                     </div>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                  <Collapsible 
-                    open={isAdvancedSettingsOpen} 
-                    onOpenChange={setIsAdvancedSettingsOpen}
-                    className="w-full"
-                  >
-                    <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between cursor-pointer p-2 hover:bg-accent/50 rounded-md mt-4 mb-1">
-                        <div className="flex items-center gap-2">
-                          <Settings className="h-4 w-4 text-muted-foreground" />
-                          <SidebarGroupLabel className="font-medium m-0">AI Behavior</SidebarGroupLabel>
-                        </div>
-                        {isAdvancedSettingsOpen ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="px-2 pt-2 space-y-3">
-                      {/* System Prompt Selection */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium">Response Style</label>
-                        <Select
-                          value={selectedPrompt}
-                          onValueChange={setSelectedPrompt}
-                        >
-                          <SelectTrigger className="w-full text-xs">
-                            <SelectValue placeholder="Select a system prompt" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {systemPrompts.map((prompt) => (
-                              <SelectItem key={prompt.id} value={prompt.id}>
-                                <div className="flex flex-col">
-                                  <span>{prompt.name}</span>
-                                  <span className="text-xs text-muted-foreground">{prompt.description}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <Button 
-                        size="sm"
-                        className="w-full text-xs mt-2 hover-scale"
-                        onClick={handleSettingsChange}
-                      >
-                        Apply Settings
-                      </Button>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </SidebarGroup>
-              </>
+                  </div>
+                </SidebarGroupContent>
+              </SidebarGroup>
             )}
           </SidebarContent>
         </Sidebar>
 
         <div className="flex flex-col flex-1 p-4 md:p-6">
-          {/* Fixed Header */}
           <div 
             ref={headerRef} 
-            className="flex items-center justify-between mb-6 md:mb-8 animate-fade-in py-2 px-4 transition-all"
+            className="flex items-center justify-between mb-6 md:mb-8 animate-fade-in py-2 px-4 transition-all z-50 w-full bg-background"
           >
             <div className="flex items-center gap-3">
               <SidebarTrigger className="hover-scale">
@@ -890,15 +617,14 @@ const Index = () => {
                 <img 
                   src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
                   alt="I4C Logo" 
-                  className="h-10 w-auto md:h-12"
+                  className="h-8 w-auto md:h-10"
                 />
-                <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent text-center md:text-left">
+                <h1 className="text-base md:text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent text-center md:text-left">
                   Indian Cybercrime Coordination Centre
                 </h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* Desktop New Chat Button */}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -910,7 +636,6 @@ const Index = () => {
                 New Chat
               </Button>
               
-              {/* Desktop Chat History Button */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -920,7 +645,6 @@ const Index = () => {
                 <MessageSquare className="h-5 w-5" />
               </Button>
               
-              {/* Mobile Chat History Sheet */}
               {isMobile && (
                 <Sheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen}>
                   <SheetTrigger asChild>
@@ -972,7 +696,6 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Processing Animation */}
           {isProcessing && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
               <div className="relative h-20 w-20">
@@ -985,9 +708,7 @@ const Index = () => {
           )}
 
           <div className="flex flex-1 gap-4 mt-4">
-            {/* Chat Container */}
             <div className="flex flex-col flex-1 animate-slide-in-right">
-              {/* Chat Messages */}
               <div className="flex-1 overflow-auto mb-4 pr-2 scrollbar-track rounded-md">
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-4 md:p-8 animate-fade-in">
@@ -1028,7 +749,6 @@ const Index = () => {
                       />
                     ))}
                     
-                    {/* Streaming message if any */}
                     {streamingContent && (
                       <ChatMessage 
                         role="assistant" 
@@ -1037,13 +757,11 @@ const Index = () => {
                       />
                     )}
                     
-                    {/* Invisible element to scroll to */}
                     <div ref={messagesEndRef} />
                   </div>
                 )}
               </div>
               
-              {/* Chat Input */}
               <div className="sticky bottom-0 pb-2 pt-1 bg-background">
                 <form onSubmit={handleSubmit} className="flex items-center space-x-2 bg-card/50 p-2 rounded-lg backdrop-blur-sm border border-border/30">
                   <Input
@@ -1070,7 +788,6 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Chat History Sidebar (Right) - Desktop only */}
             {showRightSidebar && !isMobile && (
               <div className="w-80 bg-background border-l border-border/40 p-3 overflow-y-auto animate-slide-in-right hidden md:block">
                 <div className="flex items-center justify-between mb-4">

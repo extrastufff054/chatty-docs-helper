@@ -264,7 +264,8 @@ def select_document():
     document_id = data.get('document_id')
     model = data.get('model')
     prompt_id = data.get('prompt_id', 'default')
-    temperature = data.get('temperature', 0.0)
+    # Always use temperature 0.0 regardless of what is provided in the request
+    temperature = 0.0
     
     if not document_id:
         return jsonify({"error": "Missing document_id"}), 400
@@ -279,7 +280,7 @@ def select_document():
         document = documents[document_id]
         filepath = os.path.join(uploads_dir, document['filename'])
         
-        # Initialize QA chain with prompt and temperature
+        # Initialize QA chain with prompt and fixed temperature 0.0
         qa_chain = initialize_qa_chain(filepath, model, prompt_id, temperature)
         qa_chains[document_id] = qa_chain
         

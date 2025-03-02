@@ -1,4 +1,3 @@
-
 /**
  * API client for interacting with the backend
  * Provides methods for fetching documents, prompts, and handling queries
@@ -11,8 +10,8 @@ const getApiBaseUrl = () => {
                      !window.location.hostname.includes('127.0.0.1');
   
   // If deployed, use relative URLs to ensure requests go to the same origin
-  // Otherwise, use the explicit localhost URL
-  return isDeployed ? '' : 'http://localhost:5000';
+  // Otherwise, use the explicit localhost URL with the specific port
+  return isDeployed ? '' : `http://${window.location.hostname}:5000`;
 };
 
 export const API_BASE_URL = getApiBaseUrl();

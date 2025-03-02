@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ArrowLeft, FileText, Settings } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
-import SystemPromptManagement from "@/components/SystemPromptManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminLogin from "@/components/admin/AdminLogin";
 import DocumentUpload from "@/components/admin/DocumentUpload";
 import DocumentsList from "@/components/admin/DocumentsList";
+import SystemPromptWrapper from "@/components/SystemPromptWrapper";
 
 /**
  * Admin Panel
@@ -228,7 +227,7 @@ const Admin = () => {
         </TabsContent>
         
         <TabsContent value="advanced" className="animate-fade-in">
-          <SystemPromptManagement adminToken={adminToken} />
+          <SystemPromptWrapper adminToken={adminToken} />
         </TabsContent>
       </Tabs>
     </div>

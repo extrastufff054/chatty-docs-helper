@@ -1,6 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import { Loader2, User, Bot } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
@@ -32,7 +33,13 @@ const ChatMessage = ({ role, content, isStreaming = false }: ChatMessageProps) =
         
         <div className="flex-1">
           <div className="whitespace-pre-wrap text-sm leading-relaxed">
-            {content}
+            {role === "assistant" ? (
+              <ReactMarkdown className="prose dark:prose-invert prose-sm max-w-none">
+                {content}
+              </ReactMarkdown>
+            ) : (
+              content
+            )}
             {isStreaming && (
               <Loader2 className="h-4 w-4 inline ml-1 animate-spin text-primary" />
             )}

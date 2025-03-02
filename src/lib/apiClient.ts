@@ -1,3 +1,4 @@
+
 /**
  * API client for interacting with the backend
  * Provides methods for fetching documents, prompts, and handling queries
@@ -108,7 +109,11 @@ export const processQuery = async (sessionId: string, query: string) => {
       throw new Error(errorData.error || `Failed to process query: ${response.status}`);
     }
     
-    return await response.json();
+    // Get the full, unfiltered response
+    const rawData = await response.json();
+    
+    // Do not apply any client-side filtering - return everything
+    return rawData;
   } catch (error) {
     console.error("Error processing query:", error);
     throw error;

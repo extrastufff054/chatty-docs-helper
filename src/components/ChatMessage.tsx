@@ -34,7 +34,22 @@ const ChatMessage = ({ role, content, isStreaming = false }: ChatMessageProps) =
         <div className="flex-1">
           <div className="whitespace-pre-wrap text-sm leading-relaxed">
             {role === "assistant" ? (
-              <ReactMarkdown className="prose dark:prose-invert prose-sm max-w-none">
+              <ReactMarkdown 
+                className="prose dark:prose-invert prose-sm max-w-none"
+                components={{
+                  // Allow all HTML in markdown to ensure personal info is shown
+                  p: ({node, ...props}) => <p className="mb-2" {...props} />,
+                  a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                  pre: ({node, ...props}) => <pre className="bg-secondary/30 p-2 rounded my-2 overflow-x-auto" {...props} />,
+                  code: ({node, inline, ...props}) => 
+                    inline 
+                      ? <code className="bg-secondary/30 px-1 py-0.5 rounded text-xs" {...props} />
+                      : <code {...props} />,
+                  table: ({node, ...props}) => <table className="border-collapse my-2 text-sm" {...props} />,
+                  th: ({node, ...props}) => <th className="border border-border p-2 bg-secondary/30" {...props} />,
+                  td: ({node, ...props}) => <td className="border border-border p-2" {...props} />
+                }}
+              >
                 {content}
               </ReactMarkdown>
             ) : (

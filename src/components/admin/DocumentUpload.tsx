@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useDropzone } from 'react-dropzone';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, Trash, FileText, FileUp } from "lucide-react";
+import { Loader2, Upload, Trash, FileText, FileUp, AlertCircle } from "lucide-react";
 import { uploadDocument } from "@/lib/documentProcessor";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+// Maximum file size in bytes (20MB)
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 interface DocumentUploadProps {
   adminToken: string;
@@ -35,10 +40,14 @@ const DocumentUpload = ({
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  
+  // Track if upload has been canceled
+  const uploadCancelRef = useRef<boolean>(false);
   
   const { toast } = useToast();
 
-  // Configure Dropzone for file upload with expanded file types
+  // Configure Dropzone for file upload with expanded file types and size validation
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'application/pdf': ['.pdf'],
@@ -47,7 +56,9 @@ const DocumentUpload = ({
       'application/vnd.ms-excel': ['.xls']
     },
     multiple: false,
+    maxSize: MAX_FILE_SIZE,
     onDrop: acceptedFiles => {
+      setErrorMessage("");
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
         setUploadedFile(file);
@@ -61,15 +72,70 @@ const DocumentUpload = ({
         
         toast({
           title: "File selected",
-          description: `${file.name} has been selected`,
+          description: `${file.name} (${formatFileSize(file.size)}) has been selected`,
         });
+      }
+    },
+    onDropRejected: (rejectedFiles) => {
+      const rejection = rejectedFiles[0];
+      if (rejection.errors[0].code === 'file-too-large') {
+        setErrorMessage(`File is too large. Maximum size is ${formatFileSize(MAX_FILE_SIZE)}.`);
+        toast({
+          title: "File too large",
+          description: `Maximum file size is ${formatFileSize(MAX_FILE_SIZE)}.`,
+          variant: "destructive",
+        });
+      } else {
+        setErrorMessage(`Invalid file: ${rejection.errors[0].message}`);
       }
     }
   });
 
+  // Format file size in KB, MB, etc.
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   const handleRemoveFile = () => {
     setUploadedFile(null);
+    setErrorMessage("");
   };
+
+  // Cancel the current upload
+  const handleCancelUpload = useCallback(() => {
+    uploadCancelRef.current = true;
+    setIsUploading(false);
+    setUploadProgress(0);
+    toast({
+      title: "Upload canceled",
+      description: "Document upload has been canceled.",
+    });
+  }, [toast]);
+
+  const simulateProgress = useCallback(() => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      if (uploadCancelRef.current) {
+        clearInterval(interval);
+        return;
+      }
+      
+      if (progress < 90) {
+        // Slower progress as we get closer to 90%
+        const increment = progress < 30 ? 5 : 
+                        progress < 60 ? 3 : 
+                        progress < 80 ? 1 : 0.5;
+        progress += increment;
+        setUploadProgress(progress);
+      }
+    }, 300);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,16 +151,13 @@ const DocumentUpload = ({
     
     setIsUploading(true);
     setUploadProgress(0);
+    setErrorMessage("");
+    uploadCancelRef.current = false;
+    
+    // Start progress simulation
+    const stopProgressSimulation = simulateProgress();
     
     try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          const newProgress = prev + (100 - prev) * 0.1;
-          return Math.min(95, newProgress); // Cap at 95% until we get the response
-        });
-      }, 300);
-      
       // Use the uploadDocument function
       const result = await uploadDocument(
         uploadedFile,
@@ -104,7 +167,11 @@ const DocumentUpload = ({
         adminToken
       );
       
-      clearInterval(progressInterval);
+      if (uploadCancelRef.current) {
+        return;
+      }
+      
+      // Complete the progress
       setUploadProgress(100);
       
       toast({
@@ -121,14 +188,23 @@ const DocumentUpload = ({
       // Refresh documents list
       fetchDocuments();
     } catch (error: any) {
+      if (uploadCancelRef.current) {
+        return;
+      }
+      
       console.error("Error uploading document:", error);
+      setErrorMessage(error.message || "Failed to upload and process the document.");
       toast({
         title: "Error uploading document",
         description: error.message || "Failed to upload and process the document.",
         variant: "destructive",
       });
     } finally {
-      setIsUploading(false);
+      stopProgressSimulation();
+      if (!uploadCancelRef.current) {
+        setIsUploading(false);
+      }
+      uploadCancelRef.current = false;
     }
   };
 
@@ -150,11 +226,20 @@ const DocumentUpload = ({
       <CardHeader>
         <CardTitle className="text-xl">Upload Document</CardTitle>
         <CardDescription>
-          Upload PDF, Word, or Excel files for users to query
+          Upload PDF, Word, or Excel files (max {formatFileSize(MAX_FILE_SIZE)})
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleUpload}>
         <CardContent className="space-y-5">
+          {/* Error Alert */}
+          {errorMessage && (
+            <Alert variant="destructive" className="animate-shake">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+          
           {/* Document Upload */}
           <div className="space-y-2">
             <Label>Document File</Label>
@@ -175,7 +260,7 @@ const DocumentUpload = ({
                     : "Drag & drop a file here"}
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Supports PDF, Word (DOCX), and Excel (XLSX/XLS) files
+                  Supports PDF, Word (DOCX), and Excel (XLSX/XLS) files up to {formatFileSize(MAX_FILE_SIZE)}
                 </p>
               </div>
             </div>
@@ -189,7 +274,7 @@ const DocumentUpload = ({
                       <FileText className="h-4 w-4 text-primary flex-shrink-0" />
                       <span className="text-sm truncate max-w-[200px]">{uploadedFile.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                        {formatFileSize(uploadedFile.size)}
                       </span>
                       <span className="text-xs bg-secondary/50 px-2 py-0.5 rounded-full">
                         {getFileTypeLabel(uploadedFile)}
@@ -203,6 +288,7 @@ const DocumentUpload = ({
                         handleRemoveFile();
                       }}
                       className="h-6 w-6 rounded-full hover:bg-destructive/10"
+                      disabled={isUploading}
                     >
                       <Trash className="h-3 w-3 text-destructive" />
                     </Button>
@@ -222,6 +308,7 @@ const DocumentUpload = ({
               onChange={(e) => setTitle(e.target.value)}
               required
               className="transition-colors"
+              disabled={isUploading}
             />
           </div>
           
@@ -235,6 +322,7 @@ const DocumentUpload = ({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               className="resize-none transition-colors"
+              disabled={isUploading}
             />
           </div>
           
@@ -246,6 +334,7 @@ const DocumentUpload = ({
               onValueChange={setSelectedModel}
               className="flex flex-col space-y-1"
               required
+              disabled={isUploading}
             >
               {availableModels.length > 0 ? (
                 availableModels.map(model => (
@@ -272,29 +361,46 @@ const DocumentUpload = ({
                   style={{ width: `${uploadProgress}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-muted-foreground text-right mt-1">
-                {uploadProgress < 100 ? "Processing..." : "Complete"}
-              </p>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-xs text-muted-foreground">
+                  {uploadProgress < 100 ? "Processing..." : "Complete"}
+                </p>
+                <p className="text-xs font-medium">{Math.round(uploadProgress)}%</p>
+              </div>
             </div>
           )}
           
-          <Button 
-            type="submit" 
-            className="w-full hover-scale"
-            disabled={isUploading || !uploadedFile || !selectedModel || !title}
-          >
+          <div className="flex w-full gap-2">
             {isUploading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleCancelUpload}
+                >
+                  Cancel Upload
+                </Button>
+                <Button 
+                  type="button" 
+                  className="flex-1"
+                  disabled={true}
+                >
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </Button>
               </>
             ) : (
-              <>
+              <Button 
+                type="submit" 
+                className="w-full hover-scale"
+                disabled={isUploading || !uploadedFile || !selectedModel || !title}
+              >
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Document
-              </>
+              </Button>
             )}
-          </Button>
+          </div>
         </CardFooter>
       </form>
     </Card>

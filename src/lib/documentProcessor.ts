@@ -1,3 +1,4 @@
+
 /**
  * Document Processing Module
  * 
@@ -40,18 +41,34 @@ interface QAChainResult {
  */
 export const initializeQAChain = async (file: File, modelName: string): Promise<QAChainResult> => {
   try {
+    // Create optimized FormData object with only essential data
     const formData = new FormData();
     formData.append('file', file);
     formData.append('model', modelName);
     
+    // Use AbortController to allow timeout cancellation for long-running uploads
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 3-minute timeout
+    
     const response = await fetch(UPLOAD_ENDPOINT, {
       method: 'POST',
       body: formData,
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to upload and process the document");
+      // Better error handling with HTTP status and message
+      const errorText = await response.text();
+      let errorMessage = `Upload failed with status ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        console.error("Non-JSON error response:", errorText);
+      }
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();
@@ -68,7 +85,13 @@ export const initializeQAChain = async (file: File, modelName: string): Promise<
       llm: { model: modelName }
     };
   } catch (error: any) {
-    console.error("Error initializing QA chain:", error);
+    // Enhanced error logging with more details
+    if (error.name === 'AbortError') {
+      console.error("Upload timed out after 3 minutes");
+      throw new Error("Document upload timed out. The file might be too large or the server is busy.");
+    }
+    
+    console.error("Error initializing QA chain:", error, error.stack);
     throw new Error(error.message || "Failed to initialize the QA chain.");
   }
 };
@@ -94,6 +117,10 @@ export const processQuery = async (
   streamCallback?: (token: string) => void
 ): Promise<string> => {
   try {
+    // Add timeout control for query processing
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 1-minute timeout
+    
     // Send the query to the backend
     const response = await fetch(QUERY_ENDPOINT, {
       method: 'POST',
@@ -104,11 +131,22 @@ export const processQuery = async (
         session_id: qaChain.sessionId,
         query: query
       }),
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to process the query");
+      // Improved error handling with status code context
+      const errorText = await response.text();
+      let errorMessage = `Query failed with status ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        console.error("Non-JSON error response:", errorText);
+      }
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();
@@ -122,6 +160,12 @@ export const processQuery = async (
     
     return data.answer || "No answer found.";
   } catch (error: any) {
+    // Better error handling with AbortController support
+    if (error.name === 'AbortError') {
+      console.error("Query processing timed out");
+      return "The query processing timed out. Please try a simpler question or try again later.";
+    }
+    
     console.error("Error processing query:", error);
     
     // Check for specific Ollama errors
@@ -141,20 +185,36 @@ export const processQuery = async (
  */
 export const getOllamaModels = async (): Promise<string[]> => {
   try {
-    const response = await fetch(MODELS_ENDPOINT);
+    // Add timeout for API call
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+    
+    const response = await fetch(MODELS_ENDPOINT, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
-      throw new Error("Failed to fetch models from the backend");
+      throw new Error(`Failed to fetch models from the backend (Status: ${response.status})`);
     }
     
     const data = await response.json();
     return data.models || [];
-  } catch (error) {
-    console.error("Error fetching Ollama models:", error);
+  } catch (error: any) {
+    // Enhanced error logging with timeout detection
+    if (error.name === 'AbortError') {
+      console.error("Models API call timed out");
+    } else {
+      console.error("Error fetching Ollama models:", error);
+    }
     // Return some default models as fallback
     return ["llama3", "mistral", "gemma", "phi"];
   }
 };
+
+// Export API_BASE_URL for use in other components
+export { API_BASE_URL };
 
 /**
  * Get the file type display name
@@ -189,6 +249,10 @@ export const uploadDocument = async (
   adminToken: string
 ) => {
   try {
+    // Use AbortController for upload timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 3-minute timeout
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', title);
@@ -200,16 +264,33 @@ export const uploadDocument = async (
       headers: {
         'Authorization': `Bearer ${adminToken}`
       },
-      body: formData
+      body: formData,
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to upload document");
+      // Better error handling with HTTP status context
+      const errorText = await response.text();
+      let errorMessage = `Document upload failed with status ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        console.error("Non-JSON error response:", errorText);
+      }
+      throw new Error(errorMessage);
     }
     
     return await response.json();
   } catch (error: any) {
+    // Enhanced error handling
+    if (error.name === 'AbortError') {
+      console.error("Document upload timed out");
+      throw new Error("Document upload timed out. The file might be too large or the server is busy.");
+    }
+    
     console.error("Error uploading document:", error);
     throw new Error(error.message || "Failed to upload and process the document.");
   }

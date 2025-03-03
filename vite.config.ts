@@ -17,6 +17,15 @@ export default defineConfig(({ mode }) => ({
       clientPort: 443,
       host: 'localhost'
     },
+    // Add this to allow Serveo domains
+    fs: {
+      allow: ['.']
+    },
+    proxy: {},
+    // Explicitly allow serveo.net domains
+    strictPort: true,
+    // This is the key setting needed to resolve the error
+    allowedHosts: ['localhost', '.serveo.net']
   },
   plugins: [
     react(),

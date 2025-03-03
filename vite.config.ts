@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -8,6 +9,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Allow all origins, necessary for Serveo and other tunneling services
+    cors: true,
+    // Specifically handle Serveo domains
+    hmr: {
+      // Add this to support HMR over Serveo
+      clientPort: 443,
+      host: 'localhost'
+    },
   },
   plugins: [
     react(),

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { API_BASE_URL } from "@/lib/apiClient";
 
 interface SystemPrompt {
   id: string;
@@ -32,7 +32,7 @@ interface SystemPromptManagementProps {
   adminToken: string;
 }
 
-const ADMIN_API_BASE_URL = "http://localhost:5000/admin";
+const ADMIN_API_BASE_URL = `${API_BASE_URL}/admin`;
 
 const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => {
   const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
@@ -56,7 +56,6 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
 
   const { toast } = useToast();
 
-  // Fetch system prompts on component mount
   useEffect(() => {
     fetchSystemPrompts();
   }, []);
@@ -120,7 +119,6 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
         description: "The system prompt has been created successfully.",
       });
       
-      // Reset form and refresh list
       setNewPrompt({
         name: "",
         prompt: "",
@@ -178,7 +176,6 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
         description: "The system prompt has been updated successfully.",
       });
       
-      // Reset form and refresh list
       setEditingPrompt(null);
       fetchSystemPrompts();
     } catch (error) {
@@ -195,7 +192,6 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
 
   const handleDeletePrompt = async (promptId: string) => {
     try {
-      // Check if it's a default prompt
       if (promptId === 'default' || promptId === 'concise') {
         toast({
           title: "Cannot delete default prompts",
@@ -221,7 +217,6 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
         description: "The system prompt has been deleted successfully.",
       });
       
-      // Refresh list
       fetchSystemPrompts();
     } catch (error) {
       console.error("Error deleting system prompt:", error);

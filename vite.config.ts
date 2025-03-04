@@ -7,25 +7,29 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: true, // Listen on all available network interfaces
     port: 8080,
-    // Allow all origins, necessary for Serveo and other tunneling services
+    // Allow all origins for development
     cors: true,
-    // Specifically handle Serveo domains
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      }
+    },
+    // Add this to allow access from any host
     hmr: {
-      // Add this to support HMR over Serveo
       clientPort: 443,
       host: 'localhost'
     },
-    // Add this to allow Serveo domains
+    // Add this to allow all origins
     fs: {
       allow: ['.']
     },
-    proxy: {},
-    // Explicitly allow serveo.net domains
-    strictPort: true,
-    // This is the key setting needed to resolve the error
-    allowedHosts: ['localhost', '.serveo.net']
+    // Explicitly allow all hosts
+    allowedHosts: 'all'
   },
   plugins: [
     react(),

@@ -1,14 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ArrowLeft, FileText, Settings } from "lucide-react";
+import { ArrowLeft, FileText, Settings, Thermometer } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminLogin from "@/components/admin/AdminLogin";
 import DocumentUpload from "@/components/admin/DocumentUpload";
 import DocumentsList from "@/components/admin/DocumentsList";
 import SystemPromptWrapper from "@/components/SystemPromptWrapper";
+import TemperatureSlider from "@/components/admin/TemperatureSlider";
 
 /**
  * Admin Panel
@@ -28,6 +30,7 @@ const Admin = () => {
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
+  const [globalTemperature, setGlobalTemperature] = useState<number>(0);
   
   // UI state
   const [activeTab, setActiveTab] = useState<string>("documents");
@@ -194,14 +197,18 @@ const Admin = () => {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2">
+        <TabsList className="grid grid-cols-3">
           <TabsTrigger value="documents" className="flex gap-2 items-center">
             <FileText className="h-4 w-4" />
             Documents
           </TabsTrigger>
+          <TabsTrigger value="settings" className="flex gap-2 items-center">
+            <Thermometer className="h-4 w-4" />
+            Temperature
+          </TabsTrigger>
           <TabsTrigger value="advanced" className="flex gap-2 items-center">
             <Settings className="h-4 w-4" />
-            Advanced Settings
+            System Prompts
           </TabsTrigger>
         </TabsList>
         
@@ -223,6 +230,49 @@ const Admin = () => {
               adminToken={adminToken}
               handleDeleteDocument={handleDeleteDocument}
             />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="settings" className="animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <TemperatureSlider 
+              initialTemperature={globalTemperature}
+              onTemperatureChange={(temp) => {
+                setGlobalTemperature(temp);
+                toast({
+                  title: "Temperature updated",
+                  description: `Global temperature set to ${temp.toFixed(1)}`,
+                });
+              }}
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Temperature Settings</CardTitle>
+                <CardDescription>
+                  How temperature affects AI responses
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">0.0</span>
+                    <span className="text-sm">Precise, deterministic, focused answers</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">0.5</span>
+                    <span className="text-sm">Balanced responses with some variation</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">1.0</span>
+                    <span className="text-sm">Creative, diverse, more unpredictable</span>
+                  </div>
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    <p className="mb-2">For document Q&A, lower temperatures (0.0-0.3) are recommended for factual accuracy.</p>
+                    <p>Temperature adjustments apply to newly uploaded documents and system prompts.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
         

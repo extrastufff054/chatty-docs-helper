@@ -1,3 +1,4 @@
+
 /**
  * API client for interacting with the backend
  * Provides methods for fetching documents, prompts, and handling queries
@@ -22,11 +23,16 @@ export const API_BASE_URL = getApiBaseUrl();
  */
 export const fetchDocuments = async () => {
   try {
+    console.log('Fetching documents from:', `${API_BASE_URL}/api/documents`);
     const response = await fetch(`${API_BASE_URL}/api/documents`);
+    
     if (!response.ok) {
+      console.error('Error response:', await response.text());
       throw new Error(`Failed to fetch documents: ${response.status}`);
     }
+    
     const data = await response.json();
+    console.log('Documents fetched successfully:', data);
     return data.documents || [];
   } catch (error) {
     console.error("Error fetching documents:", error);
@@ -40,11 +46,16 @@ export const fetchDocuments = async () => {
  */
 export const fetchSystemPrompts = async () => {
   try {
+    console.log('Fetching system prompts from:', `${API_BASE_URL}/api/system-prompts`);
     const response = await fetch(`${API_BASE_URL}/api/system-prompts`);
+    
     if (!response.ok) {
+      console.error('Error response:', await response.text());
       throw new Error(`Failed to fetch system prompts: ${response.status}`);
     }
+    
     const data = await response.json();
+    console.log('System prompts fetched successfully:', data);
     return data.prompts || [];
   } catch (error) {
     console.error("Error fetching system prompts:", error);
@@ -60,6 +71,9 @@ export const fetchSystemPrompts = async () => {
  */
 export const selectDocument = async (documentId: string, model: string) => {
   try {
+    console.log('Selecting document:', documentId, 'with model:', model);
+    console.log('API URL:', `${API_BASE_URL}/api/select-document`);
+    
     const response = await fetch(`${API_BASE_URL}/api/select-document`, {
       method: 'POST',
       headers: {
@@ -74,10 +88,13 @@ export const selectDocument = async (documentId: string, model: string) => {
     });
     
     if (!response.ok) {
+      console.error('Error response:', await response.text());
       throw new Error(`Failed to select document: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('Document selected successfully:', data);
+    return data;
   } catch (error) {
     console.error("Error selecting document:", error);
     throw error;
@@ -92,6 +109,9 @@ export const selectDocument = async (documentId: string, model: string) => {
  */
 export const processQuery = async (sessionId: string, query: string) => {
   try {
+    console.log('Processing query with session ID:', sessionId);
+    console.log('API URL:', `${API_BASE_URL}/api/query`);
+    
     const response = await fetch(`${API_BASE_URL}/api/query`, {
       method: 'POST',
       headers: {
@@ -104,15 +124,22 @@ export const processQuery = async (sessionId: string, query: string) => {
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Failed to process query: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.error || `Failed to process query: ${response.status}`);
+      } catch (parseError) {
+        throw new Error(`Failed to process query: ${response.status}`);
+      }
     }
     
     // Get the full, unfiltered response
-    const rawData = await response.json();
+    const data = await response.json();
+    console.log('Query processed successfully:', data);
     
-    // Do not apply any client-side filtering - return everything
-    return rawData;
+    return data;
   } catch (error) {
     console.error("Error processing query:", error);
     throw error;

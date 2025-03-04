@@ -10,7 +10,10 @@ RUN npm install
 # Copy the application code
 COPY . .
 
-# Build the application
+# Build the TypeScript server
+RUN npm run build:server
+
+# Build the frontend application
 RUN npm run build
 
 # Create uploads directory
@@ -20,4 +23,4 @@ RUN mkdir -p uploads
 EXPOSE 5000
 
 # Command to run the application
-CMD ["npm", "run", "start"]
+CMD ["node", "dist/server.js"]

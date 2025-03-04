@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import AdminLogin from "@/components/admin/AdminLogin";
 import DocumentUpload from "@/components/admin/DocumentUpload";
 import DocumentsList from "@/components/admin/DocumentsList";
 import SystemPromptWrapper from "@/components/SystemPromptWrapper";
+import { API_BASE_URL } from "@/lib/apiClient";
 
 /**
  * Admin Panel
@@ -38,15 +40,19 @@ const Admin = () => {
   useEffect(() => {
     const fetchAdminToken = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/admin/token`);
+        console.log('Fetching admin token from:', `${API_BASE_URL}/admin/token`);
+        const response = await fetch(`${API_BASE_URL}/admin/token`);
         if (response.ok) {
           const data = await response.json();
           if (data.admin_token) {
             // Only set this if no token has been entered yet
             if (!adminToken) {
               setAdminToken(data.admin_token);
+              console.log('Admin token retrieved successfully');
             }
           }
+        } else {
+          console.error('Failed to fetch admin token:', response.status);
         }
       } catch (error) {
         console.error("Error fetching admin token:", error);
@@ -56,7 +62,7 @@ const Admin = () => {
     fetchAdminToken();
   }, [adminToken]);
 
-  // Fetch available Ollama models
+  // Fetch available models
   useEffect(() => {
     if (!isTokenValid) return;
     
@@ -70,7 +76,7 @@ const Admin = () => {
         } else {
           toast({
             title: "No models found",
-            description: "Ensure Ollama is running and models are installed.",
+            description: "Ensure models are installed on the server.",
             variant: "destructive",
           });
         }
@@ -78,7 +84,7 @@ const Admin = () => {
         console.error("Error fetching models:", error);
         toast({
           title: "Error fetching models",
-          description: "Please ensure Ollama is installed and running.",
+          description: "Please ensure the server is running.",
           variant: "destructive",
         });
       }
@@ -102,17 +108,24 @@ const Admin = () => {
     
     setIsLoadingDocuments(true);
     try {
-      const response = await fetch(`http://localhost:5000/admin/documents`, {
+      console.log('Fetching documents from:', `${API_BASE_URL}/admin/documents`);
+      console.log('Using admin token:', adminToken.substring(0, 3) + '...');
+      
+      const response = await fetch(`${API_BASE_URL}/admin/documents`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`
+          'Authorization': `Bearer ${adminToken}`,
+          'Cache-Control': 'no-cache'
         }
       });
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch documents:', response.status, errorText);
         throw new Error("Failed to fetch documents");
       }
       
       const data = await response.json();
+      console.log('Documents fetched successfully:', data);
       setDocuments(data.documents || []);
     } catch (error) {
       console.error("Error fetching documents:", error);
@@ -131,14 +144,18 @@ const Admin = () => {
    */
   const handleDeleteDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/admin/document/${documentId}`, {
+      console.log('Deleting document:', documentId);
+      const response = await fetch(`${API_BASE_URL}/admin/document/${documentId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${adminToken}`
+          'Authorization': `Bearer ${adminToken}`,
+          'Cache-Control': 'no-cache'
         }
       });
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to delete document:', response.status, errorText);
         throw new Error("Failed to delete document");
       }
       

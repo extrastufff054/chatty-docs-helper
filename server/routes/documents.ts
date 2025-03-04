@@ -3,12 +3,13 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { 
-  adminUploadDocument, 
-  deleteDocument, 
   getDocuments, 
-  getAdminToken 
+  getSystemPrompts, 
+  selectDocument, 
+  processQuery, 
+  getModels, 
+  uploadDocument 
 } from '../controllers/documentController';
-import { authenticateAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -25,12 +26,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Admin routes
-router.get('/token', getAdminToken);
-
-// Protected routes that require authentication
-router.get('/documents', authenticateAdmin, getDocuments);
-router.post('/upload', authenticateAdmin, upload.single('file'), adminUploadDocument);
-router.delete('/document/:documentId', authenticateAdmin, deleteDocument);
+// Public API routes
+router.get('/documents', getDocuments);
+router.get('/system-prompts', getSystemPrompts);
+router.post('/select-document', selectDocument);
+router.post('/query', processQuery);
+router.get('/models', getModels);
+router.post('/upload', upload.single('file'), uploadDocument);
 
 export default router;

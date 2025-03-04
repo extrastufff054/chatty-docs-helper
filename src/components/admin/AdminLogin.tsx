@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { API_BASE_URL } from "@/lib/apiClient";
 
 interface AdminLoginProps {
   adminToken: string;
@@ -31,24 +30,19 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
     
     setIsChecking(true);
     try {
-      console.log('Validating admin token at:', `${API_BASE_URL}/admin/documents`);
-      
-      const response = await fetch(`${API_BASE_URL}/admin/documents`, {
+      const response = await fetch(`http://localhost:5000/admin/documents`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Cache-Control': 'no-cache'
+          'Authorization': `Bearer ${adminToken}`
         }
       });
       
       if (response.ok) {
-        console.log('Token validation successful');
         setIsTokenValid(true);
         toast({
           title: "Token validated",
           description: "Admin access granted.",
         });
       } else {
-        console.error('Token validation failed:', response.status);
         setIsTokenValid(false);
         toast({
           title: "Invalid token",
@@ -60,7 +54,7 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
       console.error("Error validating token:", error);
       toast({
         title: "Error validating token",
-        description: "Failed to validate the admin token. Ensure the server is running.",
+        description: "Failed to validate the admin token.",
         variant: "destructive",
       });
     } finally {

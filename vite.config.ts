@@ -21,16 +21,7 @@ export default defineConfig(({ mode }) => ({
     fs: {
       allow: ['.']
     },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
-      '/admin': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      }
-    },
+    proxy: {},
     // Explicitly allow serveo.net domains
     strictPort: true,
     // This is the key setting needed to resolve the error

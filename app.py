@@ -1,3 +1,4 @@
+
 import logging
 import os
 import subprocess
@@ -30,9 +31,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Enable CORS for all routes with additional configuration
+# Enable CORS for all routes
 CORS(app, resources={
-    r"/api/*": {
+    r"/*": {
         "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]

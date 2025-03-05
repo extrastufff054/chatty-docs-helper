@@ -44,12 +44,19 @@ logger.info(f"Admin Token: {ADMIN_TOKEN} (Keep this secure)")
 register_admin_routes(app)
 register_api_routes(app)
 
+# Catch-all route to serve the frontend application
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    """Serve the frontend application."""
-    if path != "" and os.path.exists(os.path.join('public', path)):
+    """
+    Serve the frontend application for any route.
+    This ensures that routes like /admin are handled by the React Router.
+    """
+    if path and os.path.exists(os.path.join('public', path)):
         return send_from_directory('public', path)
+    elif path and '.' in path:
+        # For other assets that don't exist, return 404
+        return "Not found", 404
     return send_from_directory('public', 'index.html')
 
 if __name__ == '__main__':

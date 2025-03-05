@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import AdminLogin from "@/components/admin/AdminLogin";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminTabs from "@/components/admin/AdminTabs";
@@ -27,15 +28,19 @@ const Admin = () => {
   const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
   const [globalTemperature, setGlobalTemperature] = useState<number>(0);
   
+  // Error state
+  const [hasConnectionError, setHasConnectionError] = useState<boolean>(false);
+  
   // UI state
   const [activeTab, setActiveTab] = useState<string>("documents");
   
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   // Fetch admin token for first-time setup
   useEffect(() => {
     const fetchAdminToken = async () => {
       try {
+        setHasConnectionError(false);
         const response = await fetch(`${API_BASE_URL}/admin/token`);
         if (response.ok) {
           const data = await response.json();
@@ -48,6 +53,11 @@ const Admin = () => {
         }
       } catch (error) {
         console.error("Error fetching admin token:", error);
+        setHasConnectionError(true);
+        toast.error("Connection error", {
+          description: "Could not connect to the backend server. Please check if it's running and accessible.",
+          duration: 5000,
+        });
       }
     };
 
@@ -66,7 +76,7 @@ const Admin = () => {
         if (models.length > 0) {
           setSelectedModel(models[0]);
         } else {
-          toast({
+          uiToast({
             title: "No models found",
             description: "Ensure Ollama is running and models are installed.",
             variant: "destructive",
@@ -74,7 +84,7 @@ const Admin = () => {
         }
       } catch (error) {
         console.error("Error fetching models:", error);
-        toast({
+        uiToast({
           title: "Error fetching models",
           description: "Please ensure Ollama is installed and running.",
           variant: "destructive",
@@ -83,7 +93,7 @@ const Admin = () => {
     };
 
     fetchModels();
-  }, [toast, isTokenValid]);
+  }, [uiToast, isTokenValid]);
 
   // Fetch documents when token is valid
   useEffect(() => {
@@ -114,7 +124,7 @@ const Admin = () => {
       setDocuments(data.documents || []);
     } catch (error) {
       console.error("Error fetching documents:", error);
-      toast({
+      uiToast({
         title: "Error fetching documents",
         description: "Failed to retrieve uploaded documents.",
         variant: "destructive",
@@ -140,7 +150,7 @@ const Admin = () => {
         throw new Error("Failed to delete document");
       }
       
-      toast({
+      uiToast({
         title: "Document deleted",
         description: "The document has been deleted successfully.",
       });
@@ -149,13 +159,39 @@ const Admin = () => {
       fetchDocuments();
     } catch (error) {
       console.error("Error deleting document:", error);
-      toast({
+      uiToast({
         title: "Error deleting document",
         description: "Failed to delete the document.",
         variant: "destructive",
       });
     }
   };
+
+  // If there's a connection error, show a helpful message
+  if (hasConnectionError) {
+    return (
+      <div className="container mx-auto py-16 text-center">
+        <h1 className="text-3xl font-bold mb-6">Connection Error</h1>
+        <div className="max-w-xl mx-auto bg-destructive/10 p-6 rounded-lg border border-destructive">
+          <p className="mb-4">
+            Could not connect to the backend server. Please check if:
+          </p>
+          <ul className="text-left list-disc pl-6 mb-6">
+            <li className="mb-2">The backend server is running</li>
+            <li className="mb-2">The server is accessible from this network</li>
+            <li className="mb-2">There are no firewall issues blocking the connection</li>
+            <li className="mb-2">The API URL configuration is correct</li>
+          </ul>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // If token is not valid, show login screen
   if (!isTokenValid) {

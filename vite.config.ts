@@ -30,31 +30,11 @@ export default defineConfig(({ mode }) => ({
           });
         },
       },
-      '/admin/token': {
+      '/admin': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       },
-      '/admin/documents': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/admin/upload': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/admin/document': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/admin/system-prompts': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      }
     },
     // Add this to allow access from any host
     hmr: {

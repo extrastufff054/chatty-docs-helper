@@ -1,5 +1,5 @@
 
-import { API_BASE_URL } from '@/config/constants';
+import { apiFetch, processApiResponse } from '@/utils/apiUtils';
 
 export interface SystemPrompt {
   id: string;
@@ -11,20 +11,9 @@ export interface SystemPrompt {
 
 export async function fetchSystemPrompts(): Promise<SystemPrompt[]> {
   try {
-    console.log(`Fetching system prompts from ${API_BASE_URL}/api/system-prompts`);
-    const response = await fetch(`${API_BASE_URL}/api/system-prompts`, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      }
-    });
-    
-    if (!response.ok) {
-      console.error(`Error response from server: ${response.status} ${response.statusText}`);
-      throw new Error(`HTTP error ${response.status}`);
-    }
-    
-    const data = await response.json();
+    console.log('Fetching system prompts from API');
+    const response = await apiFetch('/api/system-prompts');
+    const data = await processApiResponse<{ prompts: SystemPrompt[] }>(response);
     console.log("System prompts fetched successfully:", data);
     return data.prompts || [];
   } catch (error: any) {
@@ -38,7 +27,7 @@ export async function createSystemPrompt(
   promptData: Omit<SystemPrompt, 'id'>
 ): Promise<SystemPrompt> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/system-prompts`, {
+    const response = await apiFetch('/admin/system-prompts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,12 +36,7 @@ export async function createSystemPrompt(
       body: JSON.stringify(promptData)
     });
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error ${response.status}`);
-    }
-    
-    const data = await response.json();
+    const data = await processApiResponse<{ prompt: SystemPrompt }>(response);
     return data.prompt;
   } catch (error: any) {
     console.error("Error creating system prompt:", error);
@@ -66,7 +50,7 @@ export async function updateSystemPrompt(
   promptData: Omit<SystemPrompt, 'id'>
 ): Promise<SystemPrompt> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/system-prompts/${promptId}`, {
+    const response = await apiFetch(`/admin/system-prompts/${promptId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -75,11 +59,7 @@ export async function updateSystemPrompt(
       body: JSON.stringify(promptData)
     });
     
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
-    }
-    
-    const data = await response.json();
+    const data = await processApiResponse<{ prompt: SystemPrompt }>(response);
     return data.prompt;
   } catch (error: any) {
     console.error("Error updating system prompt:", error);
@@ -92,16 +72,14 @@ export async function deleteSystemPrompt(
   promptId: string
 ): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/system-prompts/${promptId}`, {
+    const response = await apiFetch(`/admin/system-prompts/${promptId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${adminToken}`
       }
     });
     
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
-    }
+    await processApiResponse(response);
   } catch (error: any) {
     console.error("Error deleting system prompt:", error);
     throw new Error(error.message || "Failed to delete system prompt");

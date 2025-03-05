@@ -1,5 +1,5 @@
 
-import { API_BASE_URL } from '@/config/constants';
+import { apiFetch, processApiResponse } from '@/utils/apiUtils';
 
 export interface Document {
   id: string;
@@ -12,20 +12,9 @@ export interface Document {
 
 export async function fetchDocuments(): Promise<Document[]> {
   try {
-    console.log(`Fetching documents from ${API_BASE_URL}/api/documents`);
-    const response = await fetch(`${API_BASE_URL}/api/documents`, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      }
-    });
-    
-    if (!response.ok) {
-      console.error(`Error response from server: ${response.status} ${response.statusText}`);
-      throw new Error(`HTTP error ${response.status}`);
-    }
-    
-    const data = await response.json();
+    console.log('Fetching documents from API');
+    const response = await apiFetch('/api/documents');
+    const data = await processApiResponse<{ documents: Document[] }>(response);
     console.log("Documents fetched successfully:", data);
     return data.documents || [];
   } catch (error: any) {
@@ -37,22 +26,15 @@ export async function fetchDocuments(): Promise<Document[]> {
 export async function selectDocument(documentId: string, model: string): Promise<{ session_id: string }> {
   try {
     console.log(`Selecting document ${documentId} with model ${model}`);
-    const response = await fetch(`${API_BASE_URL}/api/select-document`, {
+    const response = await apiFetch('/api/select-document', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
       },
       body: JSON.stringify({ document_id: documentId, model }),
     });
 
-    if (!response.ok) {
-      console.error(`Error response from server: ${response.status} ${response.statusText}`);
-      throw new Error(`HTTP error ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await processApiResponse<{ session_id: string }>(response);
     console.log("Document selected successfully:", data);
     return data;
   } catch (error: any) {

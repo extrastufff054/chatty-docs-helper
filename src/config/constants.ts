@@ -7,15 +7,19 @@ export const API_BASE_URL = (() => {
     window.location.hostname === 'localhost' || 
     window.location.hostname === '127.0.0.1';
 
-  // For local development, use the hardcoded localhost URL with correct port
+  // Get the current hostname for dynamic configuration
+  const hostname = window.location.hostname;
+  
+  // For local development, prefer the proxy setup through Vite
   if (isLocalhost) {
-    return 'http://localhost:5000';
+    // Use relative URL which will work with Vite's proxy
+    return '';
   }
   
-  // Use the same origin (hostname) as the frontend when deployed
-  // This works when both frontend and backend are on the same domain
-  // but potentially different ports or subpaths
-  return `${window.location.protocol}//${window.location.hostname}:5000`;
+  // For deployed environments, try to connect directly to the backend
+  // We remove the port specification to allow the browser to use the same port
+  // This works better with various deployment scenarios
+  return `${window.location.protocol}//${hostname}`;
 })();
 
 console.log(`API_BASE_URL configured as: ${API_BASE_URL}`);

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { API_BASE_URL } from "@/config/constants";
 
 interface AdminLoginProps {
   adminToken: string;
@@ -22,7 +22,6 @@ interface AdminLoginProps {
  */
 const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginProps) => {
   const [isChecking, setIsChecking] = useState<boolean>(false);
-  const [networkError, setNetworkError] = useState<string>("");
   const { toast } = useToast();
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
@@ -30,15 +29,10 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
     if (!adminToken) return;
     
     setIsChecking(true);
-    setNetworkError("");
-    
     try {
-      console.log(`Validating admin token with ${API_BASE_URL}/admin/documents`);
-      const response = await fetch(`${API_BASE_URL}/admin/documents`, {
+      const response = await fetch(`http://localhost:5000/admin/documents`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
+          'Authorization': `Bearer ${adminToken}`
         }
       });
       
@@ -49,20 +43,18 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
           description: "Admin access granted.",
         });
       } else {
-        const errorData = await response.json().catch(() => ({ error: `Server returned status: ${response.status}` }));
         setIsTokenValid(false);
         toast({
           title: "Invalid token",
-          description: errorData.error || "The provided admin token is invalid.",
+          description: "The provided admin token is invalid.",
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error validating token:", error);
-      setNetworkError(`Network error: Unable to connect to ${API_BASE_URL}. Please ensure the backend server is running and accessible.`);
       toast({
-        title: "Connection error",
-        description: "Failed to connect to the backend server.",
+        title: "Error validating token",
+        description: "Failed to validate the admin token.",
         variant: "destructive",
       });
     } finally {
@@ -103,12 +95,6 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
                   className="transition-colors"
                 />
               </div>
-              {networkError && (
-                <div className="text-sm text-destructive mt-2">
-                  {networkError}
-                  <p className="mt-1">Backend URL: {API_BASE_URL}</p>
-                </div>
-              )}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

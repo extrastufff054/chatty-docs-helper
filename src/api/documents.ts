@@ -12,22 +12,11 @@ export interface Document {
 
 export async function fetchDocuments(): Promise<Document[]> {
   try {
-    console.log(`Fetching documents from ${API_BASE_URL}/api/documents`);
-    const response = await fetch(`${API_BASE_URL}/api/documents`, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      }
-    });
-    
+    const response = await fetch(`${API_BASE_URL}/api/documents`);
     if (!response.ok) {
-      console.error(`Error response from server: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP error ${response.status}`);
     }
-    
-    const data = await response.json();
-    console.log("Documents fetched successfully:", data);
-    return data.documents || [];
+    return await response.json();
   } catch (error: any) {
     console.error("Error fetching documents:", error);
     throw new Error(error.message || "Failed to fetch documents");
@@ -36,25 +25,19 @@ export async function fetchDocuments(): Promise<Document[]> {
 
 export async function selectDocument(documentId: string, model: string): Promise<{ session_id: string }> {
   try {
-    console.log(`Selecting document ${documentId} with model ${model}`);
-    const response = await fetch(`${API_BASE_URL}/api/select-document`, {
+    const response = await fetch(`${API_BASE_URL}/api/select_document`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
       },
       body: JSON.stringify({ document_id: documentId, model }),
     });
 
     if (!response.ok) {
-      console.error(`Error response from server: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP error ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log("Document selected successfully:", data);
-    return data;
+    return await response.json();
   } catch (error: any) {
     console.error("Error selecting document:", error);
     throw new Error(error.message || "Failed to select document");

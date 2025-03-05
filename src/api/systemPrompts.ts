@@ -11,21 +11,11 @@ export interface SystemPrompt {
 
 export async function fetchSystemPrompts(): Promise<SystemPrompt[]> {
   try {
-    console.log(`Fetching system prompts from ${API_BASE_URL}/api/system-prompts`);
-    const response = await fetch(`${API_BASE_URL}/api/system-prompts`, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      }
-    });
-    
+    const response = await fetch(`${API_BASE_URL}/api/system-prompts`);
     if (!response.ok) {
-      console.error(`Error response from server: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP error ${response.status}`);
     }
-    
     const data = await response.json();
-    console.log("System prompts fetched successfully:", data);
     return data.prompts || [];
   } catch (error: any) {
     console.error("Error fetching system prompts:", error);

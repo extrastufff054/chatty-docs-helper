@@ -1,4 +1,3 @@
-
 /**
  * Document Processing Module
  * 
@@ -6,19 +5,9 @@
  * It handles file uploads, model selection, and query processing for the document Q&A system.
  */
 
-// Determine the correct API base URL based on the environment
-const getApiBaseUrl = () => {
-  // Check if we're running in a deployed environment with a different hostname
-  const isDeployed = window.location.hostname !== 'localhost' && 
-                     !window.location.hostname.includes('127.0.0.1');
-  
-  // If deployed, use relative URLs to ensure requests go to the same origin
-  // Otherwise, use the explicit localhost URL with the specific port
-  return isDeployed ? '' : `http://${window.location.hostname}:5000`;
-};
+import { API_BASE_URL } from '@/config/constants';
 
 // API endpoints for the Python backend
-const API_BASE_URL = getApiBaseUrl();
 const MODELS_ENDPOINT = `${API_BASE_URL}/api/models`;
 const UPLOAD_ENDPOINT = `${API_BASE_URL}/api/upload`;
 const QUERY_ENDPOINT = `${API_BASE_URL}/api/query`;

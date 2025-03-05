@@ -12,6 +12,7 @@ import DocumentUpload from "@/components/admin/DocumentUpload";
 import DocumentsList from "@/components/admin/DocumentsList";
 import SystemPromptWrapper from "@/components/SystemPromptWrapper";
 import TemperatureSlider from "@/components/admin/TemperatureSlider";
+import { API_BASE_URL } from "@/config/constants";
 
 /**
  * Admin Panel
@@ -42,7 +43,7 @@ const Admin = () => {
   useEffect(() => {
     const fetchAdminToken = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/admin/token`);
+        const response = await fetch(`${API_BASE_URL}/admin/token`);
         if (response.ok) {
           const data = await response.json();
           if (data.admin_token) {
@@ -106,7 +107,7 @@ const Admin = () => {
     
     setIsLoadingDocuments(true);
     try {
-      const response = await fetch(`http://localhost:5000/admin/documents`, {
+      const response = await fetch(`${API_BASE_URL}/admin/documents`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -135,7 +136,7 @@ const Admin = () => {
    */
   const handleDeleteDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/admin/document/${documentId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/document/${documentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`

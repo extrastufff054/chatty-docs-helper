@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,8 @@ interface SystemPromptManagementProps {
   adminToken: string;
 }
 
+const ADMIN_API_BASE_URL = `${API_BASE_URL}/admin`;
+
 const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => {
   const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,39 +53,24 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
   const [isEditing, setIsEditing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [useCustomTemperature, setUseCustomTemperature] = useState(false);
-  const [adminApiBaseUrl, setAdminApiBaseUrl] = useState<string>('');
 
   const { toast } = useToast();
 
   useEffect(() => {
-    // Dynamically determine the admin API base URL
-    const apiBaseUrl = API_BASE_URL;
-    setAdminApiBaseUrl(`${apiBaseUrl}/admin`);
-    
     fetchSystemPrompts();
   }, []);
 
   const fetchSystemPrompts = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${adminApiBaseUrl}/system-prompts`, {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/system-prompts`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          'Authorization': `Bearer ${adminToken}`
         }
       });
       
-      // Check if the response is not JSON (HTML error page)
-      const contentType = response.headers.get('content-type');
-      if (contentType && !contentType.includes('application/json')) {
-        console.error('Received non-JSON response:', await response.text());
-        throw new Error(`Received non-JSON response with content type: ${contentType}`);
-      }
-      
       if (!response.ok) {
-        throw new Error(`Failed to fetch system prompts: ${response.status} ${response.statusText}`);
+        throw new Error("Failed to fetch system prompts");
       }
       
       const data = await response.json();
@@ -93,7 +79,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
       console.error("Error fetching system prompts:", error);
       toast({
         title: "Error fetching system prompts",
-        description: `Failed to retrieve system prompts: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: "Failed to retrieve system prompts. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -113,9 +99,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
     
     setIsCreating(true);
     try {
-      console.log(`Sending POST request to: ${adminApiBaseUrl}/system-prompts`);
-      
-      const response = await fetch(`${adminApiBaseUrl}/system-prompts`, {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/system-prompts`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${adminToken}`,
@@ -124,20 +108,11 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
         body: JSON.stringify(newPrompt)
       });
       
-      // Check if the response is not JSON (HTML error page)
-      const contentType = response.headers.get('content-type');
-      if (contentType && !contentType.includes('application/json')) {
-        const errorText = await response.text();
-        console.error('Received non-JSON response:', errorText);
-        throw new Error(`Server returned ${response.status} with non-JSON response`);
-      }
-      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Failed to create system prompt: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
+        throw new Error("Failed to create system prompt");
       }
       
-      await response.json();
+      const data = await response.json();
       
       toast({
         title: "System prompt created",
@@ -156,7 +131,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
       console.error("Error creating system prompt:", error);
       toast({
         title: "Error creating system prompt",
-        description: `Failed to create the system prompt: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: "Failed to create the system prompt. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -176,7 +151,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
     
     setIsEditing(true);
     try {
-      const response = await fetch(`${adminApiBaseUrl}/system-prompts/${editingPrompt.id}`, {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/system-prompts/${editingPrompt.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${adminToken}`,
@@ -190,18 +165,11 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
         })
       });
       
-      // Check if the response is not JSON (HTML error page)
-      const contentType = response.headers.get('content-type');
-      if (contentType && !contentType.includes('application/json')) {
-        console.error('Received non-JSON response:', await response.text());
-        throw new Error(`Received non-JSON response with content type: ${contentType}`);
-      }
-      
       if (!response.ok) {
-        throw new Error(`Failed to update system prompt: ${response.status} ${response.statusText}`);
+        throw new Error("Failed to update system prompt");
       }
       
-      await response.json();
+      const data = await response.json();
       
       toast({
         title: "System prompt updated",
@@ -214,7 +182,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
       console.error("Error updating system prompt:", error);
       toast({
         title: "Error updating system prompt",
-        description: `Failed to update the system prompt: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: "Failed to update the system prompt. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -233,22 +201,15 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
         return;
       }
       
-      const response = await fetch(`${adminApiBaseUrl}/system-prompts/${promptId}`, {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/system-prompts/${promptId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
       });
       
-      // Check if the response is not JSON (HTML error page)
-      const contentType = response.headers.get('content-type');
-      if (contentType && !contentType.includes('application/json')) {
-        console.error('Received non-JSON response:', await response.text());
-        throw new Error(`Received non-JSON response with content type: ${contentType}`);
-      }
-      
       if (!response.ok) {
-        throw new Error(`Failed to delete system prompt: ${response.status} ${response.statusText}`);
+        throw new Error("Failed to delete system prompt");
       }
       
       toast({
@@ -261,7 +222,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
       console.error("Error deleting system prompt:", error);
       toast({
         title: "Error deleting system prompt",
-        description: `Failed to delete the system prompt: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: "Failed to delete the system prompt. Please try again.",
         variant: "destructive",
       });
     }

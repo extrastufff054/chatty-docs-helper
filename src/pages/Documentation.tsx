@@ -1,8 +1,8 @@
+
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
 
 const Documentation = () => {
   return (
@@ -21,24 +21,21 @@ const Documentation = () => {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Link to="/">
-              <Button variant="outline" className="hover-scale">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to App
-              </Button>
-            </Link>
+            <Button variant="outline" onClick={() => window.location.href = "/"} className="hover-scale">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to App
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="container py-8 max-w-4xl mx-auto">
         <Tabs defaultValue="user" className="w-full">
-          <TabsList className="grid grid-cols-5 mb-8">
+          <TabsList className="grid grid-cols-4 mb-8">
             <TabsTrigger value="user">User Guide</TabsTrigger>
-            <TabsTrigger value="admin">Admin Guide</TabsTrigger>
             <TabsTrigger value="developer">Developer Guide</TabsTrigger>
             <TabsTrigger value="server">Server Guide</TabsTrigger>
-            <TabsTrigger value="troubleshooting">Troubleshooting</TabsTrigger>
+            <TabsTrigger value="contribution">Contribution</TabsTrigger>
           </TabsList>
           
           <TabsContent value="user" className="space-y-8">
@@ -71,7 +68,7 @@ const Documentation = () => {
             <div className="mb-6 border-b pb-8">
               <h2 className="text-2xl font-bold mb-4">Administration</h2>
               <p className="text-muted-foreground mb-4">
-                To upload and manage documents, access the admin page at <Link to="/admin" className="text-primary hover:underline">/admin</Link>.
+                To upload and manage documents, access the admin page at <code className="bg-muted px-1 py-0.5 rounded">/admin</code>.
               </p>
               <h3 className="text-xl font-semibold mt-6 mb-3">Document Upload Process:</h3>
               <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
@@ -104,98 +101,6 @@ const Documentation = () => {
                 </li>
                 <li>
                   <span className="font-medium text-foreground">PDF Documents:</span> Files should be text-based PDFs, not scanned images.
-                </li>
-              </ul>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="admin" className="space-y-8">
-            <div className="mb-6 border-b pb-8">
-              <h2 className="text-3xl font-bold mb-4">Admin Guide</h2>
-              <p className="text-muted-foreground mb-4">
-                This guide provides detailed instructions for administrators to manage the I4C Chatbot system, including document management, system prompt configuration, and more.
-              </p>
-            </div>
-
-            <div className="mb-6 border-b pb-8">
-              <h2 className="text-2xl font-bold mb-4">Accessing the Admin Panel</h2>
-              <p className="text-muted-foreground mb-4">
-                The admin panel is available at <Link to="/admin" className="text-primary hover:underline">/admin</Link> and requires authentication with an admin token.
-              </p>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
-                <li>
-                  <span className="font-medium text-foreground">Navigate to the Admin Panel:</span> Access <Link to="/admin" className="text-primary hover:underline">/admin</Link> in your browser.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Authentication:</span> Enter the admin token that was displayed when the server was started. You can find this token in the server logs or by checking the server console output.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Access Admin Features:</span> Once authenticated, you'll have access to document management, system prompt configuration, and other administrative functions.
-                </li>
-              </ol>
-            </div>
-
-            <div className="mb-6 border-b pb-8">
-              <h2 className="text-2xl font-bold mb-4">Document Management</h2>
-              <h3 className="text-xl font-semibold mt-6 mb-3">Document Upload Process:</h3>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
-                <li>
-                  <span className="font-medium text-foreground">Select a PDF:</span> Drag and drop or click to upload a PDF document.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Add Metadata:</span> Provide a title and optional description for the document.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Choose Model:</span> Select the Ollama model to use for processing the document.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Upload:</span> Click the upload button and wait for processing to complete.
-                </li>
-              </ol>
-              
-              <h3 className="text-xl font-semibold mt-6 mb-3">Document Deletion:</h3>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
-                <li>
-                  <span className="font-medium text-foreground">Browse Documents:</span> View the list of uploaded documents.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Delete:</span> Click the delete button next to a document to remove it from the system.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Confirm:</span> Confirm the deletion in the dialog.
-                </li>
-              </ol>
-            </div>
-
-            <div className="mb-6 border-b pb-8">
-              <h2 className="text-2xl font-bold mb-4">System Prompt Management</h2>
-              <p className="text-muted-foreground mb-4">
-                System prompts define how the AI responds to questions about documents. You can create, edit, and delete custom system prompts.
-              </p>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
-                <li>
-                  <span className="font-medium text-foreground">Create Prompt:</span> Click on "Create New Prompt" to define a new response template.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Edit Prompts:</span> Modify existing prompts by clicking the edit button.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Delete Prompts:</span> Remove custom prompts when no longer needed (default prompts cannot be deleted).
-                </li>
-              </ol>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-4">Temperature Settings</h2>
-              <p className="text-muted-foreground mb-4">
-                Adjust the global temperature setting to control the creativity vs. precision balance of AI responses:
-              </p>
-              <ul className="space-y-2 text-muted-foreground list-disc list-inside">
-                <li>
-                  <span className="font-medium text-foreground">Lower values (0.0):</span> More precise, deterministic responses.
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Higher values (1.0):</span> More creative, varied responses.
                 </li>
               </ul>
             </div>
@@ -417,96 +322,120 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate</code>
             </div>
           </TabsContent>
           
-          <TabsContent value="troubleshooting" className="space-y-8">
+          <TabsContent value="contribution" className="space-y-8">
             <div className="mb-6 border-b pb-8">
-              <h2 className="text-3xl font-bold mb-4">Troubleshooting Guide</h2>
+              <h2 className="text-3xl font-bold mb-4">Contribution Guide</h2>
               <p className="text-muted-foreground mb-4">
-                This guide provides solutions for common issues you might encounter while using the I4C Chatbot application.
+                We welcome contributions to the I4C Chatbot project! This guide outlines the process for contributing code, reporting issues, and suggesting enhancements.
               </p>
             </div>
 
             <div className="mb-6 border-b pb-8">
-              <h2 className="text-2xl font-bold mb-4">Admin Page Not Found (404)</h2>
-              <p className="text-muted-foreground mb-4">
-                If you're experiencing a "Not Found" error when accessing the admin page:
-              </p>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
+              <h2 className="text-2xl font-bold mb-4">Code Contributions</h2>
+              <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
                 <li>
-                  <span className="font-medium text-foreground">Correct URL:</span> Ensure you're accessing the correct URL path - it should be <code className="bg-muted px-1 py-0.5 rounded">/admin</code> without any trailing slashes.
+                  <span className="font-medium text-foreground">Fork the repository:</span> Create your own copy of the repository on GitHub
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Server Running:</span> Verify that the backend server is running and accessible.
+                  <span className="font-medium text-foreground">Clone your fork:</span>
+                  <pre className="bg-muted p-2 rounded mt-2 overflow-x-auto">
+                    <code>git clone https://github.com/yourusername/i4c-chatbot.git</code>
+                  </pre>
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Restart Servers:</span> Try restarting both the frontend and backend servers.
+                  <span className="font-medium text-foreground">Create a branch:</span>
+                  <pre className="bg-muted p-2 rounded mt-2 overflow-x-auto">
+                    <code>git checkout -b feature/your-feature-name</code>
+                  </pre>
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Clear Cache:</span> Clear your browser cache or try in a private/incognito window.
+                  <span className="font-medium text-foreground">Make your changes:</span> Implement your feature or fix
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Check Server Logs:</span> Review the backend server logs for any error messages.
+                  <span className="font-medium text-foreground">Run tests:</span> Ensure all tests pass
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Commit your changes:</span>
+                  <pre className="bg-muted p-2 rounded mt-2 overflow-x-auto">
+                    <code>git commit -m "Descriptive commit message"</code>
+                  </pre>
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Push to your fork:</span>
+                  <pre className="bg-muted p-2 rounded mt-2 overflow-x-auto">
+                    <code>git push origin feature/your-feature-name</code>
+                  </pre>
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Create a Pull Request:</span> Open a PR against the main repository
                 </li>
               </ol>
             </div>
 
             <div className="mb-6 border-b pb-8">
-              <h2 className="text-2xl font-bold mb-4">API Connection Issues</h2>
-              <p className="text-muted-foreground mb-4">
-                If the frontend cannot connect to the backend API:
-              </p>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
+              <h2 className="text-2xl font-bold mb-4">Coding Standards</h2>
+              <ul className="space-y-2 text-muted-foreground list-disc list-inside">
                 <li>
-                  <span className="font-medium text-foreground">CORS Settings:</span> Ensure the backend CORS settings are configured correctly to allow requests from the frontend.
+                  <span className="font-medium text-foreground">TypeScript:</span> Use TypeScript for all frontend code with proper typing
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">API URL Configuration:</span> Check that the frontend is using the correct API base URL, especially if running on different machines or networks.
+                  <span className="font-medium text-foreground">Python:</span> Follow PEP 8 for Python code
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Network Connectivity:</span> Verify that both machines can communicate with each other on the required ports.
+                  <span className="font-medium text-foreground">Component Structure:</span> Keep components small and focused on a single responsibility
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Firewall Settings:</span> Check if any firewall is blocking the communication between frontend and backend.
+                  <span className="font-medium text-foreground">Documentation:</span> Add comments for complex logic and document new features
                 </li>
-              </ol>
+                <li>
+                  <span className="font-medium text-foreground">Formatting:</span> Use consistent formatting (preferably with Prettier for frontend)
+                </li>
+              </ul>
             </div>
 
             <div className="mb-6 border-b pb-8">
-              <h2 className="text-2xl font-bold mb-4">Authentication Issues</h2>
+              <h2 className="text-2xl font-bold mb-4">Reporting Issues</h2>
               <p className="text-muted-foreground mb-4">
-                If you're having trouble with admin authentication:
+                When reporting issues, please include:
               </p>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
+              <ul className="space-y-2 text-muted-foreground list-disc list-inside">
                 <li>
-                  <span className="font-medium text-foreground">Correct Token:</span> Ensure you're using the exact admin token shown in the server logs when it started.
+                  <span className="font-medium text-foreground">Issue description:</span> Clear and concise description of the problem
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Token Visibility:</span> The token may be regenerated each time the server starts if not set as an environment variable.
+                  <span className="font-medium text-foreground">Steps to reproduce:</span> Detailed steps to reproduce the issue
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Environment Variables:</span> If using a custom token, ensure the <code className="bg-muted px-1 py-0.5 rounded">ADMIN_TOKEN</code> environment variable is set correctly.
+                  <span className="font-medium text-foreground">Expected behavior:</span> What you expected to happen
                 </li>
-              </ol>
+                <li>
+                  <span className="font-medium text-foreground">Actual behavior:</span> What actually happened
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Environment details:</span> Browser, OS, and application version
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Screenshots:</span> If applicable
+                </li>
+              </ul>
             </div>
 
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-4">Ollama Integration Issues</h2>
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Feature Requests</h2>
               <p className="text-muted-foreground mb-4">
-                If experiencing problems with Ollama models:
+                We welcome feature suggestions! Please provide:
               </p>
-              <ol className="space-y-4 text-muted-foreground list-decimal list-inside">
+              <ul className="space-y-2 text-muted-foreground list-disc list-inside">
                 <li>
-                  <span className="font-medium text-foreground">Ollama Service:</span> Ensure Ollama is installed and running.
+                  <span className="font-medium text-foreground">Feature description:</span> Clear explanation of the proposed feature
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Model Installation:</span> Verify that the models you're trying to use are installed in Ollama.
+                  <span className="font-medium text-foreground">Use case:</span> Why this feature would be useful
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">Ollama API Access:</span> Check that the backend can communicate with Ollama at <code className="bg-muted px-1 py-0.5 rounded">http://localhost:11434</code>.
+                  <span className="font-medium text-foreground">Implementation ideas:</span> Any thoughts on how it might be implemented
                 </li>
-                <li>
-                  <span className="font-medium text-foreground">Resource Constraints:</span> Ensure your system has sufficient resources (RAM, disk space) for the models you're using.
-                </li>
-              </ol>
+              </ul>
             </div>
           </TabsContent>
         </Tabs>

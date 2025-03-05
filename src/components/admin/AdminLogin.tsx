@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiFetch, processApiResponse } from "@/utils/apiUtils";
+import { API_BASE_URL } from "@/config/constants";
 
 interface AdminLoginProps {
   adminToken: string;
@@ -34,10 +33,12 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
     setNetworkError("");
     
     try {
-      console.log('Validating admin token');
-      const response = await apiFetch('/admin/documents', {
+      console.log(`Validating admin token with ${API_BASE_URL}/admin/documents`);
+      const response = await fetch(`${API_BASE_URL}/admin/documents`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`
+          'Authorization': `Bearer ${adminToken}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         }
       });
       
@@ -58,7 +59,7 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
       }
     } catch (error: any) {
       console.error("Error validating token:", error);
-      setNetworkError(`Network error: Unable to connect to the backend server. Please ensure the backend server is running and accessible.`);
+      setNetworkError(`Network error: Unable to connect to ${API_BASE_URL}. Please ensure the backend server is running and accessible.`);
       toast({
         title: "Connection error",
         description: "Failed to connect to the backend server.",
@@ -105,7 +106,7 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
               {networkError && (
                 <div className="text-sm text-destructive mt-2">
                   {networkError}
-                  <p className="mt-1">Please check that the backend server is running on port 5000.</p>
+                  <p className="mt-1">Backend URL: {API_BASE_URL}</p>
                 </div>
               )}
             </div>

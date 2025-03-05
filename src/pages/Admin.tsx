@@ -1,12 +1,17 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { toast } from "sonner";
-import AdminLogin from "@/components/admin/AdminLogin";
-import AdminHeader from "@/components/admin/AdminHeader";
-import AdminTabs from "@/components/admin/AdminTabs";
-import { API_BASE_URL } from "@/config/constants";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { ArrowLeft, FileText, Settings, Thermometer } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import AdminLogin from "@/components/admin/AdminLogin";
+import DocumentUpload from "@/components/admin/DocumentUpload";
+import DocumentsList from "@/components/admin/DocumentsList";
+import SystemPromptWrapper from "@/components/SystemPromptWrapper";
+import TemperatureSlider from "@/components/admin/TemperatureSlider";
 
 /**
  * Admin Panel
@@ -28,20 +33,16 @@ const Admin = () => {
   const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
   const [globalTemperature, setGlobalTemperature] = useState<number>(0);
   
-  // Error state
-  const [hasConnectionError, setHasConnectionError] = useState<boolean>(false);
-  
   // UI state
   const [activeTab, setActiveTab] = useState<string>("documents");
   
-  const { toast: uiToast } = useToast();
+  const { toast } = useToast();
 
   // Fetch admin token for first-time setup
   useEffect(() => {
     const fetchAdminToken = async () => {
       try {
-        setHasConnectionError(false);
-        const response = await fetch(`${API_BASE_URL}/admin/token`);
+        const response = await fetch(`http://localhost:5000/admin/token`);
         if (response.ok) {
           const data = await response.json();
           if (data.admin_token) {
@@ -53,11 +54,6 @@ const Admin = () => {
         }
       } catch (error) {
         console.error("Error fetching admin token:", error);
-        setHasConnectionError(true);
-        toast.error("Connection error", {
-          description: "Could not connect to the backend server. Please check if it's running and accessible.",
-          duration: 5000,
-        });
       }
     };
 
@@ -76,7 +72,7 @@ const Admin = () => {
         if (models.length > 0) {
           setSelectedModel(models[0]);
         } else {
-          uiToast({
+          toast({
             title: "No models found",
             description: "Ensure Ollama is running and models are installed.",
             variant: "destructive",
@@ -84,7 +80,7 @@ const Admin = () => {
         }
       } catch (error) {
         console.error("Error fetching models:", error);
-        uiToast({
+        toast({
           title: "Error fetching models",
           description: "Please ensure Ollama is installed and running.",
           variant: "destructive",
@@ -93,7 +89,7 @@ const Admin = () => {
     };
 
     fetchModels();
-  }, [uiToast, isTokenValid]);
+  }, [toast, isTokenValid]);
 
   // Fetch documents when token is valid
   useEffect(() => {
@@ -110,7 +106,7 @@ const Admin = () => {
     
     setIsLoadingDocuments(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/documents`, {
+      const response = await fetch(`http://localhost:5000/admin/documents`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -124,7 +120,7 @@ const Admin = () => {
       setDocuments(data.documents || []);
     } catch (error) {
       console.error("Error fetching documents:", error);
-      uiToast({
+      toast({
         title: "Error fetching documents",
         description: "Failed to retrieve uploaded documents.",
         variant: "destructive",
@@ -139,7 +135,7 @@ const Admin = () => {
    */
   const handleDeleteDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/document/${documentId}`, {
+      const response = await fetch(`http://localhost:5000/admin/document/${documentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`
@@ -150,7 +146,7 @@ const Admin = () => {
         throw new Error("Failed to delete document");
       }
       
-      uiToast({
+      toast({
         title: "Document deleted",
         description: "The document has been deleted successfully.",
       });
@@ -159,39 +155,13 @@ const Admin = () => {
       fetchDocuments();
     } catch (error) {
       console.error("Error deleting document:", error);
-      uiToast({
+      toast({
         title: "Error deleting document",
         description: "Failed to delete the document.",
         variant: "destructive",
       });
     }
   };
-
-  // If there's a connection error, show a helpful message
-  if (hasConnectionError) {
-    return (
-      <div className="container mx-auto py-16 text-center">
-        <h1 className="text-3xl font-bold mb-6">Connection Error</h1>
-        <div className="max-w-xl mx-auto bg-destructive/10 p-6 rounded-lg border border-destructive">
-          <p className="mb-4">
-            Could not connect to the backend server. Please check if:
-          </p>
-          <ul className="text-left list-disc pl-6 mb-6">
-            <li className="mb-2">The backend server is running</li>
-            <li className="mb-2">The server is accessible from this network</li>
-            <li className="mb-2">There are no firewall issues blocking the connection</li>
-            <li className="mb-2">The API URL configuration is correct</li>
-          </ul>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 transition-colors"
-          >
-            Retry Connection
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // If token is not valid, show login screen
   if (!isTokenValid) {
@@ -207,22 +177,110 @@ const Admin = () => {
 
   return (
     <div className="container mx-auto py-8 space-y-8 transition-colors duration-300">
-      <AdminHeader />
+      <div className="flex justify-between items-center animate-fade-in">
+        <div className="flex items-center space-x-3">
+          <img 
+            src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
+            alt="I4C Logo" 
+            className="app-logo h-20 w-auto mr-2"
+          />
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Indian Cybercrime Coordination Centre
+          </h1>
+        </div>
+        <div className="flex gap-2">
+          <ThemeToggle />
+          <Button variant="outline" onClick={() => window.location.href = "/"} className="hover-scale">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
+      </div>
       
-      <AdminTabs 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        adminToken={adminToken}
-        documents={documents}
-        isLoadingDocuments={isLoadingDocuments}
-        handleDeleteDocument={handleDeleteDocument}
-        availableModels={availableModels}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-        fetchDocuments={fetchDocuments}
-        globalTemperature={globalTemperature}
-        setGlobalTemperature={setGlobalTemperature}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-3">
+          <TabsTrigger value="documents" className="flex gap-2 items-center">
+            <FileText className="h-4 w-4" />
+            Documents
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex gap-2 items-center">
+            <Thermometer className="h-4 w-4" />
+            Temperature
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex gap-2 items-center">
+            <Settings className="h-4 w-4" />
+            System Prompts
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="documents" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Upload Form */}
+            <DocumentUpload 
+              adminToken={adminToken}
+              availableModels={availableModels}
+              selectedModel={selectedModel}
+              setSelectedModel={setSelectedModel}
+              fetchDocuments={fetchDocuments}
+            />
+            
+            {/* Documents Table */}
+            <DocumentsList 
+              documents={documents}
+              isLoadingDocuments={isLoadingDocuments}
+              adminToken={adminToken}
+              handleDeleteDocument={handleDeleteDocument}
+            />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="settings" className="animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <TemperatureSlider 
+              initialTemperature={globalTemperature}
+              onTemperatureChange={(temp) => {
+                setGlobalTemperature(temp);
+                toast({
+                  title: "Temperature updated",
+                  description: `Global temperature set to ${temp.toFixed(1)}`,
+                });
+              }}
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Temperature Settings</CardTitle>
+                <CardDescription>
+                  How temperature affects AI responses
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">0.0</span>
+                    <span className="text-sm">Precise, deterministic, focused answers</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">0.5</span>
+                    <span className="text-sm">Balanced responses with some variation</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">1.0</span>
+                    <span className="text-sm">Creative, diverse, more unpredictable</span>
+                  </div>
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    <p className="mb-2">For document Q&A, lower temperatures (0.0-0.3) are recommended for factual accuracy.</p>
+                    <p>Temperature adjustments apply to newly uploaded documents and system prompts.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="advanced" className="animate-fade-in">
+          <SystemPromptWrapper adminToken={adminToken} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

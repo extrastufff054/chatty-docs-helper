@@ -30,7 +30,27 @@ export default defineConfig(({ mode }) => ({
           });
         },
       },
-      '/admin': {
+      '/admin/token': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/admin/documents': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/admin/upload': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/admin/document': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/admin/system-prompts': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,

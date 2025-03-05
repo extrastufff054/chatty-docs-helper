@@ -53,11 +53,18 @@ def serve(path):
     This ensures that routes like /admin are handled by the React Router.
     """
     if path and os.path.exists(os.path.join('public', path)):
+        # For static files that exist, serve them directly
         return send_from_directory('public', path)
     elif path and '.' in path:
         # For other assets that don't exist, return 404
+        logger.warning(f"File not found: {path}")
         return "Not found", 404
+    
+    # For all other routes including /admin, serve the index.html
+    # This allows React Router to handle the routing client-side
+    logger.info(f"Serving index.html for path: {path}")
     return send_from_directory('public', 'index.html')
 
 if __name__ == '__main__':
+    logger.info("Starting Flask server on port 5000...")
     app.run(debug=True, host='0.0.0.0', port=5000)

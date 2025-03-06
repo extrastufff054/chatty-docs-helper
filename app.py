@@ -29,8 +29,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+app = Flask(__name__, static_folder='public')
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
 
 # Generate a random admin token for security
 # In a production app, this would be set in environment variables
@@ -378,6 +378,18 @@ def upload_file():
 # Admin Routes
 # =============================================================================
 
+@app.route('/admin/validate-token', methods=['POST'])
+def admin_validate_token():
+    """Validate the admin token."""
+    data = request.json
+    token = data.get('token')
+    
+    if not token:
+        return jsonify({"valid": False, "error": "No token provided"}), 400
+    
+    is_valid = validate_admin_token(token)
+    return jsonify({"valid": is_valid})
+
 @app.route('/admin/token', methods=['GET'])
 def admin_token():
     """Return the admin token for setup purposes."""
@@ -614,9 +626,14 @@ def admin_delete_document(document_id):
 @app.route('/<path:path>')
 def serve(path):
     """Serve the frontend application."""
-    if path != "" and os.path.exists(os.path.join('public', path)):
-        return send_from_directory('public', path)
-    return send_from_directory('public', 'index.html')
+    if path.startswith("api/") or path.startswith("admin/"):
+        # Let the Flask routes handle API and admin requests
+        return {"error": "Not Found"}, 404
+    
+    # For all other routes, serve the React app
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

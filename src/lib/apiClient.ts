@@ -1,20 +1,23 @@
+
 /**
  * API client for interacting with the backend
  * Provides methods for fetching documents, prompts, and handling queries
  */
 
-// Determine the correct API base URL based on the environment
-const getApiBaseUrl = () => {
-  // Check if we're running in a deployed environment with a different hostname
-  const isDeployed = window.location.hostname !== 'localhost' && 
-                     !window.location.hostname.includes('127.0.0.1');
-  
-  // If deployed, use relative URLs to ensure requests go to the same origin
-  // Otherwise, use the explicit localhost URL with the specific port
-  return isDeployed ? '' : `http://${window.location.hostname}:5000`;
-};
+import { API_BASE_URL, apiUrl } from "@/config/apiConfig";
 
-export const API_BASE_URL = getApiBaseUrl();
+// Utility function for API requests with error handling and retries
+const fetchWithRetry = async (url: string, options?: RequestInit, retries = 3, delay = 1000): Promise<Response> => {
+  try {
+    const response = await fetch(url, options);
+    return response;
+  } catch (error) {
+    if (retries <= 1) throw error;
+    
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return fetchWithRetry(url, options, retries - 1, delay * 1.5);
+  }
+};
 
 /**
  * Fetch all available documents from the API
@@ -22,7 +25,7 @@ export const API_BASE_URL = getApiBaseUrl();
  */
 export const fetchDocuments = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/documents`);
+    const response = await fetchWithRetry(apiUrl('/api/documents'));
     if (!response.ok) {
       throw new Error(`Failed to fetch documents: ${response.status}`);
     }
@@ -40,7 +43,7 @@ export const fetchDocuments = async () => {
  */
 export const fetchSystemPrompts = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/system-prompts`);
+    const response = await fetchWithRetry(apiUrl('/api/system-prompts'));
     if (!response.ok) {
       throw new Error(`Failed to fetch system prompts: ${response.status}`);
     }
@@ -60,7 +63,7 @@ export const fetchSystemPrompts = async () => {
  */
 export const selectDocument = async (documentId: string, model: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/select-document`, {
+    const response = await fetchWithRetry(apiUrl('/api/select-document'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -92,7 +95,7 @@ export const selectDocument = async (documentId: string, model: string) => {
  */
 export const processQuery = async (sessionId: string, query: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/query`, {
+    const response = await fetchWithRetry(apiUrl('/api/query'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

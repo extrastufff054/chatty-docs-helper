@@ -1,14 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ArrowLeft, FileText, Settings } from "lucide-react";
+import { ArrowLeft, FileText, Settings, AlertCircle } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminLogin from "@/components/admin/AdminLogin";
 import DocumentUpload from "@/components/admin/DocumentUpload";
 import DocumentsList from "@/components/admin/DocumentsList";
 import SystemPromptWrapper from "@/components/SystemPromptWrapper";
+import { fetchAdminToken, fetchAdminDocuments, deleteDocument } from "@/lib/adminApiClient";
 
 /**
  * Admin Panel
@@ -29,6 +32,10 @@ const Admin = () => {
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
   
+  // Error state
+  const [hasConnectionError, setHasConnectionError] = useState<boolean>(false);
+  const [connectionErrorMessage, setConnectionErrorMessage] = useState<string>("");
+  
   // UI state
   const [activeTab, setActiveTab] = useState<string>("documents");
   
@@ -36,24 +43,24 @@ const Admin = () => {
 
   // Fetch admin token for first-time setup
   useEffect(() => {
-    const fetchAdminToken = async () => {
+    const getAdminToken = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/admin/token`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.admin_token) {
-            // Only set this if no token has been entered yet
-            if (!adminToken) {
-              setAdminToken(data.admin_token);
-            }
+        setHasConnectionError(false);
+        const token = await fetchAdminToken();
+        if (token) {
+          // Only set this if no token has been entered yet
+          if (!adminToken) {
+            setAdminToken(token);
           }
         }
       } catch (error) {
         console.error("Error fetching admin token:", error);
+        setHasConnectionError(true);
+        setConnectionErrorMessage("Could not connect to the backend server. Please ensure it's running.");
       }
     };
 
-    fetchAdminToken();
+    getAdminToken();
   }, [adminToken]);
 
   // Fetch available Ollama models
@@ -102,18 +109,8 @@ const Admin = () => {
     
     setIsLoadingDocuments(true);
     try {
-      const response = await fetch(`http://localhost:5000/admin/documents`, {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch documents");
-      }
-      
-      const data = await response.json();
-      setDocuments(data.documents || []);
+      const docs = await fetchAdminDocuments(adminToken);
+      setDocuments(docs);
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast({
@@ -131,16 +128,7 @@ const Admin = () => {
    */
   const handleDeleteDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/admin/document/${documentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
-      }
+      await deleteDocument(adminToken, documentId);
       
       toast({
         title: "Document deleted",
@@ -158,6 +146,34 @@ const Admin = () => {
       });
     }
   };
+
+  // If there's a connection error, show a helpful message
+  if (hasConnectionError) {
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center min-h-screen">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center text-destructive">
+              <AlertCircle className="mr-2" />
+              Connection Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>{connectionErrorMessage}</p>
+            <p>Please check:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>The backend server is running on port 5000</li>
+              <li>No firewall is blocking the connection</li>
+              <li>You're using the correct URL</li>
+            </ul>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Retry Connection
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // If token is not valid, show login screen
   if (!isTokenValid) {

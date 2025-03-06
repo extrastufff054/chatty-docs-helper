@@ -28,7 +28,9 @@ COPY nginx.conf /etc/nginx/sites-available/default
 RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # Create startup script
-RUN echo '#!/bin/bash\nnginx\npython app.py' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/bash\n\
+service nginx start\n\
+python app.py' > /app/start.sh && chmod +x /app/start.sh
 
 # Expose the ports
 EXPOSE 80 5000

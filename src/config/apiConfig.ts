@@ -6,17 +6,14 @@
 
 // Determine the correct API base URL based on the environment
 export const getApiBaseUrl = (): string => {
-  // In production, use relative URLs for same-origin requests
+  // In production or when served through nginx, use relative URLs for API requests
+  // This ensures requests go to the same host that serves the app
   if (import.meta.env.PROD) {
     return '';
   }
   
-  // In development, check if we're running in a Docker/container environment
-  // where frontend and backend share the same hostname but different ports
-  const hostname = window.location.hostname;
-  
-  // Default development setup with explicit port for local development
-  return `http://${hostname}:5000`;
+  // In development, use the development server address
+  return 'http://localhost:5000';
 };
 
 // The base URL for API requests

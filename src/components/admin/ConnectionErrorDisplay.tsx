@@ -31,9 +31,14 @@ const ConnectionErrorDisplay: React.FC<ConnectionErrorDisplayProps> = ({ errorMe
             <li>No firewall is blocking the connection</li>
             <li>You're using the correct URL</li>
           </ul>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Retry Connection
-          </Button>
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Retry Connection
+            </Button>
+            <Button onClick={() => window.location.href = "/"}>
+              Return to Home
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

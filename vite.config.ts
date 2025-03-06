@@ -14,12 +14,8 @@ export default defineConfig(({ mode }) => ({
         target: 'http://localhost:5000',
         changeOrigin: true,
         rewrite: (path) => path
-      },
-      '/admin': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        rewrite: (path) => path
       }
+      // Removed the /admin proxy to allow React Router to handle this route
     } : undefined
   },
   plugins: [

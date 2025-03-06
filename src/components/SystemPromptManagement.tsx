@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -220,8 +219,8 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
   return (
     <Tabs defaultValue="list" className="w-full">
       <TabsList className="grid w-full grid-cols-2 mb-4">
-        <TabsTrigger value="list">Prompt Library</TabsTrigger>
-        <TabsTrigger value="create">Create New Prompt</TabsTrigger>
+        <TabsTrigger value="list">Saved Prompts</TabsTrigger>
+        <TabsTrigger value="create">Create Prompt</TabsTrigger>
       </TabsList>
       
       <TabsContent value="list" className="space-y-4">

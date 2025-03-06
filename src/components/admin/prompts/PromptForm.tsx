@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, PlusCircle, Save, X } from "lucide-react";
+import { Loader2, PlusCircle, Save, X, Thermometer } from "lucide-react";
 
 interface PromptFormProps {
   isCreating: boolean;
@@ -57,9 +57,17 @@ const PromptForm: React.FC<PromptFormProps> = ({
       </div>
       
       <div className="space-y-2">
-        <div className="flex justify-between">
-          <label className="text-sm font-medium">Temperature</label>
-          <span className="text-sm">{prompt.temperature.toFixed(1)}</span>
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-medium flex items-center gap-1">
+            <Thermometer className="h-4 w-4" />
+            Temperature
+          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">{prompt.temperature.toFixed(1)}</span>
+            <span className="text-xs text-muted-foreground">
+              {prompt.temperature < 0.3 ? "(More precise)" : prompt.temperature > 0.7 ? "(More creative)" : "(Balanced)"}
+            </span>
+          </div>
         </div>
         <Slider
           value={[prompt.temperature]}

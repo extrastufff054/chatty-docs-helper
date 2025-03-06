@@ -39,7 +39,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { API_BASE_URL, fetchDocuments, fetchSystemPrompts, selectDocument, processQuery } from "@/lib/apiClient";
+import { API_BASE_URL } from "@/config/apiConfig";
+import { fetchDocuments, fetchSystemPrompts, selectDocument, processQuery } from "@/lib/apiClient";
 
 interface Message {
   role: "user" | "assistant";

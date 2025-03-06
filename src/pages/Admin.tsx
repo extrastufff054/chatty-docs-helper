@@ -1,17 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { ArrowLeft, FileText, Settings, AlertCircle } from "lucide-react";
+import { FileText, Settings } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminLogin from "@/components/admin/AdminLogin";
 import DocumentUpload from "@/components/admin/DocumentUpload";
 import DocumentsList from "@/components/admin/DocumentsList";
 import SystemPromptWrapper from "@/components/SystemPromptWrapper";
 import { fetchAdminToken, fetchAdminDocuments, deleteDocument } from "@/lib/adminApiClient";
+import ConnectionErrorDisplay from "@/components/admin/ConnectionErrorDisplay";
+import AdminHeader from "@/components/admin/AdminHeader";
 
 /**
  * Admin Panel
@@ -149,30 +148,7 @@ const Admin = () => {
 
   // If there's a connection error, show a helpful message
   if (hasConnectionError) {
-    return (
-      <div className="container mx-auto py-8 flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center text-destructive">
-              <AlertCircle className="mr-2" />
-              Connection Error
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p>{connectionErrorMessage}</p>
-            <p>Please check:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>The backend server is running on port 5000</li>
-              <li>No firewall is blocking the connection</li>
-              <li>You're using the correct URL</li>
-            </ul>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Retry Connection
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <ConnectionErrorDisplay errorMessage={connectionErrorMessage} />;
   }
 
   // If token is not valid, show login screen
@@ -189,25 +165,7 @@ const Admin = () => {
 
   return (
     <div className="container mx-auto py-8 space-y-8 transition-colors duration-300">
-      <div className="flex justify-between items-center animate-fade-in">
-        <div className="flex items-center space-x-3">
-          <img 
-            src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
-            alt="I4C Logo" 
-            className="app-logo h-20 w-auto mr-2"
-          />
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Indian Cybercrime Coordination Centre
-          </h1>
-        </div>
-        <div className="flex gap-2">
-          <ThemeToggle />
-          <Button variant="outline" onClick={() => window.location.href = "/"} className="hover-scale">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
-        </div>
-      </div>
+      <AdminHeader />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid grid-cols-2">

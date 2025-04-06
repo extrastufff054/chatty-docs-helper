@@ -1,4 +1,3 @@
-
 /**
  * Document Processing Module
  * 
@@ -9,11 +8,10 @@
 // Determine the correct API base URL based on the environment
 const getApiBaseUrl = () => {
   // Check if we're running in a deployed environment with a different hostname
-  const isDeployed = window.location.hostname !== 'localhost' && 
-                     !window.location.hostname.includes('127.0.0.1');
+  const isDeployed = import.meta.env.PROD;
   
   // If deployed, use relative URLs to ensure requests go to the same origin
-  // Otherwise, use the explicit localhost URL with the specific port
+  // Otherwise, dynamically use the current hostname with port 5000
   return isDeployed ? '' : `http://${window.location.hostname}:5000`;
 };
 

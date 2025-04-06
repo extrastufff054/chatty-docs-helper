@@ -6,6 +6,7 @@ import { FileText, Thermometer } from "lucide-react";
 import SystemPromptManagement from "@/components/SystemPromptManagement";
 import DefaultSystemPrompts from "@/components/DefaultSystemPrompts";
 import TemperatureSlider from "@/components/admin/settings/TemperatureSlider";
+import { API_BASE_URL } from "@/config/apiConfig";
 
 /**
  * System Prompt Wrapper Component

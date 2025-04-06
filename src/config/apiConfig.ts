@@ -1,19 +1,20 @@
 
 /**
  * API configuration for the application
- * Handles different environments: development, production, and containerized deployments
+ * Handles different environments: development, production, and network access
  */
 
 // Determine the correct API base URL based on the environment
 export const getApiBaseUrl = (): string => {
   // In production or when served through nginx, use relative URLs for API requests
-  // This ensures requests go to the same host that serves the app
   if (import.meta.env.PROD) {
     return '';
   }
   
-  // In development, use the development server address
-  return 'http://localhost:5000';
+  // For development, get the actual hostname from the browser
+  // This ensures proper network access from other devices
+  const hostname = window.location.hostname;
+  return `http://${hostname}:5000`;
 };
 
 // The base URL for API requests

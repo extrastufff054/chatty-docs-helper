@@ -35,14 +35,21 @@ const ProtectedRoute = ({
   return element;
 };
 
-// App root component
+// App routes with protection
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/admin" element={<Admin />} />
-      <Route path="/admin/*" element={<Admin />} />
+      
+      {/* Protected admin routes */}
+      <Route path="/admin" element={
+        <ProtectedRoute element={<Admin />} requiredRole="admin" />
+      } />
+      <Route path="/admin/*" element={
+        <ProtectedRoute element={<Admin />} requiredRole="admin" />
+      } />
+      
       <Route path="/documentation" element={<Documentation />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />

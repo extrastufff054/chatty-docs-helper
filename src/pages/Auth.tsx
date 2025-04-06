@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "@/components/auth/LoginForm";
@@ -10,17 +10,17 @@ import { LogIn, UserPlus } from "lucide-react";
 
 export const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Redirect if already authenticated
   if (isAuthenticated) {
-    navigate(isAdmin ? "/admin" : "/");
+    navigate("/");
     return null;
   }
 
   const handleLoginSuccess = () => {
-    navigate(isAdmin ? "/admin" : "/");
+    navigate("/");
   };
 
   const handleSignupSuccess = () => {
@@ -64,6 +64,15 @@ export const Auth = () => {
             </TabsContent>
           </div>
         </Tabs>
+        
+        <div className="text-center mt-6">
+          <p className="text-sm text-muted-foreground">
+            Are you an administrator?{" "}
+            <Link to="/admin" className="text-primary hover:underline">
+              Access Admin Portal
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
 
 interface AdminLoginProps {
   adminToken: string;
@@ -24,7 +23,6 @@ interface AdminLoginProps {
 const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginProps) => {
   const [isChecking, setIsChecking] = useState<boolean>(false);
   const { loginWithToken } = useAuth();
-  const navigate = useNavigate();
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,16 +80,11 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+          <CardFooter className="flex justify-center">
             <Button type="submit" disabled={isChecking || !adminToken} className="w-full hover-scale">
               {isChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Login with Token
             </Button>
-            <div className="text-center">
-              <Button variant="link" onClick={() => navigate("/auth")} className="text-sm">
-                Use username and password instead
-              </Button>
-            </div>
           </CardFooter>
         </form>
       </Card>

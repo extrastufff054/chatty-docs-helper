@@ -35,14 +35,29 @@ const ProtectedRoute = ({
   return element;
 };
 
+// Regular user route - requires authentication but no specific role
+const UserRoute = ({ element }: { element: JSX.Element }) => {
+  const { isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return element;
+};
+
 // App routes with protection
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
-      <Route path="/" element={<Index />} />
+      {/* Public routes */}
       <Route path="/auth" element={<Auth />} />
+      <Route path="/documentation" element={<Documentation />} />
       
-      {/* Protected admin routes */}
+      {/* User routes - require authentication */}
+      <Route path="/" element={<UserRoute element={<Index />} />} />
+      
+      {/* Admin routes - require admin role */}
       <Route path="/admin" element={
         <ProtectedRoute element={<Admin />} requiredRole="admin" />
       } />
@@ -50,8 +65,7 @@ const AppRoutes = () => (
         <ProtectedRoute element={<Admin />} requiredRole="admin" />
       } />
       
-      <Route path="/documentation" element={<Documentation />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   </BrowserRouter>

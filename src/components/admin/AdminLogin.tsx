@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 interface AdminLoginProps {
   adminToken: string;
@@ -22,7 +23,8 @@ interface AdminLoginProps {
  */
 const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginProps) => {
   const [isChecking, setIsChecking] = useState<boolean>(false);
-  const { toast } = useToast();
+  const { loginWithToken } = useAuth();
+  const navigate = useNavigate();
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,33 +32,16 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
     
     setIsChecking(true);
     try {
-      const response = await fetch(`http://localhost:5000/admin/documents`, {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      });
+      const success = await loginWithToken(adminToken);
       
-      if (response.ok) {
+      if (success) {
         setIsTokenValid(true);
-        toast({
-          title: "Token validated",
-          description: "Admin access granted.",
-        });
+        
+        // Store the expected admin token for future use
+        localStorage.setItem('expectedAdminToken', adminToken);
       } else {
         setIsTokenValid(false);
-        toast({
-          title: "Invalid token",
-          description: "The provided admin token is invalid.",
-          variant: "destructive",
-        });
       }
-    } catch (error) {
-      console.error("Error validating token:", error);
-      toast({
-        title: "Error validating token",
-        description: "Failed to validate the admin token.",
-        variant: "destructive",
-      });
     } finally {
       setIsChecking(false);
     }
@@ -97,14 +82,16 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => window.location.href = "/"} className="hover-scale">
-              Back to Home
-            </Button>
-            <Button type="submit" disabled={isChecking || !adminToken} className="hover-scale">
+          <CardFooter className="flex flex-col space-y-4">
+            <Button type="submit" disabled={isChecking || !adminToken} className="w-full hover-scale">
               {isChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Login
+              Login with Token
             </Button>
+            <div className="text-center">
+              <Button variant="link" onClick={() => navigate("/auth")} className="text-sm">
+                Use username and password instead
+              </Button>
+            </div>
           </CardFooter>
         </form>
       </Card>

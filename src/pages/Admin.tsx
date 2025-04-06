@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Settings } from "lucide-react";
+import { FileText, Settings, Users } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminLogin from "@/components/admin/AdminLogin";
@@ -11,6 +11,8 @@ import SystemPromptWrapper from "@/components/SystemPromptWrapper";
 import { fetchAdminToken, fetchAdminDocuments, deleteDocument } from "@/lib/adminApiClient";
 import ConnectionErrorDisplay from "@/components/admin/ConnectionErrorDisplay";
 import AdminHeader from "@/components/admin/AdminHeader";
+import UserManagement from "@/components/admin/users/UserManagement";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Admin Panel
@@ -19,11 +21,13 @@ import AdminHeader from "@/components/admin/AdminHeader";
  * - Document upload and deletion
  * - System prompt management
  * - Authentication
+ * - User management
  */
 const Admin = () => {
   // Authentication state
   const [adminToken, setAdminToken] = useState<string>("");
   const [isTokenValid, setIsTokenValid] = useState<boolean>(false);
+  const { isAuthenticated, isAdmin } = useAuth();
   
   // Document management state
   const [documents, setDocuments] = useState<any[]>([]);
@@ -64,7 +68,8 @@ const Admin = () => {
 
   // Fetch available Ollama models
   useEffect(() => {
-    if (!isTokenValid) return;
+    // Allow access either through old token method or new auth system
+    if (!isTokenValid && !isAuthenticated) return;
     
     const fetchModels = async () => {
       try {
@@ -91,14 +96,15 @@ const Admin = () => {
     };
 
     fetchModels();
-  }, [toast, isTokenValid]);
+  }, [toast, isTokenValid, isAuthenticated]);
 
-  // Fetch documents when token is valid
+  // Fetch documents when authenticated
   useEffect(() => {
-    if (!isTokenValid) return;
+    // Allow access either through old token method or new auth system
+    if (!isTokenValid && !isAuthenticated) return;
     
     fetchDocuments();
-  }, [isTokenValid]);
+  }, [isTokenValid, isAuthenticated]);
 
   /**
    * Fetch all documents from the server
@@ -151,8 +157,9 @@ const Admin = () => {
     return <ConnectionErrorDisplay errorMessage={connectionErrorMessage} />;
   }
 
-  // If token is not valid, show login screen
-  if (!isTokenValid) {
+  // If not authenticated, show login screen
+  // Allow access either through old token method or new auth system
+  if (!isTokenValid && !isAuthenticated) {
     return (
       <AdminLogin 
         adminToken={adminToken} 
@@ -163,15 +170,38 @@ const Admin = () => {
     );
   }
 
+  // Make sure the user is an admin
+  if (isAuthenticated && !isAdmin) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="bg-destructive/15 text-destructive p-6 rounded-lg">
+          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
+          <p>You do not have admin privileges to access this area.</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => window.location.href = "/"}
+          >
+            Return to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 space-y-8 transition-colors duration-300">
       <AdminHeader />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2">
+        <TabsList className="grid grid-cols-3">
           <TabsTrigger value="documents" className="flex gap-2 items-center">
             <FileText className="h-4 w-4" />
             Documents
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex gap-2 items-center">
+            <Users className="h-4 w-4" />
+            Users
           </TabsTrigger>
           <TabsTrigger value="advanced" className="flex gap-2 items-center">
             <Settings className="h-4 w-4" />
@@ -198,6 +228,10 @@ const Admin = () => {
               handleDeleteDocument={handleDeleteDocument}
             />
           </div>
+        </TabsContent>
+        
+        <TabsContent value="users" className="animate-fade-in">
+          <UserManagement />
         </TabsContent>
         
         <TabsContent value="advanced" className="animate-fade-in">

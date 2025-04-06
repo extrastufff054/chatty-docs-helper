@@ -3,31 +3,62 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
+import Auth from "./pages/Auth";
 import Documentation from "./pages/Documentation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Route guard for protected routes
+const ProtectedRoute = ({ 
+  element, 
+  requiredRole 
+}: { 
+  element: JSX.Element, 
+  requiredRole?: "admin" | "user" | "moderator" 
+}) => {
+  const { isAuthenticated, user } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return element;
+};
+
+// App root component
+const AppRoutes = () => (
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin/*" element={<Admin />} />
+      <Route path="/documentation" element={<Documentation />} />
+      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </BrowserRouter>
+);
+
 const App = () => (
   <ThemeProvider defaultTheme="system">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/*" element={<Admin />} /> {/* Added wildcard route for nested admin paths */}
-            <Route path="/documentation" element={<Documentation />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <AppRoutes />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   </ThemeProvider>

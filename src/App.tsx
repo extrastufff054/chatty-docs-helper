@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import AdminAuth from "./pages/AdminAuth";
 import Documentation from "./pages/Documentation";
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,23 @@ const UserRoute = ({ element }: { element: JSX.Element }) => {
   return element;
 };
 
+// Admin token route - specifically for admin access using tokens
+const AdminTokenRoute = ({ element }: { element: JSX.Element }) => {
+  const { isAuthenticated, isAdmin } = useAuth();
+  
+  // If logged in but not an admin, redirect to home
+  if (isAuthenticated && !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // If not authenticated or not an admin, don't render the admin component
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/admin-auth" replace />;
+  }
+  
+  return element;
+};
+
 // App routes with protection
 const AppRoutes = () => (
   <BrowserRouter>
@@ -53,17 +71,14 @@ const AppRoutes = () => (
       {/* Public routes */}
       <Route path="/auth" element={<Auth />} />
       <Route path="/documentation" element={<Documentation />} />
+      <Route path="/admin-auth" element={<AdminAuth />} />
       
       {/* User routes - require authentication */}
       <Route path="/" element={<UserRoute element={<Index />} />} />
       
-      {/* Admin routes - require admin role */}
-      <Route path="/admin" element={
-        <ProtectedRoute element={<Admin />} requiredRole="admin" />
-      } />
-      <Route path="/admin/*" element={
-        <ProtectedRoute element={<Admin />} requiredRole="admin" />
-      } />
+      {/* Admin routes - use token-based authentication only */}
+      <Route path="/admin" element={<AdminTokenRoute element={<Admin />} />} />
+      <Route path="/admin/*" element={<AdminTokenRoute element={<Admin />} />} />
       
       {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />

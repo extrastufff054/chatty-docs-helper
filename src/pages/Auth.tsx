@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "@/components/auth/LoginForm";
 import SignupForm from "@/components/auth/SignupForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, ShieldCheck } from "lucide-react";
 
 export const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
@@ -67,8 +67,8 @@ export const Auth = () => {
         
         <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
-            Are you an administrator?{" "}
-            <Link to="/admin" className="text-primary hover:underline">
+            <Link to="/admin-auth" className="flex items-center justify-center gap-1.5 text-primary hover:underline">
+              <ShieldCheck className="h-3.5 w-3.5" />
               Access Admin Portal
             </Link>
           </p>

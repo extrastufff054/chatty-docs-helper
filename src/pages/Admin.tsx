@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button"; // Added missing import
+import { Button } from "@/components/ui/button";
 import { FileText, Settings, Users } from "lucide-react";
 import { getOllamaModels } from "@/lib/documentProcessor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AdminLogin from "@/components/admin/AdminLogin";
 import DocumentUpload from "@/components/admin/DocumentUpload";
 import DocumentsList from "@/components/admin/DocumentsList";
 import SystemPromptWrapper from "@/components/SystemPromptWrapper";
@@ -14,6 +13,7 @@ import ConnectionErrorDisplay from "@/components/admin/ConnectionErrorDisplay";
 import AdminHeader from "@/components/admin/AdminHeader";
 import UserManagement from "@/components/admin/users/UserManagement";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Admin Panel
@@ -27,8 +27,8 @@ import { useAuth } from "@/contexts/AuthContext";
 const Admin = () => {
   // Authentication state
   const [adminToken, setAdminToken] = useState<string>("");
-  const [isTokenValid, setIsTokenValid] = useState<boolean>(false);
   const { isAuthenticated, isAdmin } = useAuth();
+  const navigate = useNavigate();
   
   // Document management state
   const [documents, setDocuments] = useState<any[]>([]);
@@ -45,7 +45,7 @@ const Admin = () => {
   
   const { toast } = useToast();
 
-  // Fetch admin token for first-time setup
+  // Fetch admin token for setup
   useEffect(() => {
     const getAdminToken = async () => {
       try {
@@ -69,8 +69,7 @@ const Admin = () => {
 
   // Fetch available Ollama models
   useEffect(() => {
-    // Allow access either through old token method or new auth system
-    if (!isTokenValid && !isAuthenticated) return;
+    if (!isAuthenticated || !isAdmin) return;
     
     const fetchModels = async () => {
       try {
@@ -97,15 +96,14 @@ const Admin = () => {
     };
 
     fetchModels();
-  }, [toast, isTokenValid, isAuthenticated]);
+  }, [toast, isAuthenticated, isAdmin]);
 
   // Fetch documents when authenticated
   useEffect(() => {
-    // Allow access either through old token method or new auth system
-    if (!isTokenValid && !isAuthenticated) return;
+    if (!isAuthenticated || !isAdmin) return;
     
     fetchDocuments();
-  }, [isTokenValid, isAuthenticated]);
+  }, [isAuthenticated, isAdmin]);
 
   /**
    * Fetch all documents from the server
@@ -158,36 +156,10 @@ const Admin = () => {
     return <ConnectionErrorDisplay errorMessage={connectionErrorMessage} />;
   }
 
-  // If not authenticated, show login screen
-  // Allow access either through old token method or new auth system
-  if (!isTokenValid && !isAuthenticated) {
-    return (
-      <AdminLogin 
-        adminToken={adminToken} 
-        setAdminToken={setAdminToken}
-        isTokenValid={isTokenValid}
-        setIsTokenValid={setIsTokenValid}
-      />
-    );
-  }
-
-  // Make sure the user is an admin
-  if (isAuthenticated && !isAdmin) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="bg-destructive/15 text-destructive p-6 rounded-lg">
-          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-          <p>You do not have admin privileges to access this area.</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => window.location.href = "/"}
-          >
-            Return to Home
-          </Button>
-        </div>
-      </div>
-    );
+  // If not authenticated as admin, redirect to admin login
+  if (!isAuthenticated || !isAdmin) {
+    navigate("/admin-auth");
+    return null;
   }
 
   return (

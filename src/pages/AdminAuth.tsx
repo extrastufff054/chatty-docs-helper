@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,21 +9,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface AdminLoginProps {
-  adminToken: string;
-  setAdminToken: (token: string) => void;
-  isTokenValid: boolean;
-  setIsTokenValid: (isValid: boolean) => void;
-}
-
-/**
- * Admin Login Component
- * 
- * Provides an authentication form for the admin panel
- */
-const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginProps) => {
+const AdminAuth = () => {
   const [isChecking, setIsChecking] = useState<boolean>(false);
+  const [adminToken, setAdminToken] = useState<string>("");
   const { loginWithToken } = useAuth();
+  const navigate = useNavigate();
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +24,10 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
       const success = await loginWithToken(adminToken);
       
       if (success) {
-        setIsTokenValid(true);
-        
         // Store the expected admin token for future use
         localStorage.setItem('expectedAdminToken', adminToken);
-      } else {
-        setIsTokenValid(false);
+        // Redirect to admin panel
+        navigate("/admin");
       }
     } finally {
       setIsChecking(false);
@@ -92,4 +81,4 @@ const AdminLogin = ({ adminToken, setAdminToken, setIsTokenValid }: AdminLoginPr
   );
 };
 
-export default AdminLogin;
+export default AdminAuth;

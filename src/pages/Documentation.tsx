@@ -1,691 +1,754 @@
 
-import React, { useState } from "react";
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { ArrowLeft, Book, Cpu, FileText, Settings, Users, MessageCircle, Server, Code, Info } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
-/**
- * Documentation Page
- * 
- * Comprehensive documentation for the I4C Chatbot system
- */
 const Documentation = () => {
-  const [activeSection, setActiveSection] = useState("overview");
-  
   return (
-    <div className="container mx-auto py-8 space-y-8 transition-colors duration-300">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          <img 
-            src="/lovable-uploads/c5a04a51-a547-4a02-98be-77462c0e80b2.png" 
-            alt="I4C Logo" 
-            className="app-logo h-20 w-auto mr-2"
-          />
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            I4C Chatbot Documentation
-          </h1>
-        </div>
-        <div className="flex gap-2">
-          <ThemeToggle />
-          <Link to="/">
-            <Button variant="outline" className="hover-scale">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </div>
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-6">I4C Chatbot Developer Documentation</h1>
       
-      {/* Main Content */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Sidebar */}
-        <Card className="h-[calc(100vh-200px)] md:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Book className="mr-2 h-5 w-5" />
-              Documentation
-            </CardTitle>
-            <CardDescription>
-              Explore the I4C Chatbot system
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex flex-col">
-              <Button 
-                variant={activeSection === "overview" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("overview")}
-              >
-                <Info className="mr-2 h-4 w-4" />
-                Overview
-              </Button>
-              <Button 
-                variant={activeSection === "user-guide" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("user-guide")}
-              >
-                <Users className="mr-2 h-4 w-4" />
-                User Guide
-              </Button>
-              <Button 
-                variant={activeSection === "admin-guide" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("admin-guide")}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Admin Guide
-              </Button>
-              <Button 
-                variant={activeSection === "api" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("api")}
-              >
-                <Server className="mr-2 h-4 w-4" />
-                API Reference
-              </Button>
-              <Button 
-                variant={activeSection === "models" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("models")}
-              >
-                <Cpu className="mr-2 h-4 w-4" />
-                AI Models
-              </Button>
-              <Button 
-                variant={activeSection === "prompts" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("prompts")}
-              >
-                <MessageCircle className="mr-2 h-4 w-4" />
-                System Prompts
-              </Button>
-              <Button 
-                variant={activeSection === "documents" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("documents")}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Document Processing
-              </Button>
-              <Button 
-                variant={activeSection === "technical" ? "default" : "ghost"} 
-                className="justify-start rounded-none"
-                onClick={() => setActiveSection("technical")}
-              >
-                <Code className="mr-2 h-4 w-4" />
-                Technical Details
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="architecture">Architecture</TabsTrigger>
+          <TabsTrigger value="components">Components</TabsTrigger>
+          <TabsTrigger value="auth">Authentication</TabsTrigger>
+          <TabsTrigger value="api">API Reference</TabsTrigger>
+        </TabsList>
         
-        {/* Content Area */}
-        <Card className="h-[calc(100vh-200px)] md:col-span-3">
-          <CardHeader>
-            <CardTitle>
-              {activeSection === "overview" && "I4C Chatbot Overview"}
-              {activeSection === "user-guide" && "User Guide"}
-              {activeSection === "admin-guide" && "Administrator Guide"}
-              {activeSection === "api" && "API Reference"}
-              {activeSection === "models" && "AI Models"}
-              {activeSection === "prompts" && "System Prompts"}
-              {activeSection === "documents" && "Document Processing"}
-              {activeSection === "technical" && "Technical Details"}
-            </CardTitle>
-            <CardDescription>
-              {activeSection === "overview" && "Learn about the I4C Chatbot system and its capabilities"}
-              {activeSection === "user-guide" && "How to use the I4C Chatbot system effectively"}
-              {activeSection === "admin-guide" && "Administration and management of the I4C Chatbot system"}
-              {activeSection === "api" && "Reference for the I4C Chatbot API endpoints"}
-              {activeSection === "models" && "Information about supported AI models and their capabilities"}
-              {activeSection === "prompts" && "Understanding and customizing system prompts"}
-              {activeSection === "documents" && "How documents are processed and queried"}
-              {activeSection === "technical" && "Technical architecture and implementation details"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[calc(100vh-350px)] pr-4">
-              {/* Overview Section */}
-              {activeSection === "overview" && (
-                <div className="space-y-6">
-                  <section>
-                    <h3 className="text-lg font-medium">Introduction</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The I4C Chatbot is a document-based question answering system that allows users to query information from uploaded documents using natural language. Designed for the Indian Cybercrime Coordination Centre, this system enables efficient retrieval of information from a variety of document formats.
-                    </p>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Key Features</h3>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li>Document upload and processing (PDF, Word, Excel)</li>
-                      <li>Natural language queries against document content</li>
-                      <li>Multiple AI model support through Ollama integration</li>
-                      <li>Customizable system prompts for tailored responses</li>
-                      <li>Admin interface for document and prompt management</li>
-                      <li>Secure authentication system</li>
-                      <li>Responsive design for use on any device</li>
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">System Architecture</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The I4C Chatbot consists of a React frontend, a Python Flask backend, and an Ollama integration for AI model inference. The system is containerized for easy deployment using Docker and served through Nginx.
-                    </p>
-                    <div className="mt-4 p-4 bg-muted rounded-md">
-                      <pre className="text-xs">
-{`┌─────────────────┐     ┌──────────────┐     ┌─────────────┐
-│                 │     │              │     │             │
-│  React Frontend ├────►│  Flask API   ├────►│  Ollama AI  │
-│                 │     │              │     │             │
-└─────────────────┘     └──────────────┘     └─────────────┘
-                              │
-                              ▼
-                        ┌──────────────┐
-                        │ File Storage │
-                        └──────────────┘`}
-                      </pre>
-                    </div>
-                  </section>
+        <ScrollArea className="h-[calc(100vh-220px)] pr-4">
+          <TabsContent value="overview" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Overview</CardTitle>
+                <CardDescription>Understanding the I4C Chatbot Application</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p>
+                  The I4C Chatbot is a React-based web application designed to provide an interactive chatbot interface 
+                  that allows users to query PDF documents using AI models. The application includes:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>A user authentication system with role-based access control</li>
+                  <li>Document upload and processing capabilities</li>
+                  <li>Chat interface for interacting with AI models</li>
+                  <li>Admin panel for managing users, documents, and system prompts</li>
+                  <li>Responsive design for different screen sizes</li>
+                </ul>
+                
+                <h3 className="text-xl font-semibold mt-6">Key Features</h3>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Authentication with multiple user roles (admin, moderator, user)</li>
+                  <li>Document processing with AI model integration</li>
+                  <li>Chat-based query interface with streaming responses</li>
+                  <li>User management with approval workflows</li>
+                  <li>System prompt customization</li>
+                  <li>Dark/light theme support</li>
+                </ul>
+                
+                <h3 className="text-xl font-semibold mt-6">Technology Stack</h3>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li><strong>Frontend:</strong> React, TypeScript, Tailwind CSS, Shadcn UI</li>
+                  <li><strong>State Management:</strong> React Context API, React Query</li>
+                  <li><strong>Authentication:</strong> Custom auth with IndexedDB</li>
+                  <li><strong>Storage:</strong> Browser IndexedDB for local data persistence</li>
+                  <li><strong>API:</strong> HTTP requests to Python backend with document processing</li>
+                </ul>
+                
+                <h3 className="text-xl font-semibold mt-6">Getting Started</h3>
+                <p>To start development with this project:</p>
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>Clone the repository</li>
+                  <li>Install dependencies with <code className="bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">npm install</code></li>
+                  <li>Start the development server with <code className="bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">npm run dev</code></li>
+                  <li>Ensure the Python backend is running (separate setup)</li>
+                </ol>
+                
+                <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md p-4 mt-6">
+                  <p className="font-semibold">Note:</p>
+                  <p>This documentation focuses on the frontend architecture. For information about the Python backend, refer to the backend documentation.</p>
                 </div>
-              )}
-              
-              {/* User Guide Section */}
-              {activeSection === "user-guide" && (
-                <div className="space-y-6">
-                  <section>
-                    <h3 className="text-lg font-medium">Getting Started</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The I4C Chatbot interface is designed to be intuitive and easy to use. Follow these steps to start using the system:
-                    </p>
-                    <ol className="mt-2 space-y-2 list-decimal pl-6">
-                      <li>Access the chatbot through your browser at the provided URL</li>
-                      <li>From the available documents, select one to query</li>
-                      <li>Choose an AI model to process your queries</li>
-                      <li>Type your question in the query box and press Enter or click the Send button</li>
-                      <li>Review the AI's response, which will include citations from the document</li>
-                    </ol>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Asking Effective Questions</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      To get the best results from the I4C Chatbot, consider these tips for formulating questions:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li>Be specific and clear in your questions</li>
-                      <li>Use natural language rather than keywords</li>
-                      <li>Ask one question at a time for more focused answers</li>
-                      <li>For complex topics, break down questions into simpler parts</li>
-                      <li>Include relevant context in your questions when needed</li>
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Understanding Responses</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      Chatbot responses are generated based on the content of the selected document and include:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>Answer Text:</strong> The AI's response to your query</li>
-                      <li><strong>Citations:</strong> References to specific parts of the document</li>
-                      <li><strong>Confidence Level:</strong> Indicated by the AI's tone and qualifying statements</li>
-                    </ul>
-                    <p className="mt-2 text-muted-foreground">
-                      If the AI doesn't have enough information to answer your question confidently, it will state this clearly rather than providing inaccurate information.
-                    </p>
-                  </section>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="architecture" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Application Architecture</CardTitle>
+                <CardDescription>How the I4C Chatbot is structured</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <h3 className="text-xl font-semibold">Directory Structure</h3>
+                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm">
+{`src/
+├── components/     # UI components
+│   ├── admin/      # Admin panel components
+│   ├── auth/       # Authentication components
+│   └── ui/         # Shadcn UI components
+├── contexts/       # React contexts for state management
+├── hooks/          # Custom React hooks
+├── lib/            # Utility functions and core logic
+├── pages/          # Main application pages
+├── config/         # Configuration files
+└── main.tsx        # Application entry point`}
+                </pre>
+                
+                <h3 className="text-xl font-semibold mt-6">Core Architecture Concepts</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">1. Component-Based Structure</h4>
+                <p>
+                  The application follows React's component-based architecture, with reusable UI components organized by 
+                  feature area. This promotes code reusability and separation of concerns.
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">2. Context API for State Management</h4>
+                <p>
+                  React Context API is used for global state management, particularly for authentication state (via AuthContext). 
+                  This provides access to authentication data and methods throughout the application without prop drilling.
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">3. Custom Hooks</h4>
+                <p>
+                  Custom React hooks encapsulate reusable logic, such as toast notifications, form handling, and API interactions. 
+                  These hooks simplify component code and promote the reuse of complex functionality.
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">4. Browser-Based Database</h4>
+                <p>
+                  The application uses IndexedDB (through a custom wrapper in <code>db.ts</code>) to store user data directly 
+                  in the browser. This enables user management functionality without requiring a backend database.
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">5. API Client Architecture</h4>
+                <p>
+                  Separate API client modules (<code>apiClient.ts</code> and <code>adminApiClient.ts</code>) handle 
+                  communication with the backend. These provide structured methods for different API endpoints and include 
+                  error handling and retries.
+                </p>
+                
+                <h3 className="text-xl font-semibold mt-6">Data Flow</h3>
+                
+                <p>The typical data flow in the application follows this pattern:</p>
+                
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>User interacts with a component (e.g., submits a form, clicks a button)</li>
+                  <li>Component calls a method from context or custom hook</li>
+                  <li>The method may communicate with an API client or database utility</li>
+                  <li>Results are returned to the component and/or stored in global state</li>
+                  <li>UI updates to reflect the new state</li>
+                </ol>
+                
+                <h3 className="text-xl font-semibold mt-6">Authentication Flow</h3>
+                
+                <p>The authentication system follows this general flow:</p>
+                
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>User registers or logs in through authentication forms</li>
+                  <li>Credentials are validated against stored user data in IndexedDB</li>
+                  <li>On successful authentication, a session token is generated and stored</li>
+                  <li>The token is used to maintain authenticated state across page reloads</li>
+                  <li>Protected routes and components check authentication status through the AuthContext</li>
+                </ol>
+                
+                <h3 className="text-xl font-semibold mt-6">API Architecture</h3>
+                
+                <p>The application communicates with a Python backend for document processing and AI functionality:</p>
+                
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Document uploads are processed by the backend and converted to vector embeddings</li>
+                  <li>User queries are sent to the backend, which retrieves relevant document sections</li>
+                  <li>The backend forwards queries and context to AI models for processing</li>
+                  <li>Responses are streamed back to the frontend for real-time display</li>
+                </ul>
+                
+                <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md p-4 mt-6">
+                  <p className="font-semibold">Pro Tip:</p>
+                  <p>
+                    When adding new features, follow the established patterns in the codebase. If you're adding a new API endpoint, 
+                    create corresponding methods in the API client. For new UI features, create reusable components and hooks.
+                  </p>
                 </div>
-              )}
-              
-              {/* Admin Guide Section */}
-              {activeSection === "admin-guide" && (
-                <div className="space-y-6">
-                  <section>
-                    <h3 className="text-lg font-medium">Accessing the Admin Panel</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      To access the admin panel, navigate to the /admin route and authenticate with your admin token. The admin token is generated automatically on first system startup and can be found in the server logs or by requesting it from the API.
-                    </p>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Managing Documents</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The Documents tab in the admin panel allows you to:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>Upload Documents:</strong> Add new PDF, Word, or Excel files</li>
-                      <li><strong>Select Models:</strong> Choose which AI model to use for processing</li>
-                      <li><strong>Add Metadata:</strong> Include title and description for better organization</li>
-                      <li><strong>Delete Documents:</strong> Remove documents that are no longer needed</li>
-                    </ul>
-                    <p className="mt-2 text-muted-foreground">
-                      Each document is processed to extract text and create embeddings for AI-powered retrieval. This process can take some time for large documents.
-                    </p>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">System Prompts Management</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The Advanced Settings tab allows you to manage system prompts, which control how the AI generates responses:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>View Existing Prompts:</strong> See all available system prompts</li>
-                      <li><strong>Create New Prompts:</strong> Add custom prompt templates</li>
-                      <li><strong>Edit Prompts:</strong> Modify existing prompt templates</li>
-                      <li><strong>Set Temperature:</strong> Adjust the creativity level of AI responses</li>
-                      <li><strong>Use Templates:</strong> Start with pre-defined templates</li>
-                    </ul>
-                    <p className="mt-2 text-muted-foreground">
-                      System prompts use special placeholders: {'{context}'} for document content and {'{question}'} for the user's query.
-                    </p>
-                  </section>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="components" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Key Components Guide</CardTitle>
+                <CardDescription>Understanding the major components in the application</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <h3 className="text-xl font-semibold">Authentication Components</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">AuthContext</h4>
+                <p>
+                  <code>AuthContext</code> (in <code>src/contexts/AuthContext.tsx</code>) is the core of the authentication system.
+                  It provides:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Current user data and authentication state</li>
+                  <li>Login, signup, and logout methods</li>
+                  <li>Role-based authorization checks</li>
+                  <li>Session persistence across page reloads</li>
+                </ul>
+                <p className="mt-2">
+                  The context uses the auth utility library to handle the actual authentication logic and 
+                  exposes a clean API for components to use.
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">LoginForm and SignupForm</h4>
+                <p>
+                  These components in <code>src/components/auth/</code> provide the UI for user authentication. 
+                  They use form validation, error handling, and connect to the AuthContext for authentication operations.
+                </p>
+                
+                <h3 className="text-xl font-semibold mt-6">Admin Components</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">UserManagement</h4>
+                <p>
+                  The <code>UserManagement</code> component provides the admin interface for managing users, including:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>User listing with filtering and sorting</li>
+                  <li>User approval workflow</li>
+                  <li>Role management</li>
+                  <li>User deletion</li>
+                </ul>
+                
+                <h4 className="text-lg font-semibold mt-4">DocumentUpload and DocumentsList</h4>
+                <p>
+                  These components handle document management in the admin panel, allowing administrators to upload 
+                  new documents and manage existing ones. They interact with the document processing API.
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">SystemPromptManagement</h4>
+                <p>
+                  This component allows administrators to create and manage system prompts that control the AI's behavior 
+                  when responding to user queries.
+                </p>
+                
+                <h3 className="text-xl font-semibold mt-6">Chat Components</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">ChatMessage</h4>
+                <p>
+                  Renders individual chat messages with support for different message types (user, assistant) 
+                  and formatted content.
+                </p>
+                
+                <h3 className="text-xl font-semibold mt-6">Utility Components</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">ThemeToggle</h4>
+                <p>
+                  Allows users to switch between light and dark themes.
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">UI Components</h4>
+                <p>
+                  The application uses a set of reusable UI components from the shadcn/ui library, located in 
+                  <code>src/components/ui/</code>. These include buttons, forms, dialogs, and other UI elements.
+                </p>
+                
+                <h3 className="text-xl font-semibold mt-6">Component Interaction Patterns</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">Context Consumers</h4>
+                <p>
+                  Many components consume the AuthContext to access user data and authentication state. This is typically 
+                  done using the <code>useAuth</code> hook:
+                </p>
+                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm mt-2">
+{`const MyComponent = () => {
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  
+  // Component logic using authentication state
+}`}
+                </pre>
+                
+                <h4 className="text-lg font-semibold mt-4">API Integration</h4>
+                <p>
+                  Components that interact with the backend typically use the API client utilities:
+                </p>
+                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm mt-2">
+{`const MyComponent = () => {
+  const [data, setData] = useState([]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const result = await apiClient.fetchSomeData();
+        setData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    
+    fetchData();
+  }, []);
+  
+  // Render component using data
+}`}
+                </pre>
+                
+                <div className="bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md p-4 mt-6">
+                  <p className="font-semibold">Best Practice:</p>
+                  <p>
+                    When creating new components, follow these principles:
+                  </p>
+                  <ul className="list-disc pl-6 mt-2">
+                    <li>Keep components focused on a single responsibility</li>
+                    <li>Extract reusable logic to custom hooks</li>
+                    <li>Use context for global state instead of prop drilling</li>
+                    <li>Implement proper error handling and loading states</li>
+                  </ul>
                 </div>
-              )}
-              
-              {/* API Reference Section */}
-              {activeSection === "api" && (
-                <div className="space-y-6">
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="admin-api">
-                      <AccordionTrigger>Admin API Endpoints</AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-4">
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">GET /admin/token</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Returns the admin token for first-time setup</p>
-                            <p className="text-xs font-mono mt-2 p-2 bg-muted rounded-md">Response: {"{ \"token\": \"admin-token\" }"}</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">GET /admin/documents</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Returns all uploaded documents</p>
-                            <p className="text-xs text-muted-foreground mt-1">Authentication: Bearer Token</p>
-                            <p className="text-xs font-mono mt-2 p-2 bg-muted rounded-md">Response: {"{ \"documents\": [...] }"}</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">POST /admin/documents</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Upload a new document</p>
-                            <p className="text-xs text-muted-foreground mt-1">Authentication: Bearer Token</p>
-                            <p className="text-xs text-muted-foreground mt-1">Content-Type: multipart/form-data</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">DELETE /admin/documents/:id</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Delete a document by ID</p>
-                            <p className="text-xs text-muted-foreground mt-1">Authentication: Bearer Token</p>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="prompt-api">
-                      <AccordionTrigger>System Prompts API</AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-4">
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">GET /admin/system-prompts</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Returns all system prompts</p>
-                            <p className="text-xs text-muted-foreground mt-1">Authentication: Bearer Token</p>
-                            <p className="text-xs font-mono mt-2 p-2 bg-muted rounded-md">Response: {"{ \"prompts\": [...] }"}</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">POST /admin/system-prompts</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Create a new system prompt</p>
-                            <p className="text-xs text-muted-foreground mt-1">Authentication: Bearer Token</p>
-                            <p className="text-xs text-muted-foreground mt-1">Content-Type: application/json</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">PUT /admin/system-prompts/:id</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Update a system prompt</p>
-                            <p className="text-xs text-muted-foreground mt-1">Authentication: Bearer Token</p>
-                            <p className="text-xs text-muted-foreground mt-1">Content-Type: application/json</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">DELETE /admin/system-prompts/:id</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Delete a system prompt</p>
-                            <p className="text-xs text-muted-foreground mt-1">Authentication: Bearer Token</p>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="user-api">
-                      <AccordionTrigger>User API Endpoints</AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-4">
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">GET /api/documents</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Returns all available documents for users</p>
-                            <p className="text-xs font-mono mt-2 p-2 bg-muted rounded-md">Response: {"{ \"documents\": [...] }"}</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">GET /api/system-prompts</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Returns all available system prompts</p>
-                            <p className="text-xs font-mono mt-2 p-2 bg-muted rounded-md">Response: {"{ \"prompts\": [...] }"}</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">POST /api/select-document</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Select a document for querying</p>
-                            <p className="text-xs text-muted-foreground mt-1">Content-Type: application/json</p>
-                            <p className="text-xs font-mono mt-2 p-2 bg-muted rounded-md">Body: {"{ \"document_id\": \"...\", \"model\": \"...\", \"prompt_id\": \"...\", \"temperature\": 0.0 }"}</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-md">
-                            <h4 className="font-medium">POST /api/query</h4>
-                            <p className="text-sm text-muted-foreground mt-1">Process a query against a selected document</p>
-                            <p className="text-xs text-muted-foreground mt-1">Content-Type: application/json</p>
-                            <p className="text-xs font-mono mt-2 p-2 bg-muted rounded-md">Body: {"{ \"session_id\": \"...\", \"query\": \"...\" }"}</p>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="auth" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Authentication System</CardTitle>
+                <CardDescription>A detailed guide to the authentication implementation</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <h3 className="text-xl font-semibold">Overview</h3>
+                <p>
+                  The I4C Chatbot uses a custom, browser-based authentication system with the following features:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>User registration and login</li>
+                  <li>Role-based access control (admin, moderator, user roles)</li>
+                  <li>Session management</li>
+                  <li>User approval workflow</li>
+                  <li>Password hashing for security</li>
+                </ul>
+                
+                <h3 className="text-xl font-semibold mt-6">Core Components</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">1. Database (db.ts)</h4>
+                <p>
+                  The <code>db.ts</code> file provides a wrapper around IndexedDB for storing user data in the browser. 
+                  It includes methods for:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Creating, retrieving, updating, and deleting users</li>
+                  <li>Querying users by ID, username, or email</li>
+                  <li>Managing user approval and roles</li>
+                </ul>
+                
+                <h4 className="text-lg font-semibold mt-4">2. Authentication Manager (auth.ts)</h4>
+                <p>
+                  The <code>auth.ts</code> file contains the core authentication logic, including:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Password hashing and verification</li>
+                  <li>Session token generation and validation</li>
+                  <li>Login, signup, and logout functionality</li>
+                  <li>Session persistence</li>
+                </ul>
+                
+                <h4 className="text-lg font-semibold mt-4">3. Authentication Context (AuthContext.tsx)</h4>
+                <p>
+                  The <code>AuthContext</code> provides a React context for authentication state, exposing:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Current user data and session information</li>
+                  <li>Authentication status (isAuthenticated, isAdmin)</li>
+                  <li>Login, signup, and logout methods</li>
+                  <li>Loading state during authentication operations</li>
+                </ul>
+                
+                <h3 className="text-xl font-semibold mt-6">User Data Model</h3>
+                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm">
+{`interface User {
+  id: string;               // UUID for user identification
+  username: string;         // Unique username
+  email: string;            // Unique email address
+  passwordHash: string;     // SHA-256 hash of user password
+  role: "admin" | "user" | "moderator";  // User role for access control
+  approved: boolean;        // Account approval status
+  createdAt: string;        // ISO timestamp of account creation
+}`}
+                </pre>
+                
+                <h3 className="text-xl font-semibold mt-6">Session Data Model</h3>
+                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm">
+{`interface AuthSession {
+  token: string;            // Unique session token
+  user: User;               // User associated with this session
+  expiresAt: string;        // ISO timestamp of session expiration
+}`}
+                </pre>
+                
+                <h3 className="text-xl font-semibold mt-6">Authentication Workflows</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">Registration Flow</h4>
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>User submits registration form with username, email, and password</li>
+                  <li>System checks for existing users with the same username or email</li>
+                  <li>Password is hashed using SHA-256 (would use bcrypt in production)</li>
+                  <li>New user record is created with "user" role and unapproved status</li>
+                  <li>User must wait for admin approval before logging in</li>
+                </ol>
+                
+                <h4 className="text-lg font-semibold mt-4">Login Flow</h4>
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>User submits login form with username and password</li>
+                  <li>System retrieves user record by username</li>
+                  <li>Password is hashed and compared with stored hash</li>
+                  <li>System checks if user is approved</li>
+                  <li>If authentication succeeds, a new session is created with a unique token</li>
+                  <li>Session token is stored in localStorage for persistence</li>
+                  <li>Application state is updated with authenticated user data</li>
+                </ol>
+                
+                <h4 className="text-lg font-semibold mt-4">Session Validation Flow</h4>
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>On application load, system checks for existing session token in localStorage</li>
+                  <li>If token exists, it's validated against stored sessions</li>
+                  <li>System checks if session is expired</li>
+                  <li>System verifies that the user still exists and is approved</li>
+                  <li>If validation succeeds, session is restored and user is automatically logged in</li>
+                </ol>
+                
+                <h4 className="text-lg font-semibold mt-4">Admin Token Login Flow</h4>
+                <p>
+                  For backward compatibility, the system supports logging in with an admin token:
+                </p>
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>Admin provides a token</li>
+                  <li>Token is validated against the expected admin token</li>
+                  <li>System finds the first user with admin role</li>
+                  <li>If validation succeeds, a new session is created for the admin user</li>
+                </ol>
+                
+                <h3 className="text-xl font-semibold mt-6">Production Considerations</h3>
+                
+                <p>
+                  The current authentication implementation is suitable for development but has limitations for production use:
+                </p>
+                
+                <h4 className="text-lg font-semibold mt-4">Security Enhancements</h4>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Replace SHA-256 with a more secure password hashing algorithm like bcrypt or Argon2</li>
+                  <li>Implement proper CSRF protection</li>
+                  <li>Use HTTP-only cookies instead of localStorage for token storage</li>
+                  <li>Add rate limiting for authentication attempts</li>
+                  <li>Implement multi-factor authentication</li>
+                </ul>
+                
+                <h4 className="text-lg font-semibold mt-4">Database Migration</h4>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Replace IndexedDB with a server-side database (PostgreSQL, MongoDB, etc.)</li>
+                  <li>Implement proper database migration strategies</li>
+                  <li>Add data backup and recovery procedures</li>
+                </ul>
+                
+                <h4 className="text-lg font-semibold mt-4">Session Management</h4>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Implement sliding session expiration</li>
+                  <li>Add session invalidation on password change</li>
+                  <li>Support multiple concurrent sessions per user with management UI</li>
+                  <li>Implement refresh tokens for long-lived sessions</li>
+                </ul>
+                
+                <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md p-4 mt-6">
+                  <p className="font-semibold">Important Security Note:</p>
+                  <p>
+                    The current password hashing implementation uses SHA-256, which is not recommended for password storage in production. 
+                    For production use, implement a proper password hashing algorithm like bcrypt with salt and appropriate work factor.
+                  </p>
                 </div>
-              )}
-              
-              {/* AI Models Section */}
-              {activeSection === "models" && (
-                <div className="space-y-6">
-                  <section>
-                    <h3 className="text-lg font-medium">Supported AI Models</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The I4C Chatbot supports any model available through Ollama. Common models include:
-                    </p>
-                    <div className="mt-4 grid gap-4 grid-cols-1 md:grid-cols-2">
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium">Llama 2</h4>
-                        <p className="text-sm text-muted-foreground mt-1">A powerful open-source large language model from Meta AI.</p>
-                        <p className="text-xs mt-2"><strong>Strengths:</strong> General knowledge, instruction following, balanced responses</p>
-                      </div>
-                      
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium">Mistral</h4>
-                        <p className="text-sm text-muted-foreground mt-1">An efficient language model with strong performance.</p>
-                        <p className="text-xs mt-2"><strong>Strengths:</strong> Efficiency, technical knowledge, code understanding</p>
-                      </div>
-                      
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium">Vicuna</h4>
-                        <p className="text-sm text-muted-foreground mt-1">A fine-tuned model based on LLaMA.</p>
-                        <p className="text-xs mt-2"><strong>Strengths:</strong> Conversational abilities, precise responses</p>
-                      </div>
-                      
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium">Phi-2</h4>
-                        <p className="text-sm text-muted-foreground mt-1">A small but capable model from Microsoft.</p>
-                        <p className="text-xs mt-2"><strong>Strengths:</strong> Lightweight, good performance on smaller hardware</p>
-                      </div>
-                    </div>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Model Selection Guidelines</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      When choosing a model for document processing, consider:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>Document Complexity:</strong> More complex documents benefit from larger models</li>
-                      <li><strong>Response Speed:</strong> Smaller models provide faster responses</li>
-                      <li><strong>Accuracy Needs:</strong> Larger models typically provide more accurate information</li>
-                      <li><strong>Hardware Constraints:</strong> Consider your server's capabilities</li>
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Adding New Models</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      To add new models to the system:
-                    </p>
-                    <ol className="mt-2 space-y-2 list-decimal pl-6">
-                      <li>Access the server running Ollama</li>
-                      <li>Use the Ollama CLI to pull new models: <code>ollama pull model-name</code></li>
-                      <li>The model will automatically appear in the admin interface</li>
-                    </ol>
-                    <p className="mt-2 text-muted-foreground">
-                      For more information on available models, visit the <a href="https://ollama.com/library" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Ollama Model Library</a>.
-                    </p>
-                  </section>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="api" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>API Reference</CardTitle>
+                <CardDescription>Complete guide to the application's API functionality</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <h3 className="text-xl font-semibold">API Client Modules</h3>
+                
+                <p>
+                  The application includes two main API client modules:
+                </p>
+                
+                <ul className="list-disc pl-6 space-y-2">
+                  <li><code>apiClient.ts</code>: For regular user API operations</li>
+                  <li><code>adminApiClient.ts</code>: For admin-specific operations</li>
+                </ul>
+                
+                <h3 className="text-xl font-semibold mt-6">Standard API Operations</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">Documents API</h4>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>fetchDocuments()</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Fetches all available documents from the API.</p>
+                    <p className="text-xs font-semibold">Returns:</p>
+                    <p className="text-xs">Promise with array of documents</p>
+                    <p className="text-xs font-semibold mt-2">Example:</p>
+                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
+{`const documents = await fetchDocuments();
+console.log(documents); // Array of document objects`}
+                    </pre>
+                  </div>
                 </div>
-              )}
-              
-              {/* System Prompts Section */}
-              {activeSection === "prompts" && (
-                <div className="space-y-6">
-                  <section>
-                    <h3 className="text-lg font-medium">Understanding System Prompts</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      System prompts are instructions given to the AI that guide how it processes and responds to user queries. They act as the "personality" and behavior guidelines for the AI.
-                    </p>
-                    <p className="mt-2 text-muted-foreground">
-                      In the I4C Chatbot, system prompts contain placeholders for dynamic content:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><code>{"{context}"}</code>: Replaced with relevant document content</li>
-                      <li><code>{"{question}"}</code>: Replaced with the user's query</li>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>selectDocument(documentId: string, model: string)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Selects a document for querying with a specified model.</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>documentId</code>: Document ID to select</li>
+                      <li><code>model</code>: Model to use for the document</li>
                     </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Default System Prompts</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The system comes with pre-configured prompts:
-                    </p>
-                    <div className="mt-4 space-y-4">
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium">Default Prompt</h4>
-                        <p className="text-sm text-muted-foreground mt-1">A balanced prompt that provides comprehensive answers with citations.</p>
-                        <div className="mt-2 p-2 bg-muted rounded-md text-xs font-mono">
-                          <p>You are a helpful, respectful and honest assistant. Your task is to answer the user's question based on the provided document content.</p>
-                          <p className="mt-1">Document content: {"{context}"}</p>
-                          <p className="mt-1">User's question: {"{question}"}</p>
-                          <p className="mt-1">Provide a clear, concise answer using only the information from the document. If the document doesn't contain the answer, say "I don't have enough information to answer this question."</p>
-                        </div>
-                      </div>
-                      
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium">Concise Prompt</h4>
-                        <p className="text-sm text-muted-foreground mt-1">A prompt that generates shorter, more direct answers.</p>
-                        <div className="mt-2 p-2 bg-muted rounded-md text-xs font-mono">
-                          <p>Answer the question briefly based on this context: {"{context}"}</p>
-                          <p className="mt-1">Question: {"{question}"}</p>
-                          <p className="mt-1">Keep your answer short and to the point. Only use information from the context provided.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Creating Effective Prompts</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      Guidelines for creating effective system prompts:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>Be Specific:</strong> Clearly define the AI's role and response style</li>
-                      <li><strong>Include Constraints:</strong> Specify if answers should only come from the document</li>
-                      <li><strong>Define Format:</strong> Indicate how answers should be structured</li>
-                      <li><strong>Error Handling:</strong> Explain how to respond when information is unavailable</li>
-                      <li><strong>Use Temperature:</strong> Adjust the temperature parameter to control randomness (0.0 for precise, 1.0 for creative)</li>
-                    </ul>
-                  </section>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with session ID</p>
+                    <p className="text-xs font-semibold mt-2">Example:</p>
+                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
+{`const result = await selectDocument("doc-123", "llama3");
+console.log(result.session_id); // Session ID for future queries`}
+                    </pre>
+                  </div>
                 </div>
-              )}
-              
-              {/* Document Processing Section */}
-              {activeSection === "documents" && (
-                <div className="space-y-6">
-                  <section>
-                    <h3 className="text-lg font-medium">Document Processing Pipeline</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The I4C Chatbot processes documents through several stages:
-                    </p>
-                    <ol className="mt-2 space-y-2 list-decimal pl-6">
-                      <li><strong>Upload:</strong> Document is transferred to the server</li>
-                      <li><strong>Text Extraction:</strong> Content is extracted based on document type</li>
-                      <li><strong>Chunking:</strong> Text is divided into manageable segments</li>
-                      <li><strong>Embedding:</strong> Each chunk is converted to vector embeddings</li>
-                      <li><strong>Indexing:</strong> Embeddings are stored in a vector database for retrieval</li>
-                    </ol>
-                    <p className="mt-2 text-muted-foreground">
-                      This process enables efficient semantic search and retrieval of relevant content when users ask questions.
-                    </p>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Supported Document Types</h3>
-                    <div className="mt-4 grid gap-4 grid-cols-1 md:grid-cols-3">
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium flex items-center">
-                          <FileText className="h-4 w-4 mr-2 text-primary" />
-                          PDF Documents
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Text and basic formatting are extracted. Tables and images are not processed.
-                        </p>
-                        <p className="text-xs mt-2"><strong>Processed with:</strong> pdf-parse library</p>
-                      </div>
-                      
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium flex items-center">
-                          <FileText className="h-4 w-4 mr-2 text-blue-500" />
-                          Word Documents (DOCX)
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Text and basic structure are extracted. Complex formatting may be simplified.
-                        </p>
-                        <p className="text-xs mt-2"><strong>Processed with:</strong> python-docx library</p>
-                      </div>
-                      
-                      <div className="p-4 border rounded-md">
-                        <h4 className="font-medium flex items-center">
-                          <FileText className="h-4 w-4 mr-2 text-green-500" />
-                          Excel Files (XLSX/XLS)
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Cell contents are extracted and formatted as tabular text.
-                        </p>
-                        <p className="text-xs mt-2"><strong>Processed with:</strong> pandas library</p>
-                      </div>
-                    </div>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Query Processing</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      When a user submits a query, the system:
-                    </p>
-                    <ol className="mt-2 space-y-2 list-decimal pl-6">
-                      <li>Converts the query to an embedding vector</li>
-                      <li>Searches the document's vector database for similar content</li>
-                      <li>Retrieves the most relevant chunks</li>
-                      <li>Combines chunks with the system prompt and user query</li>
-                      <li>Sends the combined input to the selected AI model</li>
-                      <li>Returns the model's response to the user</li>
-                    </ol>
-                    <p className="mt-2 text-muted-foreground">
-                      This retrieval-augmented generation (RAG) approach enables accurate, document-grounded responses.
-                    </p>
-                  </section>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>processQuery(sessionId: string, query: string)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Processes a query against a selected document.</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>sessionId</code>: Session ID for the query</li>
+                      <li><code>query</code>: Query text</li>
+                    </ul>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with answer and tokens</p>
+                    <p className="text-xs font-semibold mt-2">Example:</p>
+                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
+{`const result = await processQuery("session-456", "What is the purpose of this document?");
+console.log(result.answer); // AI-generated answer`}
+                    </pre>
+                  </div>
                 </div>
-              )}
-              
-              {/* Technical Details Section */}
-              {activeSection === "technical" && (
-                <div className="space-y-6">
-                  <section>
-                    <h3 className="text-lg font-medium">System Architecture</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The I4C Chatbot uses a modern stack with these key components:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>Frontend:</strong> React, TypeScript, Tailwind CSS, shadcn/ui</li>
-                      <li><strong>Backend:</strong> Python Flask API</li>
-                      <li><strong>AI:</strong> Ollama for running local language models</li>
-                      <li><strong>Vector Store:</strong> FAISS for efficient similarity search</li>
-                      <li><strong>Web Server:</strong> Nginx for serving the application</li>
-                      <li><strong>Containerization:</strong> Docker for deployment</li>
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Deployment Configuration</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The system is configured for easy deployment with Docker:
-                    </p>
-                    <div className="mt-2 p-4 bg-muted rounded-md text-xs font-mono overflow-auto">
-                      <pre>
-{`# Clone the repository
-git clone https://github.com/your-org/i4c-chatbot.git
-
-# Navigate to the project directory
-cd i4c-chatbot
-
-# Build and run with Docker
-docker build -t i4c-chatbot .
-docker run -p 80:80 -p 5000:5000 i4c-chatbot`}
-                      </pre>
-                    </div>
-                    <p className="mt-2 text-muted-foreground">
-                      The Docker container includes:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li>Python environment with all dependencies</li>
-                      <li>Nginx web server configuration</li>
-                      <li>Ollama for AI model inference</li>
-                      <li>The built React application</li>
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">API Configuration</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The API is configured to work in both development and production environments:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>Development:</strong> API requests are proxied through Vite to the Flask backend</li>
-                      <li><strong>Production:</strong> Nginx routes API requests to the Flask application</li>
-                    </ul>
-                    <p className="mt-2 text-muted-foreground">
-                      This configuration eliminates the need for CORS configuration and simplifies deployment.
-                    </p>
-                  </section>
-                  
-                  <section>
-                    <h3 className="text-lg font-medium">Security Considerations</h3>
-                    <p className="mt-2 text-muted-foreground">
-                      The system implements several security measures:
-                    </p>
-                    <ul className="mt-2 space-y-2 list-disc pl-6">
-                      <li><strong>Admin Authentication:</strong> Token-based authentication for administrative actions</li>
-                      <li><strong>Input Validation:</strong> All user inputs are validated server-side</li>
-                      <li><strong>File Type Restrictions:</strong> Only allowed document types can be uploaded</li>
-                      <li><strong>Rate Limiting:</strong> API endpoints are protected from excessive requests</li>
-                      <li><strong>Secure Headers:</strong> Nginx is configured with secure headers</li>
-                    </ul>
-                  </section>
+                
+                <h4 className="text-lg font-semibold mt-6">System Prompts API</h4>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>fetchSystemPrompts()</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Fetches all available system prompts.</p>
+                    <p className="text-xs font-semibold">Returns:</p>
+                    <p className="text-xs">Promise with array of system prompts</p>
+                  </div>
                 </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                
+                <h3 className="text-xl font-semibold mt-6">Admin API Operations</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">Admin Authentication</h4>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>validateAdminToken(token: string)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Validates an admin token with the backend.</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>token</code>: Admin token to validate</li>
+                    </ul>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with validation result (boolean)</p>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>fetchAdminToken()</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Fetches the admin token for setup.</p>
+                    <p className="text-xs font-semibold">Returns:</p>
+                    <p className="text-xs">Promise with admin token or null</p>
+                  </div>
+                </div>
+                
+                <h4 className="text-lg font-semibold mt-4">Admin Document Management</h4>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>fetchAdminDocuments(adminToken: string)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Fetches all documents (admin view).</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>adminToken</code>: Admin authentication token</li>
+                    </ul>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with array of documents</p>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>deleteDocument(adminToken: string, documentId: string)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Deletes a document (admin only).</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>adminToken</code>: Admin authentication token</li>
+                      <li><code>documentId</code>: Document ID to delete</li>
+                    </ul>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with deletion result</p>
+                  </div>
+                </div>
+                
+                <h4 className="text-lg font-semibold mt-4">Admin System Prompts Management</h4>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>fetchAdminSystemPrompts(adminToken: string)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Fetches all system prompts (admin view).</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>adminToken</code>: Admin authentication token</li>
+                    </ul>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with array of system prompts</p>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>updateSystemPrompt(adminToken: string, promptId: string, promptData: any)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Updates a system prompt.</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>adminToken</code>: Admin authentication token</li>
+                      <li><code>promptId</code>: System prompt ID to update</li>
+                      <li><code>promptData</code>: Updated prompt data</li>
+                    </ul>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with update result</p>
+                  </div>
+                </div>
+                
+                <h3 className="text-xl font-semibold mt-6">Document Processing API</h3>
+                
+                <h4 className="text-lg font-semibold mt-4">Document Initialization</h4>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>initializeQAChain(file: File, modelName: string)</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Initializes a QA chain with a document file and AI model.</p>
+                    <p className="text-xs font-semibold">Parameters:</p>
+                    <ul className="text-xs list-disc pl-6">
+                      <li><code>file</code>: The document file to process (PDF, DOCX, etc.)</li>
+                      <li><code>modelName</code>: The name of the Ollama model to use</li>
+                    </ul>
+                    <p className="text-xs font-semibold mt-2">Returns:</p>
+                    <p className="text-xs">Promise with QA chain result object</p>
+                    <p className="text-xs font-semibold mt-2">Example:</p>
+                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
+{`const qaChain = await initializeQAChain(file, "llama3");
+console.log(qaChain.sessionId); // Session ID for future queries`}
+                    </pre>
+                  </div>
+                </div>
+                
+                <h4 className="text-lg font-semibold mt-4">Available Models</h4>
+                
+                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
+                    <code>getOllamaModels()</code>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm mb-2">Gets a list of available Ollama models.</p>
+                    <p className="text-xs font-semibold">Returns:</p>
+                    <p className="text-xs">Promise with array of model names</p>
+                    <p className="text-xs font-semibold mt-2">Example:</p>
+                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
+{`const models = await getOllamaModels();
+console.log(models); // ["llama3", "mistral", "gemma", ...]`}
+                    </pre>
+                  </div>
+                </div>
+                
+                <h3 className="text-xl font-semibold mt-6">API Configuration</h3>
+                
+                <p>
+                  The API client modules use configuration from <code>src/config/apiConfig.ts</code>, which includes:
+                </p>
+                
+                <ul className="list-disc pl-6 space-y-2">
+                  <li><code>getApiBaseUrl()</code>: Determines the correct API base URL based on the environment</li>
+                  <li><code>API_BASE_URL</code>: The base URL for API requests</li>
+                  <li><code>apiUrl(endpoint)</code>: Utility function to create a fully qualified API URL</li>
+                </ul>
+                
+                <h3 className="text-xl font-semibold mt-6">Error Handling</h3>
+                
+                <p>
+                  The API client modules include robust error handling with:
+                </p>
+                
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Request timeout controls</li>
+                  <li>Retry logic for failed requests</li>
+                  <li>Detailed error reporting</li>
+                  <li>Status code context in error messages</li>
+                </ul>
+                
+                <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md p-4 mt-6">
+                  <p className="font-semibold">API Security Note:</p>
+                  <p>
+                    The admin API operations require an admin token for authentication. Always ensure this token 
+                    is kept secure and not exposed in client-side code or logs.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </ScrollArea>
+      </Tabs>
+      
+      <div className="mt-8">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          For more information, refer to the following resources:
+        </p>
+        <div className="flex flex-wrap gap-4 mt-2">
+          <Link to="/" className="text-blue-500 hover:underline text-sm">Home</Link>
+          <a href="/DEVELOPER_GUIDE.md" className="text-blue-500 hover:underline text-sm" target="_blank">Developer Guide</a>
+          <a href="/AUTHENTICATION_GUIDE.md" className="text-blue-500 hover:underline text-sm" target="_blank">Authentication Guide</a>
+          <a href="/README.md" className="text-blue-500 hover:underline text-sm" target="_blank">README</a>
+        </div>
       </div>
     </div>
   );

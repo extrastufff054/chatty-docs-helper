@@ -13,6 +13,7 @@ interface AuthContextType {
   loginWithToken: (token: string) => Promise<boolean>;
   signup: (data: SignupData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  isInitializing: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isAdmin: false,
+  isInitializing: true,
   login: async () => false,
   loginWithToken: async () => false,
   signup: async () => ({ success: false }),
@@ -30,6 +32,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const { toast } = useToast();
 
   const user = session?.user || null;
@@ -38,21 +41,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Check for existing session on mount
   useEffect(() => {
-    const savedToken = localStorage.getItem('currentSessionToken');
-    if (savedToken) {
-      const { valid, session: validSession } = auth.validateSession(savedToken);
-      if (valid && validSession) {
-        setSession(validSession);
-        auth.setCurrentSession(validSession);
-      } else {
-        localStorage.removeItem('currentSessionToken');
+    const initAuth = async () => {
+      const savedToken = localStorage.getItem('currentSessionToken');
+      if (savedToken) {
+        const { valid, session: validSession } = await auth.validateSession(savedToken);
+        if (valid && validSession) {
+          setSession(validSession);
+          auth.setCurrentSession(validSession);
+        } else {
+          localStorage.removeItem('currentSessionToken');
+        }
       }
-    }
+      setIsInitializing(false);
+    };
+    
+    initAuth();
   }, []);
 
   // Login with username/password
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
-    const result = auth.login(credentials);
+    const result = await auth.login(credentials);
     
     if (result.success && result.session) {
       setSession(result.session);
@@ -74,7 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Login with admin token (for backward compatibility)
   const loginWithToken = async (token: string): Promise<boolean> => {
-    const result = auth.loginWithAdminToken(token);
+    const result = await auth.loginWithAdminToken(token);
     
     if (result.success && result.session) {
       setSession(result.session);
@@ -96,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Sign up new user
   const signup = async (data: SignupData): Promise<{ success: boolean; error?: string }> => {
-    const result = auth.signup(data);
+    const result = await auth.signup(data);
     
     if (result.success) {
       toast({
@@ -132,6 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user,
     isAuthenticated,
     isAdmin,
+    isInitializing,
     login,
     loginWithToken,
     signup,

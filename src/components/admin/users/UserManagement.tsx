@@ -14,10 +14,10 @@ export const UserManagement = () => {
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
   const { toast } = useToast();
   
-  const loadUsers = () => {
+  const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const allUsers = db.getUsers();
+      const allUsers = await db.getUsers();
       setUsers(allUsers);
     } catch (error) {
       console.error("Error loading users:", error);
@@ -35,9 +35,9 @@ export const UserManagement = () => {
     loadUsers();
   }, []);
   
-  const handleApproveUser = (userId: string) => {
+  const handleApproveUser = async (userId: string) => {
     try {
-      const updatedUser = db.approveUser(userId);
+      const updatedUser = await db.approveUser(userId);
       if (updatedUser) {
         toast({
           title: "User approved",
@@ -55,9 +55,9 @@ export const UserManagement = () => {
     }
   };
   
-  const handleUpdateRole = (userId: string, role: User['role']) => {
+  const handleUpdateRole = async (userId: string, role: User['role']) => {
     try {
-      const updatedUser = db.updateUserRole(userId, role);
+      const updatedUser = await db.updateUserRole(userId, role);
       if (updatedUser) {
         toast({
           title: "Role updated",
@@ -75,9 +75,9 @@ export const UserManagement = () => {
     }
   };
   
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     try {
-      const deleted = db.deleteUser(userId);
+      const deleted = await db.deleteUser(userId);
       if (deleted) {
         toast({
           title: "User deleted",

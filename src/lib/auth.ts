@@ -30,26 +30,25 @@ class AuthManager {
   }
   
   // Hash a password (simplified version - use bcrypt in production)
-  hashPassword(password: string): string {
+  async hashPassword(password: string): Promise<string> {
     // Simple SHA-256 hash for demo purposes
     // In production, use a proper password hashing library like bcrypt
     return this.sha256(password);
   }
   
   // Simple SHA-256 implementation for demo purposes
-  private sha256(message: string): string {
+  private async sha256(message: string): Promise<string> {
     // Create a new TextEncoder to convert the string to UTF-8 bytes
     const encoder = new TextEncoder();
     const data = encoder.encode(message);
     
     // Use the SubtleCrypto API to hash the data
-    return crypto.subtle.digest('SHA-256', data)
-      .then(hash => {
-        // Convert the hash to a hex string
-        return Array.from(new Uint8Array(hash))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('');
-      }) as unknown as string;
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    
+    // Convert the hash to a hex string
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
   }
   
   // Generate a session token
@@ -79,22 +78,24 @@ class AuthManager {
   }
   
   // Create user account
-  signup(data: SignupData): { success: boolean; error?: string } {
+  async signup(data: SignupData): Promise<{ success: boolean; error?: string }> {
     // Check if username already exists
-    if (db.getUserByUsername(data.username)) {
+    const existingUsername = await db.getUserByUsername(data.username);
+    if (existingUsername) {
       return { success: false, error: "Username already exists" };
     }
     
     // Check if email already exists
-    if (db.getUserByEmail(data.email)) {
+    const existingEmail = await db.getUserByEmail(data.email);
+    if (existingEmail) {
       return { success: false, error: "Email already exists" };
     }
     
     // Hash the password
-    const passwordHash = this.hashPassword(data.password);
+    const passwordHash = await this.hashPassword(data.password);
     
     // Create the user with "user" role and not approved by default
-    db.createUser({
+    await db.createUser({
       username: data.username,
       email: data.email,
       passwordHash,
@@ -106,16 +107,16 @@ class AuthManager {
   }
   
   // User login
-  login(credentials: LoginCredentials): { success: boolean; session?: AuthSession; error?: string } {
+  async login(credentials: LoginCredentials): Promise<{ success: boolean; session?: AuthSession; error?: string }> {
     // Find user by username
-    const user = db.getUserByUsername(credentials.username);
+    const user = await db.getUserByUsername(credentials.username);
     
     if (!user) {
       return { success: false, error: "Invalid username or password" };
     }
     
     // Check password
-    const passwordHash = this.hashPassword(credentials.password);
+    const passwordHash = await this.hashPassword(credentials.password);
     if (user.passwordHash !== passwordHash) {
       return { success: false, error: "Invalid username or password" };
     }
@@ -143,7 +144,7 @@ class AuthManager {
   }
   
   // Validate a session
-  validateSession(token: string): { valid: boolean; session?: AuthSession } {
+  async validateSession(token: string): Promise<{ valid: boolean; session?: AuthSession }> {
     const session = this.sessions[token];
     
     if (!session) {
@@ -160,7 +161,7 @@ class AuthManager {
     }
     
     // Check if user still exists and is approved
-    const user = db.getUserById(session.user.id);
+    const user = await db.getUserById(session.user.id);
     if (!user || !user.approved) {
       this.logout(token);
       return { valid: false };
@@ -185,7 +186,7 @@ class AuthManager {
   }
   
   // Admin token login (special case for backward compatibility)
-  loginWithAdminToken(adminToken: string): { success: boolean; session?: AuthSession; error?: string } {
+  async loginWithAdminToken(adminToken: string): Promise<{ success: boolean; session?: AuthSession; error?: string }> {
     // Validate that the token matches the expected admin token
     const expectedToken = localStorage.getItem('expectedAdminToken') || '';
     
@@ -194,7 +195,8 @@ class AuthManager {
     }
     
     // Find admin user
-    const adminUser = db.getUsers().find(user => user.role === 'admin');
+    const users = await db.getUsers();
+    const adminUser = users.find(user => user.role === 'admin');
     
     if (!adminUser) {
       return { success: false, error: "No admin user found" };
@@ -236,16 +238,16 @@ class AuthManager {
   }
   
   // Check if user has specific role
-  hasRole(role: User['role'], token?: string): boolean {
+  async hasRole(role: User['role'], token?: string): Promise<boolean> {
     let session: AuthSession | undefined;
     
     if (token) {
-      const validation = this.validateSession(token);
+      const validation = await this.validateSession(token);
       if (validation.valid && validation.session) {
         session = validation.session;
       }
     } else if (this.currentSession) {
-      const validation = this.validateSession(this.currentSession.token);
+      const validation = await this.validateSession(this.currentSession.token);
       if (validation.valid && validation.session) {
         session = validation.session;
       }

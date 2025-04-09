@@ -24,10 +24,11 @@ if (!fs.existsSync(dataDir)) {
 }
 
 const dbPath = path.join(dataDir, 'auth.db');
-const db = new Database(dbPath);
+// Renamed from 'db' to 'dbConnection' to avoid naming conflict
+const dbConnection = new Database(dbPath);
 
 // Initialize database with tables if they don't exist
-db.exec(`
+dbConnection.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT UNIQUE,
@@ -52,9 +53,9 @@ const defaultAdmin = {
 };
 
 // Check if admin user exists, if not create it
-const adminCheck = db.prepare('SELECT * FROM users WHERE role = ?').get('admin');
+const adminCheck = dbConnection.prepare('SELECT * FROM users WHERE role = ?').get('admin');
 if (!adminCheck) {
-  db.prepare(`
+  dbConnection.prepare(`
     INSERT INTO users (id, username, email, passwordHash, role, approved, createdAt)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(
@@ -72,7 +73,7 @@ if (!adminCheck) {
 class DB {
   // Get all users
   getUsers(): User[] {
-    const rows = db.prepare('SELECT * FROM users').all();
+    const rows = dbConnection.prepare('SELECT * FROM users').all();
     return rows.map(row => ({
       ...row,
       approved: Boolean(row.approved)
@@ -81,7 +82,7 @@ class DB {
 
   // Get user by ID
   getUserById(id: string): User | undefined {
-    const row = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    const row = dbConnection.prepare('SELECT * FROM users WHERE id = ?').get(id);
     if (!row) return undefined;
     return {
       ...row,
@@ -91,7 +92,7 @@ class DB {
 
   // Get user by email
   getUserByEmail(email: string): User | undefined {
-    const row = db.prepare('SELECT * FROM users WHERE email = ? COLLATE NOCASE').get(email);
+    const row = dbConnection.prepare('SELECT * FROM users WHERE email = ? COLLATE NOCASE').get(email);
     if (!row) return undefined;
     return {
       ...row,
@@ -101,7 +102,7 @@ class DB {
 
   // Get user by username
   getUserByUsername(username: string): User | undefined {
-    const row = db.prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(username);
+    const row = dbConnection.prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(username);
     if (!row) return undefined;
     return {
       ...row,
@@ -117,7 +118,7 @@ class DB {
       createdAt: new Date().toISOString()
     };
     
-    db.prepare(`
+    dbConnection.prepare(`
       INSERT INTO users (id, username, email, passwordHash, role, approved, createdAt)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(
@@ -143,7 +144,7 @@ class DB {
       ...userData
     };
 
-    db.prepare(`
+    dbConnection.prepare(`
       UPDATE users 
       SET username = ?, email = ?, passwordHash = ?, role = ?, approved = ?
       WHERE id = ?
@@ -171,7 +172,7 @@ class DB {
 
   // Delete user
   deleteUser(id: string): boolean {
-    const result = db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    const result = dbConnection.prepare('DELETE FROM users WHERE id = ?').run(id);
     return result.changes > 0;
   }
 }

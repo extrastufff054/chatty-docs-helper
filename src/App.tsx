@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
@@ -66,24 +66,22 @@ const AdminTokenRoute = ({ element }: { element: JSX.Element }) => {
 
 // App routes with protection
 const AppRoutes = () => (
-  <BrowserRouter>
-    <Routes>
-      {/* Public routes */}
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/documentation" element={<Documentation />} />
-      <Route path="/admin-auth" element={<AdminAuth />} />
-      
-      {/* User routes - require authentication */}
-      <Route path="/" element={<UserRoute element={<Index />} />} />
-      
-      {/* Admin routes - use token-based authentication only */}
-      <Route path="/admin" element={<AdminTokenRoute element={<Admin />} />} />
-      <Route path="/admin/*" element={<AdminTokenRoute element={<Admin />} />} />
-      
-      {/* Catch-all route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </BrowserRouter>
+  <Routes>
+    {/* Public routes */}
+    <Route path="/auth" element={<Auth />} />
+    <Route path="/documentation" element={<Documentation />} />
+    <Route path="/admin-auth" element={<AdminAuth />} />
+    
+    {/* User routes - require authentication */}
+    <Route path="/" element={<UserRoute element={<Index />} />} />
+    
+    {/* Admin routes - use token-based authentication only */}
+    <Route path="/admin" element={<AdminTokenRoute element={<Admin />} />} />
+    <Route path="/admin/*" element={<AdminTokenRoute element={<Admin />} />} />
+    
+    {/* Catch-all route */}
+    <Route path="*" element={<NotFound />} />
+  </Routes>
 );
 
 const App = () => (

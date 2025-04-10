@@ -1,756 +1,922 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { DocumentationLayout } from "@/components/documentation/DocumentationLayout";
 
 const Documentation = () => {
+  const documentationSections = [
+    {
+      id: "getting-started",
+      title: "Getting Started",
+      items: [
+        {
+          id: "introduction",
+          title: "Introduction",
+          href: "introduction",
+          content: (
+            <div>
+              <h1>Introduction to I4C Chatbot</h1>
+              <p>
+                The I4C Chatbot is a sophisticated document-based question answering system designed
+                for the Indian Cybercrime Coordination Centre. It allows users to interact with
+                uploaded documents through natural language queries, leveraging AI to extract
+                and provide relevant information.
+              </p>
+              <p>
+                This system enables law enforcement officials and authorized personnel to quickly
+                access and analyze information from various documents, reports, and manuals related
+                to cybercrime investigation and coordination.
+              </p>
+
+              <h2>Key Features</h2>
+              <ul>
+                <li>Document-based chat interactions using natural language</li>
+                <li>Multi-model support for different types of documents</li>
+                <li>Persistent chat history for continued conversations</li>
+                <li>Role-based access control for secure document management</li>
+                <li>Admin interface for document and system management</li>
+              </ul>
+            </div>
+          ),
+        },
+        {
+          id: "quick-start",
+          title: "Quick Start Guide",
+          href: "quick-start",
+          content: (
+            <div>
+              <h1>Quick Start Guide</h1>
+              <p>
+                This guide will help you quickly get started with the I4C Chatbot interface.
+              </p>
+
+              <h2>1. Logging In</h2>
+              <p>
+                Use your authorized credentials to log in through the authentication page.
+                Different access levels (admin vs. regular user) will determine what features
+                are available to you.
+              </p>
+
+              <h2>2. Selecting a Document</h2>
+              <p>
+                From the sidebar, choose a document you wish to interact with. The document
+                will be loaded and prepared for querying.
+              </p>
+
+              <h2>3. Asking Questions</h2>
+              <p>
+                Use the chat interface to ask questions about the selected document. Type your
+                question in the input field at the bottom of the screen and press Enter or
+                click the Send button.
+              </p>
+
+              <h2>4. Viewing Responses</h2>
+              <p>
+                The AI will analyze the document and provide relevant answers based on the
+                content. Responses appear in the chat window, with the most recent at the bottom.
+              </p>
+
+              <h2>5. Managing Conversations</h2>
+              <p>
+                You can start new chats, switch between previous conversations, or continue
+                existing ones using the chat history panel on the right side of the interface.
+              </p>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      id: "using-the-system",
+      title: "Using the System",
+      items: [
+        {
+          id: "chatting",
+          title: "Chatting with Documents",
+          href: "chatting",
+          content: (
+            <div>
+              <h1>Chatting with Documents</h1>
+              <p>
+                The core functionality of the I4C Chatbot allows you to have interactive
+                conversations with the content of selected documents. Here's how to make
+                the most of this feature:
+              </p>
+
+              <h2>Question Formulation</h2>
+              <p>
+                When asking questions, try to be specific and clear. The AI performs best
+                when questions are direct and focused on particular information within the document.
+              </p>
+              <ul>
+                <li><strong>Good:</strong> "What are the key procedures for handling digital evidence?"</li>
+                <li><strong>Better:</strong> "What steps should be taken when collecting mobile phone evidence according to section 3.2?"</li>
+              </ul>
+
+              <h2>Follow-up Questions</h2>
+              <p>
+                The system maintains context within a conversation, allowing you to ask follow-up 
+                questions that reference previous queries or answers without restating the entire context.
+              </p>
+
+              <h2>Managing Chat Sessions</h2>
+              <p>
+                You can create multiple chat sessions for different inquiry threads, even on the same document.
+                This helps organize your research and investigations into logical segments.
+              </p>
+              <p>
+                Use the "New Chat" button to start a fresh conversation, or select a previous chat
+                from the history panel to continue where you left off.
+              </p>
+
+              <h2>Processing Time</h2>
+              <p>
+                For large or complex documents, the initial loading may take a few moments.
+                Similarly, detailed questions might require additional processing time.
+                The system provides visual feedback during these operations.
+              </p>
+            </div>
+          ),
+        },
+        {
+          id: "document-selection",
+          title: "Document Selection",
+          href: "document-selection",
+          content: (
+            <div>
+              <h1>Document Selection</h1>
+              <p>
+                The I4C Chatbot allows you to interact with various documents that have been
+                uploaded and processed by administrators. Understanding how to select and
+                switch between documents is essential for effective use.
+              </p>
+
+              <h2>Browsing Available Documents</h2>
+              <p>
+                All documents available to you are listed in the left sidebar of the application.
+                Each document entry shows:
+              </p>
+              <ul>
+                <li>Document title</li>
+                <li>Document type/model (when visible)</li>
+              </ul>
+
+              <h2>Selecting a Document</h2>
+              <p>
+                To select a document:
+              </p>
+              <ol>
+                <li>Locate the document in the sidebar list</li>
+                <li>Click on the document title or icon</li>
+                <li>Wait for the document to load and process</li>
+                <li>Once loaded, the document details will appear in the "Current Document" section</li>
+              </ol>
+
+              <h2>Understanding Document Models</h2>
+              <p>
+                Documents may be processed using different AI models, optimized for various types of content:
+              </p>
+              <ul>
+                <li><strong>Standard:</strong> General-purpose document analysis</li>
+                <li><strong>Legal:</strong> Optimized for legal documents and regulations</li>
+                <li><strong>Technical:</strong> Better for technical manuals and specifications</li>
+              </ul>
+              <p>
+                The model used for a document is selected by administrators during the upload process
+                and is displayed in the document details section.
+              </p>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      id: "admin-features",
+      title: "Administrator Features",
+      items: [
+        {
+          id: "document-management",
+          title: "Document Management",
+          href: "document-management",
+          content: (
+            <div>
+              <h1>Document Management</h1>
+              <p>
+                Administrators have access to comprehensive document management capabilities,
+                allowing for the maintenance and organization of the document repository.
+              </p>
+
+              <h2>Uploading Documents</h2>
+              <p>
+                To upload a new document:
+              </p>
+              <ol>
+                <li>Navigate to the Admin panel</li>
+                <li>Select "Document Management"</li>
+                <li>Click "Upload Document" or drag files to the designated area</li>
+                <li>Provide a title and optional description</li>
+                <li>Select the appropriate AI model for processing</li>
+                <li>Submit the document for processing</li>
+              </ol>
+              <p>
+                Processing time depends on document size and complexity. The system will notify you
+                when processing is complete.
+              </p>
+
+              <h2>Managing Existing Documents</h2>
+              <p>
+                For existing documents, administrators can:
+              </p>
+              <ul>
+                <li>View document details and metadata</li>
+                <li>Update document titles or descriptions</li>
+                <li>Delete documents that are no longer needed</li>
+                <li>Monitor document usage statistics</li>
+              </ul>
+
+              <h2>Document Access Control</h2>
+              <p>
+                The system allows for controlling which user roles can access specific documents.
+                This helps in maintaining confidentiality and ensuring appropriate information
+                access based on user clearance.
+              </p>
+            </div>
+          ),
+        },
+        {
+          id: "user-management",
+          title: "User Management",
+          href: "user-management",
+          content: (
+            <div>
+              <h1>User Management</h1>
+              <p>
+                The I4C Chatbot includes a comprehensive user management system that allows
+                administrators to control access and permissions within the application.
+              </p>
+
+              <h2>User Roles</h2>
+              <p>
+                The system supports multiple user roles, each with different levels of access:
+              </p>
+              <ul>
+                <li><strong>Administrators:</strong> Full system access, including user management, document management, and system settings</li>
+                <li><strong>Moderators:</strong> Can view all documents and manage some content but cannot change system settings</li>
+                <li><strong>Regular Users:</strong> Can only access documents and features they've been granted permission to use</li>
+              </ul>
+
+              <h2>Creating New Users</h2>
+              <p>
+                To add a new user to the system:
+              </p>
+              <ol>
+                <li>Navigate to the Admin panel</li>
+                <li>Select "User Management"</li>
+                <li>Click "Add User"</li>
+                <li>Fill in the required information (name, email, role, etc.)</li>
+                <li>Set initial password or enable self-registration</li>
+                <li>Save the new user profile</li>
+              </ol>
+
+              <h2>Managing Existing Users</h2>
+              <p>
+                For existing users, administrators can:
+              </p>
+              <ul>
+                <li>Edit user information and contact details</li>
+                <li>Modify user roles and permissions</li>
+                <li>Reset passwords</li>
+                <li>Disable or delete user accounts</li>
+                <li>View user activity logs</li>
+              </ul>
+
+              <h2>User Authentication Security</h2>
+              <p>
+                The system employs several security measures for user authentication:
+              </p>
+              <ul>
+                <li>Password complexity requirements</li>
+                <li>Account lockout after failed attempts</li>
+                <li>Session timeout for inactive users</li>
+                <li>Optional two-factor authentication</li>
+              </ul>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      id: "system-architecture",
+      title: "System Architecture",
+      items: [
+        {
+          id: "frontend",
+          title: "Frontend Architecture",
+          href: "frontend",
+          content: (
+            <div>
+              <h1>Frontend Architecture</h1>
+              <p>
+                The I4C Chatbot frontend is built using modern web technologies to deliver
+                a responsive, accessible, and intuitive user experience.
+              </p>
+
+              <h2>Technology Stack</h2>
+              <p>
+                The frontend is developed using:
+              </p>
+              <ul>
+                <li><strong>React:</strong> A JavaScript library for building user interfaces</li>
+                <li><strong>TypeScript:</strong> For type safety and improved developer experience</li>
+                <li><strong>Tailwind CSS:</strong> For styling and responsive design</li>
+                <li><strong>shadcn/ui:</strong> For consistent, accessible UI components</li>
+                <li><strong>Tanstack Query:</strong> For efficient data fetching and state management</li>
+              </ul>
+
+              <h2>Component Structure</h2>
+              <p>
+                The application follows a component-based architecture:
+              </p>
+              <ul>
+                <li><strong>Pages:</strong> Main views like Index, Admin, Auth, Documentation</li>
+                <li><strong>Components:</strong> Reusable UI elements organized by functionality</li>
+                <li><strong>Contexts:</strong> Global state management for themes, authentication, etc.</li>
+                <li><strong>Hooks:</strong> Custom React hooks for shared logic</li>
+                <li><strong>Lib:</strong> Utility functions and API clients</li>
+              </ul>
+
+              <h2>Responsive Design</h2>
+              <p>
+                The interface is designed to work across various device sizes:
+              </p>
+              <ul>
+                <li>Mobile-optimized layouts with appropriate navigation patterns</li>
+                <li>Tablet and desktop versions with expanded functionality</li>
+                <li>Adaptive components that adjust to available screen space</li>
+              </ul>
+
+              <h2>State Management</h2>
+              <p>
+                The application uses multiple approaches to state management:
+              </p>
+              <ul>
+                <li>React Context for global application state</li>
+                <li>Local component state for UI-specific concerns</li>
+                <li>React Query for server state management</li>
+                <li>LocalStorage for persisting user preferences and sessions</li>
+              </ul>
+            </div>
+          ),
+        },
+        {
+          id: "backend",
+          title: "Backend Integration",
+          href: "backend",
+          content: (
+            <div>
+              <h1>Backend Integration</h1>
+              <p>
+                The I4C Chatbot frontend integrates with a specialized backend that handles
+                document processing, chat functionality, and user management.
+              </p>
+
+              <h2>API Architecture</h2>
+              <p>
+                The frontend communicates with the backend through a RESTful API:
+              </p>
+              <ul>
+                <li>Authentication endpoints for user management</li>
+                <li>Document API for upload, retrieval, and management</li>
+                <li>Chat API for processing queries and managing conversations</li>
+                <li>Admin API for system configuration and monitoring</li>
+              </ul>
+
+              <h2>Document Processing</h2>
+              <p>
+                When a document is uploaded or selected, the following occurs:
+              </p>
+              <ol>
+                <li>Document is sent to the backend for processing</li>
+                <li>Backend parses and indexes the document content</li>
+                <li>AI models create a searchable representation of the document</li>
+                <li>The processed document becomes available for querying</li>
+              </ol>
+
+              <h2>Chat Processing Workflow</h2>
+              <p>
+                When a user submits a question:
+              </p>
+              <ol>
+                <li>Query is sent to the backend API</li>
+                <li>Backend processes the query against the selected document</li>
+                <li>Relevant information is extracted from the document</li>
+                <li>AI formulates a natural language response</li>
+                <li>Response is streamed back to the frontend</li>
+                <li>Conversation history is updated and persisted</li>
+              </ol>
+
+              <h2>Data Security</h2>
+              <p>
+                Security measures implemented for the API include:
+              </p>
+              <ul>
+                <li>JWT authentication for secure API access</li>
+                <li>HTTPS encryption for all communications</li>
+                <li>Rate limiting to prevent abuse</li>
+                <li>Input validation to prevent injection attacks</li>
+                <li>Access controls based on user permissions</li>
+              </ul>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      id: "deployment",
+      title: "Deployment & Scaling",
+      items: [
+        {
+          id: "deployment-guide",
+          title: "Deployment Guide",
+          href: "deployment-guide",
+          content: (
+            <div>
+              <h1>Deployment Guide</h1>
+              <p>
+                This guide covers the steps required to deploy the I4C Chatbot system
+                in production environments.
+              </p>
+
+              <h2>System Requirements</h2>
+              <p>
+                Minimum requirements for production deployment:
+              </p>
+              <ul>
+                <li>Modern web server (Nginx, Apache)</li>
+                <li>Node.js runtime environment (v16+)</li>
+                <li>Python environment (3.8+) for backend services</li>
+                <li>Database server (PostgreSQL recommended)</li>
+                <li>Storage solution for documents and indices</li>
+                <li>16GB RAM minimum (32GB+ recommended for larger deployments)</li>
+                <li>Multi-core CPU architecture</li>
+              </ul>
+
+              <h2>Deployment Options</h2>
+              <p>
+                The system can be deployed using several methods:
+              </p>
+              <ul>
+                <li><strong>Docker containerization:</strong> Using the provided Dockerfile and docker-compose configuration</li>
+                <li><strong>Traditional server setup:</strong> Manual installation of components</li>
+                <li><strong>Cloud deployment:</strong> Using services like AWS, Google Cloud, or Azure</li>
+              </ul>
+
+              <h2>Docker Deployment (Recommended)</h2>
+              <p>
+                Steps for deploying with Docker:
+              </p>
+              <ol>
+                <li>Ensure Docker and docker-compose are installed</li>
+                <li>Clone the repository</li>
+                <li>Configure environment variables in .env file</li>
+                <li>Run <code>docker-compose up -d</code> to start the services</li>
+                <li>The system will be available on the configured port</li>
+              </ol>
+
+              <h2>Environment Variables</h2>
+              <p>
+                Required environment variables include:
+              </p>
+              <ul>
+                <li><code>API_BASE_URL</code>: Backend API endpoint</li>
+                <li><code>JWT_SECRET</code>: Secret for JWT token generation</li>
+                <li><code>DATABASE_URL</code>: Connection string for the database</li>
+                <li><code>STORAGE_PATH</code>: Path for document storage</li>
+              </ul>
+
+              <h2>SSL Configuration</h2>
+              <p>
+                For production deployments, SSL is mandatory:
+              </p>
+              <ul>
+                <li>Obtain an SSL certificate from a trusted provider</li>
+                <li>Configure the web server to use HTTPS</li>
+                <li>Set up redirects from HTTP to HTTPS</li>
+                <li>Implement appropriate security headers</li>
+              </ul>
+            </div>
+          ),
+        },
+        {
+          id: "scaling",
+          title: "Scaling Strategies",
+          href: "scaling",
+          content: (
+            <div>
+              <h1>Scaling Strategies</h1>
+              <p>
+                As usage of the I4C Chatbot increases, you may need to scale the system
+                to accommodate growing demands. This guide outlines strategies for scaling
+                different components of the application.
+              </p>
+
+              <h2>Vertical Scaling</h2>
+              <p>
+                Increasing resources on existing servers:
+              </p>
+              <ul>
+                <li>Upgrade CPU and RAM for better processing performance</li>
+                <li>Increase storage capacity for more documents</li>
+                <li>Optimize database server configuration</li>
+              </ul>
+              <p>
+                <strong>Pros:</strong> Simpler implementation, no architectural changes<br />
+                <strong>Cons:</strong> Limited by hardware constraints, potential downtime during upgrades
+              </p>
+
+              <h2>Horizontal Scaling</h2>
+              <p>
+                Adding more instances of application components:
+              </p>
+              <ul>
+                <li>Deploy multiple frontend instances behind a load balancer</li>
+                <li>Scale backend API servers based on demand</li>
+                <li>Implement document processing worker pools</li>
+                <li>Database replication and sharding</li>
+              </ul>
+              <p>
+                <strong>Pros:</strong> Near-linear scalability, improved reliability<br />
+                <strong>Cons:</strong> More complex architecture, potential state management challenges
+              </p>
+
+              <h2>Caching Strategies</h2>
+              <p>
+                Implementing caching to reduce load:
+              </p>
+              <ul>
+                <li>Response caching for common queries</li>
+                <li>Document index caching</li>
+                <li>Session data caching</li>
+                <li>Static asset CDN distribution</li>
+              </ul>
+
+              <h2>Database Scaling</h2>
+              <p>
+                Options for scaling the database:
+              </p>
+              <ul>
+                <li>Read replicas for distributing query load</li>
+                <li>Sharding for distributing write operations</li>
+                <li>Connection pooling for efficient resource utilization</li>
+                <li>Consider NoSQL solutions for specific data types</li>
+              </ul>
+
+              <h2>Monitoring and Autoscaling</h2>
+              <p>
+                Implementing dynamic scaling based on demand:
+              </p>
+              <ul>
+                <li>Set up comprehensive monitoring of system metrics</li>
+                <li>Configure autoscaling rules based on CPU, memory, and request load</li>
+                <li>Implement circuit breakers for resilience during peak loads</li>
+                <li>Regular performance testing to identify bottlenecks</li>
+              </ul>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      id: "troubleshooting",
+      title: "Troubleshooting",
+      items: [
+        {
+          id: "common-issues",
+          title: "Common Issues",
+          href: "common-issues",
+          content: (
+            <div>
+              <h1>Common Issues and Solutions</h1>
+              <p>
+                This section covers frequently encountered issues and their solutions
+                to help users and administrators troubleshoot problems.
+              </p>
+
+              <h2>Document Loading Problems</h2>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-2 text-left">Issue</th>
+                    <th className="border p-2 text-left">Possible Causes</th>
+                    <th className="border p-2 text-left">Solutions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border p-2">Document fails to load</td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Network connectivity issues</li>
+                        <li>Server processing error</li>
+                        <li>Document corruption</li>
+                      </ul>
+                    </td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Check network connection</li>
+                        <li>Refresh the page</li>
+                        <li>Ask administrator to check document status</li>
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">Document processing takes too long</td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Large document size</li>
+                        <li>Complex document structure</li>
+                        <li>Server under heavy load</li>
+                      </ul>
+                    </td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Be patient for large documents</li>
+                        <li>Try processing during off-peak hours</li>
+                        <li>Consider splitting very large documents</li>
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h2>Chat Response Issues</h2>
+              <table className="w-full border-collapse mt-4">
+                <thead>
+                  <tr>
+                    <th className="border p-2 text-left">Issue</th>
+                    <th className="border p-2 text-left">Possible Causes</th>
+                    <th className="border p-2 text-left">Solutions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border p-2">No response to questions</td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>API timeout</li>
+                        <li>Connection issues</li>
+                        <li>Server errors</li>
+                      </ul>
+                    </td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Check network connection</li>
+                        <li>Refresh the page and try again</li>
+                        <li>Verify session hasn't expired</li>
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">Irrelevant or incorrect answers</td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Ambiguous question</li>
+                        <li>Information not in document</li>
+                        <li>AI limitations</li>
+                      </ul>
+                    </td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Rephrase question to be more specific</li>
+                        <li>Check if information exists in document</li>
+                        <li>Provide more context in your question</li>
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h2>Login and Authentication Issues</h2>
+              <table className="w-full border-collapse mt-4">
+                <thead>
+                  <tr>
+                    <th className="border p-2 text-left">Issue</th>
+                    <th className="border p-2 text-left">Possible Causes</th>
+                    <th className="border p-2 text-left">Solutions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border p-2">Unable to log in</td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Incorrect credentials</li>
+                        <li>Account locked or disabled</li>
+                        <li>Authentication service issues</li>
+                      </ul>
+                    </td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Verify username and password</li>
+                        <li>Use password reset if available</li>
+                        <li>Contact administrator for account status</li>
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">Session unexpectedly ends</td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Session timeout</li>
+                        <li>Token expiration</li>
+                        <li>Multiple logins from different devices</li>
+                      </ul>
+                    </td>
+                    <td className="border p-2">
+                      <ul className="list-disc pl-4">
+                        <li>Log in again</li>
+                        <li>Check for session timeout settings</li>
+                        <li>Avoid sharing credentials across devices</li>
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ),
+        },
+        {
+          id: "error-codes",
+          title: "Error Codes Reference",
+          href: "error-codes",
+          content: (
+            <div>
+              <h1>Error Codes Reference</h1>
+              <p>
+                This reference guide documents the error codes you may encounter when using
+                the I4C Chatbot system, along with explanations and recommended actions.
+              </p>
+
+              <h2>API Error Codes</h2>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-2 text-left">Code</th>
+                    <th className="border p-2 text-left">Description</th>
+                    <th className="border p-2 text-left">Suggested Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border p-2"><code>AUTH_001</code></td>
+                    <td className="border p-2">Authentication token missing</td>
+                    <td className="border p-2">Log in again to obtain a new token</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>AUTH_002</code></td>
+                    <td className="border p-2">Authentication token expired</td>
+                    <td className="border p-2">Log in again to refresh your session</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>AUTH_003</code></td>
+                    <td className="border p-2">Insufficient permissions</td>
+                    <td className="border p-2">Contact administrator for proper access rights</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>DOC_001</code></td>
+                    <td className="border p-2">Document not found</td>
+                    <td className="border p-2">Verify document ID or check if document has been deleted</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>DOC_002</code></td>
+                    <td className="border p-2">Document processing failed</td>
+                    <td className="border p-2">Check document format and try uploading again</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>CHAT_001</code></td>
+                    <td className="border p-2">Session creation failed</td>
+                    <td className="border p-2">Try selecting the document again</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>CHAT_002</code></td>
+                    <td className="border p-2">Query processing timeout</td>
+                    <td className="border p-2">Try a simpler question or check network connection</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h2>Frontend Error Codes</h2>
+              <table className="w-full border-collapse mt-4">
+                <thead>
+                  <tr>
+                    <th className="border p-2 text-left">Code</th>
+                    <th className="border p-2 text-left">Description</th>
+                    <th className="border p-2 text-left">Suggested Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border p-2"><code>UI_001</code></td>
+                    <td className="border p-2">Component rendering failure</td>
+                    <td className="border p-2">Refresh the page or clear browser cache</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>UI_002</code></td>
+                    <td className="border p-2">Form validation error</td>
+                    <td className="border p-2">Check input fields for correct format</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>UI_003</code></td>
+                    <td className="border p-2">Local storage access error</td>
+                    <td className="border p-2">Ensure cookies/local storage is enabled in browser</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>NET_001</code></td>
+                    <td className="border p-2">Network request failed</td>
+                    <td className="border p-2">Check internet connection and try again</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2"><code>NET_002</code></td>
+                    <td className="border p-2">API connection timeout</td>
+                    <td className="border p-2">Wait and retry, or check with administrator</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h2>Contacting Support</h2>
+              <p>
+                If you encounter persistent errors or issues not covered in this reference:
+              </p>
+              <ul>
+                <li>For system administrators: Check server logs for detailed error information</li>
+                <li>For users: Contact your organization's IT support or system administrator</li>
+                <li>Include the error code and a description of the actions that led to the error</li>
+                <li>Note any recent system changes or updates that might be relevant</li>
+              </ul>
+            </div>
+          ),
+        },
+      ],
+    },
+  ];
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">I4C Chatbot Developer Documentation</h1>
-      
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="architecture">Architecture</TabsTrigger>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="auth">Authentication</TabsTrigger>
-          <TabsTrigger value="api">API Reference</TabsTrigger>
-        </TabsList>
-        
-        <ScrollArea className="h-[calc(100vh-220px)] pr-4">
-          <TabsContent value="overview" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Overview</CardTitle>
-                <CardDescription>Understanding the I4C Chatbot Application</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p>
-                  The I4C Chatbot is a React-based web application designed to provide an interactive chatbot interface 
-                  that allows users to query PDF documents using AI models. The application includes:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>A user authentication system with role-based access control</li>
-                  <li>Document upload and processing capabilities</li>
-                  <li>Chat interface for interacting with AI models</li>
-                  <li>Admin panel for managing users, documents, and system prompts</li>
-                  <li>Responsive design for different screen sizes</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold mt-6">Key Features</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Authentication with multiple user roles (admin, moderator, user)</li>
-                  <li>Document processing with AI model integration</li>
-                  <li>Chat-based query interface with streaming responses</li>
-                  <li>User management with approval workflows</li>
-                  <li>System prompt customization</li>
-                  <li>Dark/light theme support</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold mt-6">Technology Stack</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li><strong>Frontend:</strong> React, TypeScript, Tailwind CSS, Shadcn UI</li>
-                  <li><strong>State Management:</strong> React Context API, React Query</li>
-                  <li><strong>Authentication:</strong> Custom auth with IndexedDB</li>
-                  <li><strong>Storage:</strong> Browser IndexedDB for local data persistence</li>
-                  <li><strong>API:</strong> HTTP requests to Python backend with document processing</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold mt-6">Getting Started</h3>
-                <p>To start development with this project:</p>
-                <ol className="list-decimal pl-6 space-y-2">
-                  <li>Clone the repository</li>
-                  <li>Install dependencies with <code className="bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">npm install</code></li>
-                  <li>Start the development server with <code className="bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">npm run dev</code></li>
-                  <li>Ensure the Python backend is running (separate setup)</li>
-                </ol>
-                
-                <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md p-4 mt-6">
-                  <p className="font-semibold">Note:</p>
-                  <p>This documentation focuses on the frontend architecture. For information about the Python backend, refer to the backend documentation.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="architecture" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Application Architecture</CardTitle>
-                <CardDescription>How the I4C Chatbot is structured</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <h3 className="text-xl font-semibold">Directory Structure</h3>
-                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm">
-{`src/
-├── components/     # UI components
-│   ├── admin/      # Admin panel components
-│   ├── auth/       # Authentication components
-│   └── ui/         # Shadcn UI components
-├── contexts/       # React contexts for state management
-├── hooks/          # Custom React hooks
-├── lib/            # Utility functions and core logic
-├── pages/          # Main application pages
-├── config/         # Configuration files
-└── main.tsx        # Application entry point`}
-                </pre>
-                
-                <h3 className="text-xl font-semibold mt-6">Core Architecture Concepts</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">1. Component-Based Structure</h4>
-                <p>
-                  The application follows React's component-based architecture, with reusable UI components organized by 
-                  feature area. This promotes code reusability and separation of concerns.
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">2. Context API for State Management</h4>
-                <p>
-                  React Context API is used for global state management, particularly for authentication state (via AuthContext). 
-                  This provides access to authentication data and methods throughout the application without prop drilling.
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">3. Custom Hooks</h4>
-                <p>
-                  Custom React hooks encapsulate reusable logic, such as toast notifications, form handling, and API interactions. 
-                  These hooks simplify component code and promote the reuse of complex functionality.
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">4. Browser-Based Database</h4>
-                <p>
-                  The application uses IndexedDB (through a custom wrapper in <code>db.ts</code>) to store user data directly 
-                  in the browser. This enables user management functionality without requiring a backend database.
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">5. API Client Architecture</h4>
-                <p>
-                  Separate API client modules (<code>apiClient.ts</code> and <code>adminApiClient.ts</code>) handle 
-                  communication with the backend. These provide structured methods for different API endpoints and include 
-                  error handling and retries.
-                </p>
-                
-                <h3 className="text-xl font-semibold mt-6">Data Flow</h3>
-                
-                <p>The typical data flow in the application follows this pattern:</p>
-                
-                <ol className="list-decimal pl-6 space-y-2">
-                  <li>User interacts with a component (e.g., submits a form, clicks a button)</li>
-                  <li>Component calls a method from context or custom hook</li>
-                  <li>The method may communicate with an API client or database utility</li>
-                  <li>Results are returned to the component and/or stored in global state</li>
-                  <li>UI updates to reflect the new state</li>
-                </ol>
-                
-                <h3 className="text-xl font-semibold mt-6">Authentication Flow</h3>
-                
-                <p>The authentication system follows this general flow:</p>
-                
-                <ol className="list-decimal pl-6 space-y-2">
-                  <li>User registers or logs in through authentication forms</li>
-                  <li>Credentials are validated against stored user data in IndexedDB</li>
-                  <li>On successful authentication, a session token is generated and stored</li>
-                  <li>The token is used to maintain authenticated state across page reloads</li>
-                  <li>Protected routes and components check authentication status through the AuthContext</li>
-                </ol>
-                
-                <h3 className="text-xl font-semibold mt-6">API Architecture</h3>
-                
-                <p>The application communicates with a Python backend for document processing and AI functionality:</p>
-                
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Document uploads are processed by the backend and converted to vector embeddings</li>
-                  <li>User queries are sent to the backend, which retrieves relevant document sections</li>
-                  <li>The backend forwards queries and context to AI models for processing</li>
-                  <li>Responses are streamed back to the frontend for real-time display</li>
-                </ul>
-                
-                <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md p-4 mt-6">
-                  <p className="font-semibold">Pro Tip:</p>
-                  <p>
-                    When adding new features, follow the established patterns in the codebase. If you're adding a new API endpoint, 
-                    create corresponding methods in the API client. For new UI features, create reusable components and hooks.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="components" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Components Guide</CardTitle>
-                <CardDescription>Understanding the major components in the application</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <h3 className="text-xl font-semibold">Authentication Components</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">AuthContext</h4>
-                <p>
-                  <code>AuthContext</code> (in <code>src/contexts/AuthContext.tsx</code>) is the core of the authentication system.
-                  It provides:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Current user data and authentication state</li>
-                  <li>Login, signup, and logout methods</li>
-                  <li>Role-based authorization checks</li>
-                  <li>Session persistence across page reloads</li>
-                </ul>
-                <p className="mt-2">
-                  The context uses the auth utility library to handle the actual authentication logic and 
-                  exposes a clean API for components to use.
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">LoginForm and SignupForm</h4>
-                <p>
-                  These components in <code>src/components/auth/</code> provide the UI for user authentication. 
-                  They use form validation, error handling, and connect to the AuthContext for authentication operations.
-                </p>
-                
-                <h3 className="text-xl font-semibold mt-6">Admin Components</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">UserManagement</h4>
-                <p>
-                  The <code>UserManagement</code> component provides the admin interface for managing users, including:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>User listing with filtering and sorting</li>
-                  <li>User approval workflow</li>
-                  <li>Role management</li>
-                  <li>User deletion</li>
-                </ul>
-                
-                <h4 className="text-lg font-semibold mt-4">DocumentUpload and DocumentsList</h4>
-                <p>
-                  These components handle document management in the admin panel, allowing administrators to upload 
-                  new documents and manage existing ones. They interact with the document processing API.
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">SystemPromptManagement</h4>
-                <p>
-                  This component allows administrators to create and manage system prompts that control the AI's behavior 
-                  when responding to user queries.
-                </p>
-                
-                <h3 className="text-xl font-semibold mt-6">Chat Components</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">ChatMessage</h4>
-                <p>
-                  Renders individual chat messages with support for different message types (user, assistant) 
-                  and formatted content.
-                </p>
-                
-                <h3 className="text-xl font-semibold mt-6">Utility Components</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">ThemeToggle</h4>
-                <p>
-                  Allows users to switch between light and dark themes.
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">UI Components</h4>
-                <p>
-                  The application uses a set of reusable UI components from the shadcn/ui library, located in 
-                  <code>src/components/ui/</code>. These include buttons, forms, dialogs, and other UI elements.
-                </p>
-                
-                <h3 className="text-xl font-semibold mt-6">Component Interaction Patterns</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">Context Consumers</h4>
-                <p>
-                  Many components consume the AuthContext to access user data and authentication state. This is typically 
-                  done using the <code>useAuth</code> hook:
-                </p>
-                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm mt-2">
-{`const MyComponent = () => {
-  const { user, isAuthenticated, isAdmin } = useAuth();
-  
-  // Component logic using authentication state
-}`}
-                </pre>
-                
-                <h4 className="text-lg font-semibold mt-4">API Integration</h4>
-                <p>
-                  Components that interact with the backend typically use the API client utilities:
-                </p>
-                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm mt-2">
-{`const MyComponent = () => {
-  const [data, setData] = useState([]);
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await apiClient.fetchSomeData();
-        setData(result);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    
-    fetchData();
-  }, []);
-  
-  // Render component using data
-}`}
-                </pre>
-                
-                <div className="bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md p-4 mt-6">
-                  <p className="font-semibold">Best Practice:</p>
-                  <p>
-                    When creating new components, follow these principles:
-                  </p>
-                  <ul className="list-disc pl-6 mt-2">
-                    <li>Keep components focused on a single responsibility</li>
-                    <li>Extract reusable logic to custom hooks</li>
-                    <li>Use context for global state instead of prop drilling</li>
-                    <li>Implement proper error handling and loading states</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="auth" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Authentication System</CardTitle>
-                <CardDescription>A detailed guide to the authentication implementation</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <h3 className="text-xl font-semibold">Overview</h3>
-                <p>
-                  The I4C Chatbot uses a custom, browser-based authentication system with the following features:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>User registration and login</li>
-                  <li>Role-based access control (admin, moderator, user roles)</li>
-                  <li>Session management</li>
-                  <li>User approval workflow</li>
-                  <li>Password hashing for security</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold mt-6">Core Components</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">1. Database (db.ts)</h4>
-                <p>
-                  The <code>db.ts</code> file provides a wrapper around IndexedDB for storing user data in the browser. 
-                  It includes methods for:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Creating, retrieving, updating, and deleting users</li>
-                  <li>Querying users by ID, username, or email</li>
-                  <li>Managing user approval and roles</li>
-                </ul>
-                
-                <h4 className="text-lg font-semibold mt-4">2. Authentication Manager (auth.ts)</h4>
-                <p>
-                  The <code>auth.ts</code> file contains the core authentication logic, including:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Password hashing and verification</li>
-                  <li>Session token generation and validation</li>
-                  <li>Login, signup, and logout functionality</li>
-                  <li>Session persistence</li>
-                </ul>
-                
-                <h4 className="text-lg font-semibold mt-4">3. Authentication Context (AuthContext.tsx)</h4>
-                <p>
-                  The <code>AuthContext</code> provides a React context for authentication state, exposing:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Current user data and session information</li>
-                  <li>Authentication status (isAuthenticated, isAdmin)</li>
-                  <li>Login, signup, and logout methods</li>
-                  <li>Loading state during authentication operations</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold mt-6">User Data Model</h3>
-                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm">
-{`interface User {
-  id: string;               // UUID for user identification
-  username: string;         // Unique username
-  email: string;            // Unique email address
-  passwordHash: string;     // SHA-256 hash of user password
-  role: "admin" | "user" | "moderator";  // User role for access control
-  approved: boolean;        // Account approval status
-  createdAt: string;        // ISO timestamp of account creation
-}`}
-                </pre>
-                
-                <h3 className="text-xl font-semibold mt-6">Session Data Model</h3>
-                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto text-sm">
-{`interface AuthSession {
-  token: string;            // Unique session token
-  user: User;               // User associated with this session
-  expiresAt: string;        // ISO timestamp of session expiration
-}`}
-                </pre>
-                
-                <h3 className="text-xl font-semibold mt-6">Authentication Workflows</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">Registration Flow</h4>
-                <ol className="list-decimal pl-6 space-y-2">
-                  <li>User submits registration form with username, email, and password</li>
-                  <li>System checks for existing users with the same username or email</li>
-                  <li>Password is hashed using SHA-256 (would use bcrypt in production)</li>
-                  <li>New user record is created with "user" role and unapproved status</li>
-                  <li>User must wait for admin approval before logging in</li>
-                </ol>
-                
-                <h4 className="text-lg font-semibold mt-4">Login Flow</h4>
-                <ol className="list-decimal pl-6 space-y-2">
-                  <li>User submits login form with username and password</li>
-                  <li>System retrieves user record by username</li>
-                  <li>Password is hashed and compared with stored hash</li>
-                  <li>System checks if user is approved</li>
-                  <li>If authentication succeeds, a new session is created with a unique token</li>
-                  <li>Session token is stored in localStorage for persistence</li>
-                  <li>Application state is updated with authenticated user data</li>
-                </ol>
-                
-                <h4 className="text-lg font-semibold mt-4">Session Validation Flow</h4>
-                <ol className="list-decimal pl-6 space-y-2">
-                  <li>On application load, system checks for existing session token in localStorage</li>
-                  <li>If token exists, it's validated against stored sessions</li>
-                  <li>System checks if session is expired</li>
-                  <li>System verifies that the user still exists and is approved</li>
-                  <li>If validation succeeds, session is restored and user is automatically logged in</li>
-                </ol>
-                
-                <h4 className="text-lg font-semibold mt-4">Admin Token Login Flow</h4>
-                <p>
-                  For backward compatibility, the system supports logging in with an admin token:
-                </p>
-                <ol className="list-decimal pl-6 space-y-2">
-                  <li>Admin provides a token</li>
-                  <li>Token is validated against the expected admin token</li>
-                  <li>System finds the first user with admin role</li>
-                  <li>If validation succeeds, a new session is created for the admin user</li>
-                </ol>
-                
-                <h3 className="text-xl font-semibold mt-6">Production Considerations</h3>
-                
-                <p>
-                  The current authentication implementation is suitable for development but has limitations for production use:
-                </p>
-                
-                <h4 className="text-lg font-semibold mt-4">Security Enhancements</h4>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Replace SHA-256 with a more secure password hashing algorithm like bcrypt or Argon2</li>
-                  <li>Implement proper CSRF protection</li>
-                  <li>Use HTTP-only cookies instead of localStorage for token storage</li>
-                  <li>Add rate limiting for authentication attempts</li>
-                  <li>Implement multi-factor authentication</li>
-                </ul>
-                
-                <h4 className="text-lg font-semibold mt-4">Database Migration</h4>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Replace IndexedDB with a server-side database (PostgreSQL, MongoDB, etc.)</li>
-                  <li>Implement proper database migration strategies</li>
-                  <li>Add data backup and recovery procedures</li>
-                </ul>
-                
-                <h4 className="text-lg font-semibold mt-4">Session Management</h4>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Implement sliding session expiration</li>
-                  <li>Add session invalidation on password change</li>
-                  <li>Support multiple concurrent sessions per user with management UI</li>
-                  <li>Implement refresh tokens for long-lived sessions</li>
-                </ul>
-                
-                <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md p-4 mt-6">
-                  <p className="font-semibold">Important Security Note:</p>
-                  <p>
-                    The current password hashing implementation uses SHA-256, which is not recommended for password storage in production. 
-                    For production use, implement a proper password hashing algorithm like bcrypt with salt and appropriate work factor.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="api" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>API Reference</CardTitle>
-                <CardDescription>Complete guide to the application's API functionality</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <h3 className="text-xl font-semibold">API Client Modules</h3>
-                
-                <p>
-                  The application includes two main API client modules:
-                </p>
-                
-                <ul className="list-disc pl-6 space-y-2">
-                  <li><code>apiClient.ts</code>: For regular user API operations</li>
-                  <li><code>adminApiClient.ts</code>: For admin-specific operations</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold mt-6">Standard API Operations</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">Documents API</h4>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>fetchDocuments()</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Fetches all available documents from the API.</p>
-                    <p className="text-xs font-semibold">Returns:</p>
-                    <p className="text-xs">Promise with array of documents</p>
-                    <p className="text-xs font-semibold mt-2">Example:</p>
-                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
-{`const documents = await fetchDocuments();
-console.log(documents); // Array of document objects`}
-                    </pre>
-                  </div>
-                </div>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>selectDocument(documentId: string, model: string)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Selects a document for querying with a specified model.</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>documentId</code>: Document ID to select</li>
-                      <li><code>model</code>: Model to use for the document</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with session ID</p>
-                    <p className="text-xs font-semibold mt-2">Example:</p>
-                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
-{`const result = await selectDocument("doc-123", "llama3");
-console.log(result.session_id); // Session ID for future queries`}
-                    </pre>
-                  </div>
-                </div>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>processQuery(sessionId: string, query: string)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Processes a query against a selected document.</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>sessionId</code>: Session ID for the query</li>
-                      <li><code>query</code>: Query text</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with answer and tokens</p>
-                    <p className="text-xs font-semibold mt-2">Example:</p>
-                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
-{`const result = await processQuery("session-456", "What is the purpose of this document?");
-console.log(result.answer); // AI-generated answer`}
-                    </pre>
-                  </div>
-                </div>
-                
-                <h4 className="text-lg font-semibold mt-6">System Prompts API</h4>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>fetchSystemPrompts()</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Fetches all available system prompts.</p>
-                    <p className="text-xs font-semibold">Returns:</p>
-                    <p className="text-xs">Promise with array of system prompts</p>
-                  </div>
-                </div>
-                
-                <h3 className="text-xl font-semibold mt-6">Admin API Operations</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">Admin Authentication</h4>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>validateAdminToken(token: string)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Validates an admin token with the backend.</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>token</code>: Admin token to validate</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with validation result (boolean)</p>
-                  </div>
-                </div>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>fetchAdminToken()</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Fetches the admin token for setup.</p>
-                    <p className="text-xs font-semibold">Returns:</p>
-                    <p className="text-xs">Promise with admin token or null</p>
-                  </div>
-                </div>
-                
-                <h4 className="text-lg font-semibold mt-4">Admin Document Management</h4>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>fetchAdminDocuments(adminToken: string)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Fetches all documents (admin view).</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>adminToken</code>: Admin authentication token</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with array of documents</p>
-                  </div>
-                </div>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>deleteDocument(adminToken: string, documentId: string)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Deletes a document (admin only).</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>adminToken</code>: Admin authentication token</li>
-                      <li><code>documentId</code>: Document ID to delete</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with deletion result</p>
-                  </div>
-                </div>
-                
-                <h4 className="text-lg font-semibold mt-4">Admin System Prompts Management</h4>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>fetchAdminSystemPrompts(adminToken: string)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Fetches all system prompts (admin view).</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>adminToken</code>: Admin authentication token</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with array of system prompts</p>
-                  </div>
-                </div>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-4">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>updateSystemPrompt(adminToken: string, promptId: string, promptData: any)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Updates a system prompt.</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>adminToken</code>: Admin authentication token</li>
-                      <li><code>promptId</code>: System prompt ID to update</li>
-                      <li><code>promptData</code>: Updated prompt data</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with update result</p>
-                  </div>
-                </div>
-                
-                <h3 className="text-xl font-semibold mt-6">Document Processing API</h3>
-                
-                <h4 className="text-lg font-semibold mt-4">Document Initialization</h4>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>initializeQAChain(file: File, modelName: string)</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Initializes a QA chain with a document file and AI model.</p>
-                    <p className="text-xs font-semibold">Parameters:</p>
-                    <ul className="text-xs list-disc pl-6">
-                      <li><code>file</code>: The document file to process (PDF, DOCX, etc.)</li>
-                      <li><code>modelName</code>: The name of the Ollama model to use</li>
-                    </ul>
-                    <p className="text-xs font-semibold mt-2">Returns:</p>
-                    <p className="text-xs">Promise with QA chain result object</p>
-                    <p className="text-xs font-semibold mt-2">Example:</p>
-                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
-{`const qaChain = await initializeQAChain(file, "llama3");
-console.log(qaChain.sessionId); // Session ID for future queries`}
-                    </pre>
-                  </div>
-                </div>
-                
-                <h4 className="text-lg font-semibold mt-4">Available Models</h4>
-                
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden mt-2">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
-                    <code>getOllamaModels()</code>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm mb-2">Gets a list of available Ollama models.</p>
-                    <p className="text-xs font-semibold">Returns:</p>
-                    <p className="text-xs">Promise with array of model names</p>
-                    <p className="text-xs font-semibold mt-2">Example:</p>
-                    <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md overflow-x-auto text-xs mt-1">
-{`const models = await getOllamaModels();
-console.log(models); // ["llama3", "mistral", "gemma", ...]`}
-                    </pre>
-                  </div>
-                </div>
-                
-                <h3 className="text-xl font-semibold mt-6">API Configuration</h3>
-                
-                <p>
-                  The API client modules use configuration from <code>src/config/apiConfig.ts</code>, which includes:
-                </p>
-                
-                <ul className="list-disc pl-6 space-y-2">
-                  <li><code>getApiBaseUrl()</code>: Determines the correct API base URL based on the environment</li>
-                  <li><code>API_BASE_URL</code>: The base URL for API requests</li>
-                  <li><code>apiUrl(endpoint)</code>: Utility function to create a fully qualified API URL</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold mt-6">Error Handling</h3>
-                
-                <p>
-                  The API client modules include robust error handling with:
-                </p>
-                
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Request timeout controls</li>
-                  <li>Retry logic for failed requests</li>
-                  <li>Detailed error reporting</li>
-                  <li>Status code context in error messages</li>
-                </ul>
-                
-                <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md p-4 mt-6">
-                  <p className="font-semibold">API Security Note:</p>
-                  <p>
-                    The admin API operations require an admin token for authentication. Always ensure this token 
-                    is kept secure and not exposed in client-side code or logs.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </ScrollArea>
-      </Tabs>
-      
-      <div className="mt-8">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          For more information, refer to the following resources:
+    <DocumentationLayout sections={documentationSections}>
+      <div>
+        <h1>I4C Chatbot Documentation</h1>
+        <p>
+          Welcome to the comprehensive documentation for the Indian Cybercrime Coordination Centre
+          (I4C) Chatbot system. This documentation provides detailed information about using,
+          administering, and understanding the I4C Chatbot platform.
         </p>
-        <div className="flex flex-wrap gap-4 mt-2">
-          <Link to="/" className="text-blue-500 hover:underline text-sm">Home</Link>
-          <a href="/DEVELOPER_GUIDE.md" className="text-blue-500 hover:underline text-sm" target="_blank">Developer Guide</a>
-          <a href="/AUTHENTICATION_GUIDE.md" className="text-blue-500 hover:underline text-sm" target="_blank">Authentication Guide</a>
-          <a href="/README.md" className="text-blue-500 hover:underline text-sm" target="_blank">README</a>
+        <p>
+          Please select a topic from the sidebar to get started, or explore the quick links below
+          for commonly accessed information.
+        </p>
+        
+        <div className="grid gap-4 mt-6 md:grid-cols-2">
+          <div className="border rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2">For Users</h3>
+            <ul className="space-y-1">
+              <li>
+                <a href="#quick-start" className="text-primary hover:underline">
+                  Quick Start Guide
+                </a>
+              </li>
+              <li>
+                <a href="#chatting" className="text-primary hover:underline">
+                  Chatting with Documents
+                </a>
+              </li>
+              <li>
+                <a href="#common-issues" className="text-primary hover:underline">
+                  Troubleshooting Common Issues
+                </a>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="border rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2">For Administrators</h3>
+            <ul className="space-y-1">
+              <li>
+                <a href="#document-management" className="text-primary hover:underline">
+                  Document Management
+                </a>
+              </li>
+              <li>
+                <a href="#user-management" className="text-primary hover:underline">
+                  User Management
+                </a>
+              </li>
+              <li>
+                <a href="#deployment-guide" className="text-primary hover:underline">
+                  Deployment Guide
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
+    </DocumentationLayout>
   );
 };
 

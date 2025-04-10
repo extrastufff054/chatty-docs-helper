@@ -1,4 +1,4 @@
-
+import { useState, useEffect } from "react";
 import { DocumentationLayout } from "@/components/documentation/DocumentationLayout";
 
 const Documentation = () => {
@@ -856,68 +856,158 @@ const Documentation = () => {
         },
       ],
     },
-  ];
+    {
+      id: "developer-guide",
+      title: "Developer Guide",
+      items: [
+        {
+          id: "codebase-structure",
+          title: "Codebase Structure",
+          href: "codebase-structure",
+          content: (
+            <div className="animate-fade-in">
+              <h1>Codebase Structure</h1>
+              <p className="text-lg mb-6">
+                This guide explains the project's file structure and organization to help developers understand
+                and navigate the codebase effectively.
+              </p>
 
-  return (
-    <DocumentationLayout sections={documentationSections}>
-      <div>
-        <h1>I4C Chatbot Documentation</h1>
-        <p>
-          Welcome to the comprehensive documentation for the Indian Cybercrime Coordination Centre
-          (I4C) Chatbot system. This documentation provides detailed information about using,
-          administering, and understanding the I4C Chatbot platform.
-        </p>
-        <p>
-          Please select a topic from the sidebar to get started, or explore the quick links below
-          for commonly accessed information.
-        </p>
-        
-        <div className="grid gap-4 mt-6 md:grid-cols-2">
-          <div className="border rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2">For Users</h3>
-            <ul className="space-y-1">
-              <li>
-                <a href="#quick-start" className="text-primary hover:underline">
-                  Quick Start Guide
-                </a>
-              </li>
-              <li>
-                <a href="#chatting" className="text-primary hover:underline">
-                  Chatting with Documents
-                </a>
-              </li>
-              <li>
-                <a href="#common-issues" className="text-primary hover:underline">
-                  Troubleshooting Common Issues
-                </a>
-              </li>
-            </ul>
-          </div>
-          
-          <div className="border rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2">For Administrators</h3>
-            <ul className="space-y-1">
-              <li>
-                <a href="#document-management" className="text-primary hover:underline">
-                  Document Management
-                </a>
-              </li>
-              <li>
-                <a href="#user-management" className="text-primary hover:underline">
-                  User Management
-                </a>
-              </li>
-              <li>
-                <a href="#deployment-guide" className="text-primary hover:underline">
-                  Deployment Guide
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </DocumentationLayout>
-  );
-};
+              <h2 className="mt-8 mb-4">Directory Structure</h2>
+              <div className="overflow-auto">
+                <pre className="p-4 bg-muted rounded-lg mb-6 text-sm">
+                  {`src/
+├── components/     # UI components organized by feature
+│   ├── ui/         # Shadcn/UI components
+│   ├── admin/      # Admin interface components
+│   ├── auth/       # Authentication components
+│   └── documentation/ # Documentation UI components
+├── contexts/       # React contexts for global state
+├── hooks/          # Custom React hooks
+├── lib/            # Utility functions and API clients
+├── pages/          # Application pages/routes
+└── index.css       # Global CSS styles`}
+                </pre>
+              </div>
 
-export default Documentation;
+              <h2 className="mt-8 mb-4">Key Files</h2>
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg transition-all hover:shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">src/main.tsx</h3>
+                  <p>Application entry point that sets up the React root and router.</p>
+                  <ul className="list-disc ml-5 mt-2">
+                    <li>Renders the root component with React Router</li>
+                    <li>Imports global CSS styles</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 border rounded-lg transition-all hover:shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">src/App.tsx</h3>
+                  <p>Main application component that sets up:</p>
+                  <ul className="list-disc ml-5 mt-2">
+                    <li>React Query client</li>
+                    <li>Theme context</li>
+                    <li>Authentication context</li>
+                    <li>Route definitions and protection</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 border rounded-lg transition-all hover:shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">src/contexts/</h3>
+                  <p>Contains global state management via React Context:</p>
+                  <ul className="list-disc ml-5 mt-2">
+                    <li><strong>AuthContext.tsx:</strong> Manages user authentication state</li>
+                    <li><strong>ThemeContext.tsx:</strong> Handles theme switching (light/dark/system)</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 border rounded-lg transition-all hover:shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">src/pages/</h3>
+                  <p>Contains top-level page components, each corresponding to a route:</p>
+                  <ul className="list-disc ml-5 mt-2">
+                    <li><strong>Index.tsx:</strong> Main chatbot interface</li>
+                    <li><strong>Admin.tsx:</strong> Admin dashboard</li>
+                    <li><strong>AdminAuth.tsx:</strong> Admin authentication</li>
+                    <li><strong>Auth.tsx:</strong> User authentication</li>
+                    <li><strong>Documentation.tsx:</strong> Documentation system</li>
+                    <li><strong>NotFound.tsx:</strong> 404 page</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 border rounded-lg transition-all hover:shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">src/lib/</h3>
+                  <p>Contains utility functions and service modules:</p>
+                  <ul className="list-disc ml-5 mt-2">
+                    <li><strong>apiClient.ts:</strong> API integration for user-facing features</li>
+                    <li><strong>adminApiClient.ts:</strong> Admin-specific API functions</li>
+                    <li><strong>documentProcessor.ts:</strong> Logic for document processing and QA</li>
+                    <li><strong>utils.ts:</strong> Generic utility functions</li>
+                    <li><strong>auth.ts:</strong> Authentication utilities</li>
+                  </ul>
+                </div>
+              </div>
+
+              <h2 className="mt-8 mb-4">Component Structure</h2>
+              <p className="mb-4">
+                Components are organized by feature area and follow a consistent pattern:
+              </p>
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="p-4 border rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">UI Components</h3>
+                  <p className="mb-2">Located in <code>src/components/ui/</code>:</p>
+                  <ul className="list-disc ml-5">
+                    <li>Shadcn/UI base components</li>
+                    <li>Reusable across the application</li>
+                    <li>Provide consistent styling</li>
+                  </ul>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">Feature Components</h3>
+                  <p className="mb-2">Located in feature-specific directories:</p>
+                  <ul className="list-disc ml-5">
+                    <li>Compose UI components into feature-specific UIs</li>
+                    <li>Contain business logic for their feature area</li>
+                    <li>May connect to API or state management</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: "customization-guide",
+          title: "Customization Guide",
+          href: "customization-guide",
+          content: (
+            <div className="animate-fade-in">
+              <h1>Customization Guide</h1>
+              <p className="text-lg mb-6">
+                This guide explains how to customize and extend the application for different use cases.
+              </p>
+
+              <h2 className="mt-8 mb-4">Theme Customization</h2>
+              <p className="mb-4">
+                The application uses CSS variables for theming, which can be customized in:
+              </p>
+              <pre className="p-4 bg-muted rounded-lg mb-6 text-sm">
+                {`// src/index.css
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    /* ... other variables */
+  }
+
+  .dark {
+    --background: 220 10% 12%;
+    --foreground: 220 20% 85%;
+    /* ... other variables */
+  }
+}`}
+              </pre>
+              <p className="mb-6">
+                These variables control the color scheme used throughout the application.
+                Modify them to create a custom theme.
+              </p>
+
+              <h2 className="mt-8 mb-4">Adding New

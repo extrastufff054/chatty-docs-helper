@@ -2,6 +2,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import custom fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap');
  
 @layer base {
   :root {
@@ -57,10 +60,36 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  h1, h2, h3, .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Responsive typography */
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+  
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+  
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+  
+  pre {
+    @apply rounded-lg text-sm;
+  }
+  
+  code {
+    @apply text-primary font-mono bg-muted/50 px-1 py-0.5 rounded text-sm;
   }
 }
 
-/* Utility classes for custom animations */
+/* Custom animations */
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
@@ -140,4 +169,65 @@
 
 .scrollbar-track::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted) / 0.4);
+}
+
+/* Documentation specific styles */
+.prose {
+  @apply text-foreground;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply text-foreground font-display font-bold;
+  scroll-margin-top: 100px;
+}
+
+.prose h1 {
+  @apply text-3xl md:text-4xl mb-6;
+}
+
+.prose h2 {
+  @apply text-2xl md:text-3xl mt-10 mb-4;
+}
+
+.prose h3 {
+  @apply text-xl md:text-2xl mt-8 mb-3;
+}
+
+.prose a {
+  @apply text-primary underline-offset-4 font-medium transition-colors hover:text-primary/80;
+}
+
+.prose ul li, .prose ol li {
+  @apply my-1;
+}
+
+.prose pre {
+  @apply bg-muted p-4 rounded-lg overflow-auto text-sm;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-primary/30 pl-4 italic;
+}
+
+/* Fancy link animation */
+.fancy-link {
+  @apply relative inline-block text-primary font-medium no-underline;
+}
+
+.fancy-link::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary origin-bottom-right scale-x-0 transition-transform duration-300;
+}
+
+.fancy-link:hover::after {
+  @apply origin-bottom-left scale-x-100;
+}
+
+/* Add a card hover effect */
+.hover-card {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.hover-card:hover {
+  @apply shadow-lg -translate-y-1;
 }

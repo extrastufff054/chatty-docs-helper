@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DocumentationLayout } from "@/components/documentation/DocumentationLayout";
 
@@ -1010,4 +1011,79 @@ const Documentation = () => {
                 Modify them to create a custom theme.
               </p>
 
-              <h2 className="mt-8 mb-4">Adding New
+              <h2 className="mt-8 mb-4">Adding New Components</h2>
+              <p className="mb-4">
+                To add a new component to the application:
+              </p>
+              <ol className="list-decimal ml-8 mb-6 space-y-2">
+                <li>Create a new file in the appropriate directory under <code>src/components/</code></li>
+                <li>Export the component as either a default or named export</li>
+                <li>Import and use the component where needed</li>
+              </ol>
+
+              <p className="mb-4">Example of a new component:</p>
+              <pre className="p-4 bg-muted rounded-lg mb-6 text-sm">
+                {`// src/components/MyNewComponent.tsx
+import React from 'react';
+
+interface MyNewComponentProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+export function MyNewComponent({ title, children }: MyNewComponentProps) {
+  return (
+    <div className="p-4 border rounded-lg">
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <div>{children}</div>
+    </div>
+  );
+}`}
+              </pre>
+
+              <h2 className="mt-8 mb-4">Adding New Routes</h2>
+              <p className="mb-4">
+                To add a new route to the application:
+              </p>
+              <ol className="list-decimal ml-8 mb-6 space-y-2">
+                <li>Create a new page component in <code>src/pages/</code></li>
+                <li>Add the route to the router in <code>src/App.tsx</code></li>
+                <li>Decide if the route should be protected or public</li>
+              </ol>
+
+              <p className="mb-4">Example of adding a new route:</p>
+              <pre className="p-4 bg-muted rounded-lg mb-6 text-sm">
+                {`// In src/App.tsx, add to the Routes component:
+
+<Route path="/new-feature" element={<UserRoute element={<NewFeature />} />} />
+
+// For an admin-only route:
+<Route path="/admin/new-feature" element={<AdminTokenRoute element={<AdminNewFeature />} />} />`}
+              </pre>
+            </div>
+          ),
+        },
+      ],
+    },
+  ];
+
+  return (
+    <DocumentationLayout sections={documentationSections}>
+      <div className="prose prose-slate max-w-none">
+        <h1>I4C Chatbot Documentation</h1>
+        <p>
+          Welcome to the documentation for the I4C Chatbot system. This
+          comprehensive guide will help you understand, use, and administer the
+          system effectively.
+        </p>
+        <p>
+          Select a topic from the sidebar to explore specific areas of the
+          documentation.
+        </p>
+      </div>
+    </DocumentationLayout>
+  );
+};
+
+export default Documentation;
+

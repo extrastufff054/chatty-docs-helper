@@ -84,6 +84,34 @@ Answer:""",
         "temperature": 0.0,
         "description": "Optimized for accurate, factual responses with document references"
     },
+    "semantic": {
+        "id": "semantic",
+        "name": "Semantic Analysis",
+        "prompt": """You are a semantic analysis expert with deep contextual understanding.
+
+Your task is to:
+1. Analyze the semantic relationships in the document excerpts
+2. Identify conceptual connections beyond literal wording
+3. Recognize patterns and themes across semantically similar content
+4. Interpret content with attention to nuanced meanings
+5. Provide answers that capture the document's semantic intent
+
+You MUST:
+- Focus on semantic meaning rather than just keyword matching
+- Connect related concepts even when expressed differently
+- Prioritize context and meaning over literal text
+- Avoid misinterpreting semantically ambiguous content
+- Ensure your response captures the true semantic content
+
+Document Excerpts (retrieved using cosine similarity):
+{context}
+
+Question: {question}
+
+After carefully analyzing the semantic relationships in these excerpts, here is your answer:""",
+        "temperature": 0.0,
+        "description": "Optimized for semantic understanding with cosine similarity"
+    },
     "concise": {
         "id": "concise",
         "name": "Concise Summary",
@@ -208,7 +236,8 @@ def get_ollama_models():
 # =============================================================================
 # Initialize the QA Chain using document type-specific loaders
 # =============================================================================
-def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", temperature=0.0):
+def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", temperature=0.0, 
+                       similarity_metric="cosine"):
     try:
         # Determine the document type based on file extension
         file_extension = os.path.splitext(filepath)[1].lower()
@@ -248,13 +277,14 @@ def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", tempera
         # Use more powerful embeddings for better semantic matching
         embeddings = SentenceTransformerEmbeddings(model_name="all-mpnet-base-v2")
         
-        # Build FAISS index with optimized parameters
+        # Build FAISS index with specified similarity metric
+        # Using cosine by default for better semantic matching
         vectordb = FAISS.from_documents(
             splits, 
             embeddings,
-            # Using a higher M value for better quality retrieval
-            distance_strategy="cosine"
+            distance_strategy=similarity_metric  # Use the specified similarity metric
         )
+        logger.info(f"Vector database created with {similarity_metric} similarity metric")
     except Exception as e:
         logger.exception("Error creating embeddings/vector store: %s", str(e))
         raise ValueError("Failed to create embeddings or vector store.")
@@ -386,6 +416,9 @@ def select_document():
     temperature = data.get('temperature', 0.0)
     retrieval_options = data.get('retrieval_options', {})
     
+    # Get similarity metric from retrieval options, default to cosine
+    similarity_metric = retrieval_options.get('similarity_metric', 'cosine')
+    
     if not document_id:
         return jsonify({"error": "Missing document_id"}), 400
     
@@ -399,8 +432,15 @@ def select_document():
         document = documents[document_id]
         filepath = os.path.join(uploads_dir, document['filename'])
         
-        # Initialize QA chain with prompt and temperature
-        qa_chain, vectordb = initialize_qa_chain(filepath, model, prompt_id, temperature)
+        # Initialize QA chain with prompt, temperature and similarity metric
+        qa_chain, vectordb = initialize_qa_chain(
+            filepath, 
+            model, 
+            prompt_id, 
+            temperature,
+            similarity_metric
+        )
+        
         qa_chains[document_id] = {
             "chain": qa_chain,
             "vectordb": vectordb,
@@ -410,7 +450,8 @@ def select_document():
         return jsonify({
             "success": True,
             "message": "Document selected successfully",
-            "session_id": document_id
+            "session_id": document_id,
+            "similarity_metric": similarity_metric
         })
     except Exception as e:
         logger.exception("Error selecting document: %s", str(e))

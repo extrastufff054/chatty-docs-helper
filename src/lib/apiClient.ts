@@ -71,6 +71,7 @@ export const selectDocument = async (
     retrievalOptions?: {
       chunkCount?: number;
       similarityThreshold?: number;
+      similarityMetric?: "cosine" | "l2" | "dot_product";
     }
   } = {}
 ) => {
@@ -87,8 +88,11 @@ export const selectDocument = async (
         temperature: options.temperature !== undefined ? options.temperature : 0.0,
         retrieval_options: options.retrievalOptions ? {
           chunk_count: options.retrievalOptions.chunkCount || 5,
-          similarity_threshold: options.retrievalOptions.similarityThreshold || 0.7
-        } : undefined
+          similarity_threshold: options.retrievalOptions.similarityThreshold || 0.7,
+          similarity_metric: options.retrievalOptions.similarityMetric || "cosine"
+        } : {
+          similarity_metric: "cosine" // Default to cosine similarity
+        }
       }),
     });
     

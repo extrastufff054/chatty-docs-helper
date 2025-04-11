@@ -1,3 +1,4 @@
+
 /**
  * Document Processing Module
  * 
@@ -32,17 +33,51 @@ interface QAChainResult {
 }
 
 /**
+ * Enumeration of available similarity metrics
+ */
+export enum SimilarityMetric {
+  COSINE = "cosine",
+  L2 = "l2", 
+  DOT_PRODUCT = "dot_product"
+}
+
+/**
+ * Interface for document retrieval options
+ */
+interface RetrievalOptions {
+  chunkCount?: number;
+  similarityThreshold?: number;
+  similarityMetric?: SimilarityMetric;
+}
+
+/**
  * Load and process a document file via the Python backend
  * @param file - The document file to process (PDF, DOCX, XLSX, XLS)
  * @param modelName - The name of the Ollama model to use
+ * @param retrievalOptions - Options for document retrieval
  * @returns A session ID for future queries
  */
-export const initializeQAChain = async (file: File, modelName: string): Promise<QAChainResult> => {
+export const initializeQAChain = async (
+  file: File, 
+  modelName: string,
+  retrievalOptions: RetrievalOptions = {
+    similarityMetric: SimilarityMetric.COSINE // Default to cosine similarity
+  }
+): Promise<QAChainResult> => {
   try {
     // Create optimized FormData object with only essential data
     const formData = new FormData();
     formData.append('file', file);
     formData.append('model', modelName);
+    
+    // Add retrieval options if provided
+    if (retrievalOptions) {
+      formData.append('retrieval_options', JSON.stringify({
+        chunk_count: retrievalOptions.chunkCount || 7,
+        similarity_threshold: retrievalOptions.similarityThreshold || 0.7,
+        similarity_metric: retrievalOptions.similarityMetric || SimilarityMetric.COSINE
+      }));
+    }
     
     // Use AbortController to allow timeout cancellation for long-running uploads
     const controller = new AbortController();

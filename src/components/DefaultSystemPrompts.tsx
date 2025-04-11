@@ -170,23 +170,6 @@ Concise Answer:`,
  * Displays a list of default system prompts that can be used as templates
  */
 const DefaultSystemPrompts = ({ onSelectPrompt }: { onSelectPrompt: (prompt: any) => void }) => {
-  // Rendering a prompt template card
-  const renderPromptCard = (promptTemplate: any, index: number) => (
-    <div 
-      key={index}
-      onClick={() => onSelectPrompt(promptTemplate)}
-      className="p-4 border rounded-md hover:bg-accent/50 cursor-pointer transition-all hover-scale"
-    >
-      <h4 className="font-medium text-primary">{promptTemplate.name}</h4>
-      <p className="text-xs text-muted-foreground mt-1">{promptTemplate.description}</p>
-      <div className="mt-2 flex items-center text-xs">
-        <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
-          Temperature: {promptTemplate.temperature.toFixed(1)}
-        </span>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Enhanced Prompt Templates</h3>
@@ -194,7 +177,21 @@ const DefaultSystemPrompts = ({ onSelectPrompt }: { onSelectPrompt: (prompt: any
         Select any of these specialized templates to improve LLM response quality for different use cases.
       </p>
       <div className="grid grid-cols-1 gap-3 mt-2">
-        {DEFAULT_SYSTEM_PROMPTS.map((promptTemplate, index) => renderPromptCard(promptTemplate, index))}
+        {DEFAULT_SYSTEM_PROMPTS.map((promptTemplate, index) => (
+          <div 
+            key={index}
+            onClick={() => onSelectPrompt(promptTemplate)}
+            className="p-4 border rounded-md hover:bg-accent/50 cursor-pointer transition-all hover-scale"
+          >
+            <h4 className="font-medium text-primary">{promptTemplate.name}</h4>
+            <p className="text-xs text-muted-foreground mt-1">{promptTemplate.description}</p>
+            <div className="mt-2 flex items-center text-xs">
+              <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
+                Temperature: {promptTemplate.temperature.toFixed(1)}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
       <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-dashed">
         <h4 className="font-medium">Prompt Engineering Tips</h4>

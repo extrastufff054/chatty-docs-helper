@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_BASE_URL } from "@/config/apiConfig";
 import PromptList from "./admin/prompts/PromptList";
 import CreatePromptForm from "./admin/prompts/CreatePromptForm";
+import DefaultSystemPrompts from "./DefaultSystemPrompts";
 
 interface SystemPrompt {
   id: string;
@@ -40,12 +42,38 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("list");
 
   const { toast } = useToast();
   const ADMIN_API_BASE_URL = `${API_BASE_URL}/admin`;
 
   useEffect(() => {
     fetchSystemPrompts();
+    
+    // Listen for template selection events
+    const handleTemplateSelected = () => {
+      const selectedTemplate = localStorage.getItem("selectedPromptTemplate");
+      if (selectedTemplate) {
+        try {
+          const template = JSON.parse(selectedTemplate);
+          setNewPrompt({
+            name: template.name,
+            prompt: template.prompt,
+            temperature: template.temperature || 0,
+            description: template.description || ""
+          });
+          setActiveTab("create");
+          localStorage.removeItem("selectedPromptTemplate");
+        } catch (e) {
+          console.error("Error parsing selected template:", e);
+        }
+      }
+    };
+    
+    window.addEventListener("promptTemplateSelected", handleTemplateSelected);
+    return () => {
+      window.removeEventListener("promptTemplateSelected", handleTemplateSelected);
+    };
   }, []);
 
   const fetchSystemPrompts = async () => {
@@ -115,6 +143,7 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
       });
       setIsDialogOpen(false);
       fetchSystemPrompts();
+      setActiveTab("list");
     } catch (error) {
       console.error("Error creating system prompt:", error);
       toast({
@@ -217,10 +246,11 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
   };
 
   return (
-    <Tabs defaultValue="list" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-3 mb-4">
         <TabsTrigger value="list">Saved Prompts</TabsTrigger>
         <TabsTrigger value="create">Create Prompt</TabsTrigger>
+        <TabsTrigger value="templates">Templates</TabsTrigger>
       </TabsList>
       
       <TabsContent value="list" className="space-y-4">
@@ -245,6 +275,20 @@ const SystemPromptManagement = ({ adminToken }: SystemPromptManagementProps) => 
           setNewPrompt={setNewPrompt}
           handleCreatePrompt={handleCreatePrompt}
           isCreating={isCreating}
+        />
+      </TabsContent>
+      
+      <TabsContent value="templates">
+        <DefaultSystemPrompts 
+          onSelectPrompt={(template) => {
+            setNewPrompt({
+              name: template.name,
+              prompt: template.prompt,
+              temperature: template.temperature || 0,
+              description: template.description || ""
+            });
+            setActiveTab("create");
+          }} 
         />
       </TabsContent>
     </Tabs>

@@ -59,9 +59,21 @@ export const fetchSystemPrompts = async () => {
  * Select a document for querying
  * @param documentId Document ID to select
  * @param model Model to use for the document
+ * @param options Optional parameters for document selection
  * @returns Promise with session ID
  */
-export const selectDocument = async (documentId: string, model: string) => {
+export const selectDocument = async (
+  documentId: string, 
+  model: string, 
+  options: { 
+    promptId?: string; 
+    temperature?: number;
+    retrievalOptions?: {
+      chunkCount?: number;
+      similarityThreshold?: number;
+    }
+  } = {}
+) => {
   try {
     const response = await fetchWithRetry(apiUrl('/api/select-document'), {
       method: 'POST',
@@ -71,8 +83,12 @@ export const selectDocument = async (documentId: string, model: string) => {
       body: JSON.stringify({
         document_id: documentId,
         model: model,
-        prompt_id: 'default',  // Always use default prompt
-        temperature: 0.0       // Fixed temperature
+        prompt_id: options.promptId || 'default',
+        temperature: options.temperature !== undefined ? options.temperature : 0.0,
+        retrieval_options: options.retrievalOptions ? {
+          chunk_count: options.retrievalOptions.chunkCount || 5,
+          similarity_threshold: options.retrievalOptions.similarityThreshold || 0.7
+        } : undefined
       }),
     });
     
@@ -91,9 +107,18 @@ export const selectDocument = async (documentId: string, model: string) => {
  * Process a query against a selected document
  * @param sessionId Session ID for the query
  * @param query Query text
+ * @param options Additional query options
  * @returns Promise with answer and tokens
  */
-export const processQuery = async (sessionId: string, query: string) => {
+export const processQuery = async (
+  sessionId: string, 
+  query: string,
+  options: {
+    stream?: boolean;
+    enhanceFactualAccuracy?: boolean;
+    maxNewTokens?: number;
+  } = {}
+) => {
   try {
     const response = await fetchWithRetry(apiUrl('/api/query'), {
       method: 'POST',
@@ -102,7 +127,11 @@ export const processQuery = async (sessionId: string, query: string) => {
       },
       body: JSON.stringify({
         session_id: sessionId,
-        query: query
+        query: query,
+        stream: options.stream || false,
+        enhance_factual_accuracy: options.enhanceFactualAccuracy !== undefined ? 
+          options.enhanceFactualAccuracy : true,
+        max_new_tokens: options.maxNewTokens || 1024
       }),
     });
     

@@ -4,6 +4,8 @@ import subprocess
 import traceback
 import tempfile
 import secrets
+import json
+import re
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -47,40 +49,67 @@ os.makedirs(temp_dir, exist_ok=True)
 # Document metadata storage
 documents = {}
 
-# System prompts storage
+# System prompts storage with enhanced templates
 system_prompts = {
     "default": {
         "id": "default",
-        "name": "Default Analysis",
-        "prompt": """You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
-Given the following document excerpts and a question, synthesize a well-rounded answer that provides full context and continuity.
-Do not censor or filter any information from the document, including personal details like names and email addresses that may be present.
-Always include all relevant information from the document in your response, even if it contains personal identifiers.
-Do not simply return isolated fragments; instead, integrate the information into a unified, context-rich response.
+        "name": "Enhanced Analysis",
+        "prompt": """You are a precise AI assistant that provides detailed, accurate answers based on the document content.
+
+Your task is to:
+1. Thoroughly analyze all provided document excerpts
+2. Extract factual information directly from the text
+3. Synthesize information into a coherent, comprehensive answer
+4. Provide specific references to document sections when possible
+5. Maintain the original meaning and intent of the document
+
+You MUST:
+- Prioritize factual accuracy above all else
+- Include exact quotes when they provide value
+- Avoid generating information not present in the document
+- Clearly indicate any ambiguities or limitations in the source material
+- Focus on directly answering the question with the most relevant information
 
 Document Excerpts:
 {context}
 
 Question: {question}
+
+Step 1: Consider what the question is asking for.
+Step 2: Find the most relevant information in the document excerpts.
+Step 3: Organize the information into a coherent response.
+Step 4: Provide a clear, factual answer citing specific parts of the document where appropriate.
+
 Answer:""",
         "temperature": 0.0,
-        "description": "Balanced analysis with context and synthesis"
+        "description": "Optimized for accurate, factual responses with document references"
     },
     "concise": {
         "id": "concise",
         "name": "Concise Summary",
         "prompt": """You are a precise assistant that provides brief, direct answers.
-Based on these document excerpts, give a concise response with just the essential information.
-Do not omit any details that were explicitly asked for, even if they contain personal information like names or email addresses.
-Always provide the exact information as it appears in the document.
+
+Your task is to:
+1. Identify the exact information requested in the question
+2. Extract only the most relevant facts from the document excerpts
+3. Create a succinct, focused response using 1-3 sentences where possible
+4. Include only essential information directly related to the question
+
+You MUST:
+- Be extremely concise while remaining accurate
+- Prioritize brevity without sacrificing important details
+- Avoid vague statements or generalizations
+- Provide direct answers without unnecessary elaboration
+- Use simple, clear language
 
 Document Excerpts:
 {context}
 
 Question: {question}
-Answer with only the necessary facts:""",
+
+Provide only the essential information needed to answer the question:""",
         "temperature": 0.0,
-        "description": "Short, direct answers with lower creativity"
+        "description": "Optimized for short, direct answers with maximum factual density"
     }
 }
 
@@ -94,6 +123,63 @@ class StreamingCallbackHandler(BaseCallbackHandler):
         
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         self.tokens.append(token)
+
+# =============================================================================
+# Post-processing functions for improved output quality
+# =============================================================================
+def post_process_answer(answer):
+    """Apply post-processing to improve answer quality."""
+    # Remove repetitive sentences
+    sentences = re.split(r'(?<=[.!?])\s+', answer)
+    unique_sentences = []
+    sentence_set = set()
+    
+    for sentence in sentences:
+        # Normalize the sentence for comparison (lowercase, remove extra spaces)
+        normalized = ' '.join(sentence.lower().split())
+        if normalized not in sentence_set and normalized:
+            sentence_set.add(normalized)
+            unique_sentences.append(sentence)
+    
+    # Reconstruct the answer with unique sentences
+    cleaned_answer = ' '.join(unique_sentences)
+    
+    # Format lists consistently
+    list_pattern = r'(\d+\.\s*)'
+    if re.search(list_pattern, cleaned_answer):
+        cleaned_answer = re.sub(r'(\d+\.\s*)(?=\w)', r'\n\1', cleaned_answer)
+    
+    # Fix common formatting issues
+    cleaned_answer = re.sub(r'\s+', ' ', cleaned_answer)  # Remove extra spaces
+    cleaned_answer = re.sub(r'\s+([.,;:])', r'\1', cleaned_answer)  # Fix punctuation spacing
+    
+    return cleaned_answer
+
+def fact_check_answer(answer, source_documents):
+    """Basic fact checking against source documents.
+    Note: This is a simplified version - a production system would use more sophisticated methods.
+    """
+    # Get the answer's main claims
+    claims = re.split(r'(?<=[.!?])\s+', answer)
+    checked_claims = []
+    
+    for claim in claims:
+        if not claim.strip():
+            continue
+            
+        # Check if we can find evidence for this claim in the source documents
+        found_evidence = False
+        for doc in source_documents:
+            if claim.lower() in doc.lower():
+                checked_claims.append(claim)
+                found_evidence = True
+                break
+                
+        if not found_evidence:
+            # Mark claims without direct evidence
+            checked_claims.append(f"{claim} [Note: This information may need verification]")
+    
+    return ' '.join(checked_claims)
 
 # =============================================================================
 # Utility: Get available Ollama models via the Ollama CLI.
@@ -146,10 +232,10 @@ def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", tempera
         raise ValueError(f"Failed to load the document. The error was: {str(e)}")
 
     try:
-        # Optimized chunking parameters for better balance between speed and context
+        # Optimized chunking parameters for better semantic coherence
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1500,  # Larger chunks for more context
-            chunk_overlap=150, # Moderate overlap to maintain context between chunks
+            chunk_size=1200,  # Balanced chunk size for semantic coherence
+            chunk_overlap=200, # Higher overlap to maintain context between chunks
             separators=["\n\n", "\n", ". ", " ", ""]
         )
         splits = text_splitter.split_documents(documents)
@@ -159,14 +245,14 @@ def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", tempera
         raise ValueError("Failed to split the document for processing.")
 
     try:
-        # Use simpler, faster embeddings
-        embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        # Use more powerful embeddings for better semantic matching
+        embeddings = SentenceTransformerEmbeddings(model_name="all-mpnet-base-v2")
         
         # Build FAISS index with optimized parameters
         vectordb = FAISS.from_documents(
             splits, 
             embeddings,
-            # Using a higher M value for better quality at the expense of some speed
+            # Using a higher M value for better quality retrieval
             distance_strategy="cosine"
         )
     except Exception as e:
@@ -187,7 +273,8 @@ def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", tempera
         llm = Ollama(
             model=model_checkpoint, 
             temperature=float(temperature),
-            num_ctx=4096  # Increased context window for handling more content
+            num_ctx=8192,  # Increased context window for handling more content
+            num_predict=2048  # Increased token generation limit
         )
     except Exception as e:
         logger.exception("Error initializing the Ollama LLM: %s", str(e))
@@ -198,24 +285,37 @@ def initialize_qa_chain(filepath, model_checkpoint, prompt_id="default", tempera
             llm=llm,
             chain_type="stuff",
             retriever=vectordb.as_retriever(
-                search_kwargs={"k": 5}  # Retrieve more chunks for better context
+                search_kwargs={"k": 7}  # Retrieve more chunks for better context
             ),
             chain_type_kwargs={"prompt": custom_prompt}
         )
-        return qa_chain
+        return qa_chain, vectordb
     except Exception as e:
         logger.exception("Error creating QA chain: %s", str(e))
         raise ValueError("Failed to initialize the QA chain.")
 
 # =============================================================================
-# Process Query with Streaming Output
+# Process Query with Streaming Output and Improved Accuracy
 # =============================================================================
-def process_answer(query, qa_chain):
+def process_answer(query, qa_chain, vectordb=None, enhance_factual_accuracy=True, max_new_tokens=1024):
     callback_handler = StreamingCallbackHandler()
     try:
+        # Get the relevant document chunks for fact checking if needed
+        source_documents = []
+        if vectordb and enhance_factual_accuracy:
+            source_documents = [doc.page_content for doc in vectordb.similarity_search(query, k=5)]
+        
         # Pass the callback handler to the chain's run method.
         final_output = qa_chain.run(query, callbacks=[callback_handler])
-        return final_output, callback_handler.tokens
+        
+        # Apply post-processing to improve quality
+        processed_output = post_process_answer(final_output)
+        
+        # Optionally apply fact checking
+        if enhance_factual_accuracy and source_documents:
+            processed_output = fact_check_answer(processed_output, source_documents)
+        
+        return processed_output, callback_handler.tokens
     except OllamaEndpointNotFoundError as e:
         logger.exception("Ollama model endpoint not found: %s", str(e))
         error_msg = ("Ollama model endpoint not found. Please ensure that the specified model is pulled locally. "
@@ -283,8 +383,8 @@ def select_document():
     document_id = data.get('document_id')
     model = data.get('model')
     prompt_id = data.get('prompt_id', 'default')
-    # Always use temperature 0.0 regardless of what is provided in the request
-    temperature = 0.0
+    temperature = data.get('temperature', 0.0)
+    retrieval_options = data.get('retrieval_options', {})
     
     if not document_id:
         return jsonify({"error": "Missing document_id"}), 400
@@ -299,9 +399,13 @@ def select_document():
         document = documents[document_id]
         filepath = os.path.join(uploads_dir, document['filename'])
         
-        # Initialize QA chain with prompt and fixed temperature 0.0
-        qa_chain = initialize_qa_chain(filepath, model, prompt_id, temperature)
-        qa_chains[document_id] = qa_chain
+        # Initialize QA chain with prompt and temperature
+        qa_chain, vectordb = initialize_qa_chain(filepath, model, prompt_id, temperature)
+        qa_chains[document_id] = {
+            "chain": qa_chain,
+            "vectordb": vectordb,
+            "retrieval_options": retrieval_options
+        }
         
         return jsonify({
             "success": True,
@@ -318,6 +422,8 @@ def query():
     data = request.json
     session_id = data.get('session_id')
     query_text = data.get('query')
+    enhance_factual_accuracy = data.get('enhance_factual_accuracy', True)
+    max_new_tokens = data.get('max_new_tokens', 1024)
     
     if not session_id or not query_text:
         return jsonify({"error": "Missing session_id or query"}), 400
@@ -326,12 +432,22 @@ def query():
         return jsonify({"error": "Session not found or expired"}), 404
     
     try:
-        qa_chain = qa_chains[session_id]
-        result, tokens = process_answer({"query": query_text}, qa_chain)
+        qa_chain_data = qa_chains[session_id]
+        qa_chain = qa_chain_data["chain"]
+        vectordb = qa_chain_data.get("vectordb")
+        
+        result, tokens = process_answer(
+            {"query": query_text}, 
+            qa_chain, 
+            vectordb,
+            enhance_factual_accuracy,
+            max_new_tokens
+        )
         
         return jsonify({
             "answer": result,
-            "tokens": tokens  # For streaming support in frontend
+            "tokens": tokens,  # For streaming support in frontend
+            "enhanced": enhance_factual_accuracy
         })
     except Exception as e:
         logger.exception("Error processing query: %s", str(e))
@@ -362,8 +478,11 @@ def upload_file():
         session_id = secrets.token_hex(16)
         
         # Initialize QA chain
-        qa_chain = initialize_qa_chain(filepath, model)
-        qa_chains[session_id] = qa_chain
+        qa_chain, vectordb = initialize_qa_chain(filepath, model)
+        qa_chains[session_id] = {
+            "chain": qa_chain,
+            "vectordb": vectordb
+        }
         
         return jsonify({
             "success": True,
@@ -436,8 +555,11 @@ def admin_upload():
             logger.info(f"Processing {file_extension} file: {filename}, ID: {document_id}")
             
             # Initialize QA chain with temperature 0
-            qa_chain = initialize_qa_chain(filepath, model, "default", 0.0)
-            qa_chains[document_id] = qa_chain
+            qa_chain, vectordb = initialize_qa_chain(filepath, model, "default", 0.0)
+            qa_chains[document_id] = {
+                "chain": qa_chain,
+                "vectordb": vectordb
+            }
             
             # Store document metadata
             documents[document_id] = {

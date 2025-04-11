@@ -6,6 +6,12 @@
 
 import { API_BASE_URL, apiUrl } from "@/config/apiConfig";
 
+// Shared error handling to reduce duplication
+const handleApiError = (error: any, context: string) => {
+  console.error(`Error ${context}:`, error);
+  throw error;
+};
+
 // Utility function for API requests with error handling and retries
 const fetchWithRetry = async (url: string, options?: RequestInit, retries = 3, delay = 1000): Promise<Response> => {
   try {
@@ -19,6 +25,14 @@ const fetchWithRetry = async (url: string, options?: RequestInit, retries = 3, d
   }
 };
 
+// Shared response processing 
+const processResponse = async (response: Response, errorPrefix: string) => {
+  if (!response.ok) {
+    throw new Error(`${errorPrefix}: ${response.status}`);
+  }
+  return await response.json();
+};
+
 /**
  * Fetch all available documents from the API
  * @returns Promise with array of documents
@@ -26,14 +40,10 @@ const fetchWithRetry = async (url: string, options?: RequestInit, retries = 3, d
 export const fetchDocuments = async () => {
   try {
     const response = await fetchWithRetry(apiUrl('/api/documents'));
-    if (!response.ok) {
-      throw new Error(`Failed to fetch documents: ${response.status}`);
-    }
-    const data = await response.json();
+    const data = await processResponse(response, 'Failed to fetch documents');
     return data.documents || [];
   } catch (error) {
-    console.error("Error fetching documents:", error);
-    throw error;
+    handleApiError(error, "fetching documents");
   }
 };
 
@@ -44,15 +54,24 @@ export const fetchDocuments = async () => {
 export const fetchSystemPrompts = async () => {
   try {
     const response = await fetchWithRetry(apiUrl('/api/system-prompts'));
-    if (!response.ok) {
-      throw new Error(`Failed to fetch system prompts: ${response.status}`);
-    }
-    const data = await response.json();
+    const data = await processResponse(response, 'Failed to fetch system prompts');
     return data.prompts || [];
   } catch (error) {
-    console.error("Error fetching system prompts:", error);
-    throw error;
+    handleApiError(error, "fetching system prompts");
   }
+};
+
+// Type definitions to improve type safety
+type RetrievalOptions = {
+  chunkCount?: number;
+  similarityThreshold?: number;
+  similarityMetric?: "cosine" | "l2" | "dot_product";
+};
+
+type SelectDocumentOptions = {
+  promptId?: string;
+  temperature?: number;
+  retrievalOptions?: RetrievalOptions;
 };
 
 /**
@@ -65,46 +84,39 @@ export const fetchSystemPrompts = async () => {
 export const selectDocument = async (
   documentId: string, 
   model: string, 
-  options: { 
-    promptId?: string; 
-    temperature?: number;
-    retrievalOptions?: {
-      chunkCount?: number;
-      similarityThreshold?: number;
-      similarityMetric?: "cosine" | "l2" | "dot_product";
-    }
-  } = {}
+  options: SelectDocumentOptions = {}
 ) => {
   try {
+    const { promptId = 'default', temperature = 0.0, retrievalOptions } = options;
+    
+    const payload = {
+      document_id: documentId,
+      model: model,
+      prompt_id: promptId,
+      temperature: temperature,
+      retrieval_options: retrievalOptions ? {
+        chunk_count: retrievalOptions.chunkCount || 5,
+        similarity_threshold: retrievalOptions.similarityThreshold || 0.7,
+        similarity_metric: retrievalOptions.similarityMetric || "cosine"
+      } : { similarity_metric: "cosine" }
+    };
+    
     const response = await fetchWithRetry(apiUrl('/api/select-document'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        document_id: documentId,
-        model: model,
-        prompt_id: options.promptId || 'default',
-        temperature: options.temperature !== undefined ? options.temperature : 0.0,
-        retrieval_options: options.retrievalOptions ? {
-          chunk_count: options.retrievalOptions.chunkCount || 5,
-          similarity_threshold: options.retrievalOptions.similarityThreshold || 0.7,
-          similarity_metric: options.retrievalOptions.similarityMetric || "cosine"
-        } : {
-          similarity_metric: "cosine" // Default to cosine similarity
-        }
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
     
-    if (!response.ok) {
-      throw new Error(`Failed to select document: ${response.status}`);
-    }
-    
-    return await response.json();
+    return await processResponse(response, 'Failed to select document');
   } catch (error) {
-    console.error("Error selecting document:", error);
-    throw error;
+    handleApiError(error, "selecting document");
   }
+};
+
+type QueryOptions = {
+  stream?: boolean;
+  enhanceFactualAccuracy?: boolean;
+  maxNewTokens?: number;
 };
 
 /**
@@ -117,26 +129,23 @@ export const selectDocument = async (
 export const processQuery = async (
   sessionId: string, 
   query: string,
-  options: {
-    stream?: boolean;
-    enhanceFactualAccuracy?: boolean;
-    maxNewTokens?: number;
-  } = {}
+  options: QueryOptions = {}
 ) => {
   try {
+    const { stream = false, enhanceFactualAccuracy = true, maxNewTokens = 1024 } = options;
+    
+    const payload = {
+      session_id: sessionId,
+      query: query,
+      stream: stream,
+      enhance_factual_accuracy: enhanceFactualAccuracy,
+      max_new_tokens: maxNewTokens
+    };
+    
     const response = await fetchWithRetry(apiUrl('/api/query'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        session_id: sessionId,
-        query: query,
-        stream: options.stream || false,
-        enhance_factual_accuracy: options.enhanceFactualAccuracy !== undefined ? 
-          options.enhanceFactualAccuracy : true,
-        max_new_tokens: options.maxNewTokens || 1024
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
     
     if (!response.ok) {
@@ -144,13 +153,8 @@ export const processQuery = async (
       throw new Error(errorData.error || `Failed to process query: ${response.status}`);
     }
     
-    // Get the full, unfiltered response
-    const rawData = await response.json();
-    
-    // Do not apply any client-side filtering - return everything
-    return rawData;
+    return await response.json();
   } catch (error) {
-    console.error("Error processing query:", error);
-    throw error;
+    handleApiError(error, "processing query");
   }
 };

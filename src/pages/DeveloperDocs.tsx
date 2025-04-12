@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DocumentationLayout } from "@/components/documentation/DocumentationLayout";
 import { Link } from "react-router-dom";
@@ -140,6 +139,36 @@ const DeveloperDocs = () => {
           title: "Supporting New Document Formats",
           href: "document-formats",
           content: <DocumentFormats />
+        }
+      ]
+    },
+    {
+      id: "function-reference",
+      title: "Function Reference",
+      items: [
+        {
+          id: "document-processing-functions",
+          title: "Document Processing Functions",
+          href: "document-processing-functions",
+          content: <DocumentProcessingFunctions />
+        },
+        {
+          id: "api-client-functions",
+          title: "API Client Functions",
+          href: "api-client-functions",
+          content: <APIClientFunctions />
+        },
+        {
+          id: "auth-functions",
+          title: "Authentication Functions",
+          href: "auth-functions",
+          content: <AuthFunctions />
+        },
+        {
+          id: "utility-functions",
+          title: "Utility Functions",
+          href: "utility-functions",
+          content: <UtilityFunctions />
         }
       ]
     }
@@ -835,199 +864,4 @@ const DataFlow = () => (
       <div className="space-y-8">
         <div className="flex items-start gap-4">
           <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">User</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Uploads PDF document through web interface</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Frontend</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Sends document to backend API for processing</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Backend</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Processes document through extraction, chunking, and embedding pipelines</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Vector DB</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Stores document embeddings for quick retrieval</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Backend</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Returns document processing confirmation to frontend</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Frontend</span>
-            </div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Updates UI to show document is ready for querying</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <h2 className="text-2xl font-bold mt-8 mb-4">Query Processing Flow</h2>
-    
-    <div className="relative overflow-x-auto mb-8">
-      <div className="space-y-8">
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">User</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Enters a question in the chat interface</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Frontend</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Sends query to backend API</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Backend</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Converts query to vector embedding</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Vector DB</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Retrieves most similar document chunks using cosine similarity</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Backend</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Constructs prompt with retrieved chunks and sends to Ollama</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Ollama</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Generates response based on prompt and document context</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Backend</span>
-            </div>
-            <div className="border-l-2 h-8 mx-auto border-dashed"></div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Streams response tokens back to frontend</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-lg mb-2">
-              <span className="text-primary font-semibold">Frontend</span>
-            </div>
-          </div>
-          <div className="flex-1 p-4 bg-muted rounded-lg">
-            <p className="text-sm">Displays streaming response in the chat interface</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// Component Section Components
-const CoreComponents = () => <div>Core Components documentation content</div>;
-const UIComponents = () => <div>UI Components documentation content</div>;
-const Utilities = () => <div>Utilities & Helpers documentation content</div>;
-
-// API Section Components
-const APIClient = () => <div>API Client documentation content</div>;
-const DocumentProcessor = () => <div>Document Processor documentation content</div>;
-const AuthServices = () => <div>Authentication Services documentation content</div>;
-
-// Development Guide Components
-const GettingStarted = () => <div>Getting Started documentation content</div>;
-const DevelopmentWorkflow = () => <div>Development Workflow documentation content</div>;
-const BestPractices = () => <div>Best Practices documentation content</div>;
-const CommonPatterns = () => <div>Common Patterns documentation content</div>;
-
-// Extension Components
-const AddingFeatures = () => <div>Adding New Features documentation content</div>;
-const CustomModels = () => <div>Custom AI Models documentation content</div>;
-const DocumentFormats = () => <div>Supporting New Document Formats documentation content</div>;
-
-export default DeveloperDocs;
+            <div className="p-3 bg-primary/10 rounded-

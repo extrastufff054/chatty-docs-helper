@@ -11,11 +11,12 @@ This guide provides technical information for developers who want to understand,
 4. [Technology Stack](#technology-stack)
 5. [Development Setup](#development-setup)
 6. [Key Workflows](#key-workflows)
-7. [Customization Guide](#customization-guide)
+7. [Function Reference](#function-reference)
 8. [API Documentation](#api-documentation)
-9. [Testing](#testing)
-10. [Performance Considerations](#performance-considerations)
-11. [Contributing Guidelines](#contributing-guidelines)
+9. [Common Usage Patterns](#common-usage-patterns)
+10. [Testing](#testing)
+11. [Performance Considerations](#performance-considerations)
+12. [Contributing Guidelines](#contributing-guidelines)
 
 ## Architecture Overview
 
@@ -173,48 +174,355 @@ const handleSubmit = async (e) => {
 };
 ```
 
-## Customization Guide
+## Function Reference
 
-### Prompt Template
+This section provides detailed information about key functions in the application, including their purpose, usage patterns, and references to files where they are used.
 
-You can customize the prompt template in `documentProcessor.ts` to change how the AI responds to questions:
+### Document Processing Functions
 
+#### `initializeQAChain`
+
+**Location**: `src/lib/documentProcessor.ts`
+
+**Purpose**: Initializes a QA chain with a PDF file and Ollama model.
+
+**Parameters**:
+- `file`: The PDF file to process
+- `modelName`: The name of the Ollama model to use
+- `retrievalOptions`: Options for document retrieval (optional)
+
+**Returns**: A promise that resolves to a QA chain object.
+
+**Used in**:
+- `src/pages/Index.tsx` - For handling document uploads in the main chat interface
+- `src/components/DocumentUploader.tsx` - For processing uploaded files
+
+**Usage Example**:
 ```typescript
-// Modify this prompt template to customize the AI behavior
-const customPromptTemplate = new PromptTemplate({
-  inputVariables: ["context", "question"],
-  template: `You are a helpful assistant that carefully analyzes the entire document to generate a coherent, comprehensive answer.
-Given the following document excerpts and a question, synthesize a well-rounded answer that provides full context and continuity.
-Do not simply return isolated fragments; instead, integrate the information into a unified, context-rich response.
-
-Document Excerpts:
-{context}
-
-Question: {question}
-Answer:`
-});
+const handleFileUpload = async (file) => {
+  const qaChain = await initializeQAChain(file, "llama3");
+  setQaChain(qaChain);
+};
 ```
 
-### Document Processing Parameters
+**Workflow**:
+1. Creates a FormData object with the file and model
+2. Sends an HTTP POST request to the upload endpoint
+3. Processes the server response
+4. Returns a QA chain object with the session ID and model name
 
-Adjust these parameters in `documentProcessor.ts` to change how documents are processed:
+#### `processQuery`
 
+**Location**: `src/lib/documentProcessor.ts`
+
+**Purpose**: Processes a user query against a document using the QA chain.
+
+**Parameters**:
+- `query`: The question to ask
+- `qaChain`: The QA chain object containing sessionId
+- `streamCallback`: A callback function for streaming tokens (optional)
+
+**Returns**: A promise that resolves to the final answer.
+
+**Used in**:
+- `src/pages/Index.tsx` - For handling user questions in the chat interface
+- `src/components/ChatInterface.tsx` - For submitting questions to the backend
+
+**Usage Example**:
 ```typescript
-// Increase or decrease chunk size based on your needs
-const textSplitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 500,  // Smaller for faster processing, larger for better context
-  chunkOverlap: 50 // Adjust overlap for better continuity between chunks
-});
-
-// Change embedding model if needed
-const embeddings = new SentenceTransformerEmbeddings({
-  modelName: "all-MiniLM-L6-v2" // Can be changed to other compatible models
-});
+const handleSubmit = async (question) => {
+  let responseText = "";
+  await processQuery(question, qaChain, (token) => {
+    responseText += token;
+    setStreamingContent(responseText);
+  });
+  
+  setMessages(prev => [...prev, { role: "assistant", content: responseText }]);
+};
 ```
 
-### UI Customization
+**Workflow**:
+1. Sends an HTTP POST request to the query endpoint with the question and session ID
+2. Processes streaming tokens if a callback is provided
+3. Returns the final answer
 
-The UI can be customized by modifying the components in the `components` directory and the main page in `pages/Index.tsx`. The application uses Tailwind CSS for styling.
+#### `getOllamaModels`
+
+**Location**: `src/lib/documentProcessor.ts`
+
+**Purpose**: Fetches available Ollama models from the backend.
+
+**Parameters**: None
+
+**Returns**: A promise that resolves to an array of model names.
+
+**Used in**:
+- `src/pages/Index.tsx` - For populating the model selection dropdown
+- `src/components/ModelDropdown.tsx` - For displaying available models
+
+**Usage Example**:
+```typescript
+useEffect(() => {
+  const fetchModels = async () => {
+    try {
+      const models = await getOllamaModels();
+      setAvailableModels(models);
+    } catch (error) {
+      console.error("Failed to fetch models:", error);
+    }
+  };
+  
+  fetchModels();
+}, []);
+```
+
+**Workflow**:
+1. Sends an HTTP GET request to the models endpoint
+2. Processes the server response
+3. Returns an array of model names or defaults if the request fails
+
+### API Client Functions
+
+#### `fetchDocuments`
+
+**Location**: `src/lib/apiClient.ts`
+
+**Purpose**: Fetches all available documents from the API.
+
+**Parameters**: None
+
+**Returns**: A promise with an array of documents.
+
+**Used in**:
+- `src/pages/Admin.tsx` - For displaying the list of available documents
+- `src/components/admin/DocumentsList.tsx` - For rendering document cards
+
+**Usage Example**:
+```typescript
+useEffect(() => {
+  const loadDocuments = async () => {
+    try {
+      const documents = await fetchDocuments();
+      setDocuments(documents);
+    } catch (error) {
+      console.error("Error loading documents:", error);
+    }
+  };
+  
+  loadDocuments();
+}, []);
+```
+
+**Workflow**:
+1. Sends an HTTP GET request to the documents endpoint
+2. Processes the server response with retry logic
+3. Returns the documents array or throws an error
+
+#### `selectDocument`
+
+**Location**: `src/lib/apiClient.ts`
+
+**Purpose**: Selects a document for querying.
+
+**Parameters**:
+- `documentId`: Document ID to select
+- `model`: Model to use for the document
+- `options`: Optional parameters for document selection
+
+**Returns**: A promise with session ID.
+
+**Used in**:
+- `src/pages/Index.tsx` - For selecting documents from the document list
+- `src/components/DocumentSelector.tsx` - For handling document selection events
+
+**Usage Example**:
+```typescript
+const handleDocumentSelect = async (docId) => {
+  try {
+    const { session_id } = await selectDocument(docId, selectedModel, {
+      promptId: 'default',
+      temperature: 0.0
+    });
+    setSessionId(session_id);
+  } catch (error) {
+    console.error("Error selecting document:", error);
+  }
+};
+```
+
+**Workflow**:
+1. Sends an HTTP POST request to the select-document endpoint
+2. Includes document ID, model, and options in the request body
+3. Returns the session ID or throws an error
+
+#### `processQuery` (API Client version)
+
+**Location**: `src/lib/apiClient.ts`
+
+**Purpose**: Process a query against a selected document.
+
+**Parameters**:
+- `sessionId`: Session ID for the query
+- `query`: Query text
+- `options`: Additional query options
+
+**Returns**: Promise with answer and tokens.
+
+**Used in**:
+- `src/pages/Index.tsx` - For handling user questions with selected documents
+- `src/components/ChatInterface.tsx` - For submitting questions to the backend
+
+**Usage Example**:
+```typescript
+const submitQuestion = async (question) => {
+  try {
+    const response = await processQuery(sessionId, question, {
+      stream: true,
+      enhanceFactualAccuracy: true
+    });
+    
+    if (response.tokens) {
+      // Handle streaming tokens
+    }
+    
+    return response.answer;
+  } catch (error) {
+    console.error("Error processing query:", error);
+    return null;
+  }
+};
+```
+
+**Workflow**:
+1. Sends an HTTP POST request to the query endpoint
+2. Includes session ID, query, and options in the request body
+3. Returns the full response data or throws an error
+
+### Authentication Functions
+
+#### `login`
+
+**Location**: `src/lib/auth.ts`
+
+**Purpose**: Authenticates a user and gets a token.
+
+**Parameters**:
+- `username`: User's username
+- `password`: User's password
+
+**Returns**: A promise with authentication token and user info.
+
+**Used in**:
+- `src/pages/Auth.tsx` - For handling user login
+- `src/components/auth/LoginForm.tsx` - For submitting login credentials
+
+**Usage Example**:
+```typescript
+const handleLogin = async (credentials) => {
+  try {
+    const { token, user } = await login(credentials.username, credentials.password);
+    setAuthToken(token);
+    setUser(user);
+    navigate('/');
+  } catch (error) {
+    setError("Login failed. Please check your credentials.");
+  }
+};
+```
+
+**Workflow**:
+1. Sends an HTTP POST request to the login endpoint
+2. Includes username and password in the request body
+3. Returns the token and user info or throws an error
+
+#### `signup`
+
+**Location**: `src/lib/auth.ts`
+
+**Purpose**: Creates a new user account.
+
+**Parameters**:
+- `username`: New user's username
+- `password`: New user's password
+- `email`: New user's email
+
+**Returns**: A promise with success status.
+
+**Used in**:
+- `src/pages/Auth.tsx` - For handling user registration
+- `src/components/auth/SignupForm.tsx` - For submitting registration details
+
+**Usage Example**:
+```typescript
+const handleSignup = async (userData) => {
+  try {
+    await signup(userData.username, userData.password, userData.email);
+    setSuccess("Account created successfully. You can now log in.");
+  } catch (error) {
+    setError("Registration failed. Please try again.");
+  }
+};
+```
+
+**Workflow**:
+1. Sends an HTTP POST request to the signup endpoint
+2. Includes username, password, and email in the request body
+3. Returns success status or throws an error
+
+## Common Usage Patterns
+
+### Working with Documents
+
+Documents are central to the application. Here are common patterns for working with them:
+
+#### Uploading and Processing Documents
+
+Documents are uploaded through the UI using react-dropzone. The uploaded file is then processed using the `initializeQAChain` function from `documentProcessor.ts`.
+
+**Key Components**:
+- `src/components/admin/DocumentUpload.tsx` - UI for document upload
+- `src/components/admin/DropzoneArea.tsx` - Drag-and-drop area for files
+- `src/lib/documentProcessor.ts` - Processing logic
+
+**Workflow**:
+1. User selects or drops a file in the UI
+2. File is validated for type and size
+3. File is passed to `initializeQAChain` for processing
+4. Loading state is managed during processing
+5. Success/error states are handled and displayed to the user
+
+#### Querying Documents
+
+Users can query documents using the chat interface. Queries are processed using the `processQuery` function.
+
+**Key Components**:
+- `src/pages/Index.tsx` - Main chat interface
+- `src/components/ChatMessage.tsx` - Displays chat messages
+- `src/lib/documentProcessor.ts` - Query processing logic
+
+**Workflow**:
+1. User inputs a question in the chat interface
+2. Question is sent to `processQuery` along with the QA chain
+3. Response is streamed back and displayed in real-time
+4. Chat history is updated with the new messages
+
+### Authentication Flows
+
+Authentication is handled through login and signup forms. The auth functions are defined in `src/lib/auth.ts`.
+
+**Key Components**:
+- `src/pages/Auth.tsx` - Authentication page
+- `src/components/auth/LoginForm.tsx` - Login form
+- `src/components/auth/SignupForm.tsx` - Signup form
+- `src/contexts/AuthContext.tsx` - Auth context provider
+
+**Workflow**:
+1. User navigates to the auth page
+2. User submits login/signup form
+3. Form data is validated
+4. Auth function (`login`/`signup`) is called
+5. On success, user is redirected or shown a success message
+6. On failure, an error message is displayed
 
 ## API Documentation
 

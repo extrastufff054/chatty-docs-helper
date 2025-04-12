@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DocumentationLayout } from "@/components/documentation/DocumentationLayout";
 import { Link } from "react-router-dom";
@@ -864,4 +865,253 @@ const DataFlow = () => (
       <div className="space-y-8">
         <div className="flex items-start gap-4">
           <div className="w-32 flex-shrink-0 text-center">
-            <div className="p-3 bg-primary/10 rounded-
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              User
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Uploads PDF document through web interface
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              React Frontend
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Captures file, validates format and size, sends to backend via multipart form data
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Flask Backend
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Receives file, saves to disk, and initiates document processing pipeline
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              PDF Processor
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Extracts text from PDF, handles OCR if needed, cleans and normalizes text
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Text Splitter
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Divides document into chunks with controlled size and overlap
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Embedding Model
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Generates vector embeddings for each text chunk
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              FAISS Vector DB
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Stores vector embeddings with metadata, creates searchable index
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Flask Backend
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Creates document record, stores metadata, and returns success response to frontend
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <h2 className="text-2xl font-bold mt-12 mb-4">Query Processing Flow</h2>
+    
+    <div className="relative overflow-x-auto mb-8">
+      <div className="space-y-8">
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              User
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Selects document and submits a question via chat interface
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              React Frontend
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Sends query along with document ID and session information to backend
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Flask Backend
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Processes query, validates session, and prepares for similarity search
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Embedding Model
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Converts user question to vector embedding
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              FAISS Vector DB
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Performs similarity search to find relevant document chunks
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Prompt Builder
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Combines system prompt, user query, conversation history, and relevant chunks
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Ollama API
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Processes the assembled prompt using the selected LLM model
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              Flask Backend
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Streams LLM response tokens back to the frontend as they're generated
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-4">
+          <div className="w-32 flex-shrink-0 text-center">
+            <div className="p-3 bg-primary/10 rounded-lg font-medium">
+              React Frontend
+            </div>
+          </div>
+          <div className="flex-grow">
+            <div className="p-4 bg-muted rounded-lg">
+              Renders response incrementally, updates conversation history, and manages UI state
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Placeholder for other documentation components
+const CoreComponents = () => <div>Core Components documentation</div>;
+const UIComponents = () => <div>UI Components documentation</div>;
+const Utilities = () => <div>Utilities & Helpers documentation</div>;
+const APIClient = () => <div>API Client documentation</div>;
+const DocumentProcessor = () => <div>Document Processor documentation</div>;
+const AuthServices = () => <div>Authentication Services documentation</div>;
+const GettingStarted = () => <div>Getting Started documentation</div>;
+const DevelopmentWorkflow = () => <div>Development Workflow documentation</div>;
+const BestPractices = () => <div>Best Practices documentation</div>;
+const CommonPatterns = () => <div>Common Patterns documentation</div>;
+const AddingFeatures = () => <div>Adding New Features documentation</div>;
+const CustomModels = () => <div>Custom AI Models documentation</div>;
+const DocumentFormats = () => <div>Supporting New Document Formats documentation</div>;
+const DocumentProcessingFunctions = () => <div>Document Processing Functions reference</div>;
+const APIClientFunctions = () => <div>API Client Functions reference</div>;
+const AuthFunctions = () => <div>Authentication Functions reference</div>;
+const UtilityFunctions = () => <div>Utility Functions reference</div>;
+
+export default DeveloperDocs;
+

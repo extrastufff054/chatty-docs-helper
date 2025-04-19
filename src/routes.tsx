@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import Documentation from "./pages/Documentation";
 import DeveloperDocs from "./pages/DeveloperDocs";
 
+// Improved router with consistent nesting and organization
 const router = createBrowserRouter([
   {
     path: "/",
@@ -30,7 +31,7 @@ const router = createBrowserRouter([
     element: <Documentation />,
   },
   {
-    path: "/developer",
+    path: "/developer/*",
     element: <DeveloperDocs />,
   },
   {
@@ -40,4 +41,3 @@ const router = createBrowserRouter([
 ]);
 
 export default router;
-

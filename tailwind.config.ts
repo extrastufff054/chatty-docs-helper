@@ -89,7 +89,21 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+			},
+      spacing: {
+        '4.5': '1.125rem',  // Between tight and normal
+        '5.5': '1.375rem',  // Intermediate spacing
+        '15': '3.75rem',    // Larger spacing option
+        '18': '4.5rem',     // Even larger spacing
+      },
+      maxWidth: {
+        'prose': '65ch',    // Optimal line length for readability
+        '8xl': '88rem',     // Extra large container
+        '9xl': '96rem',     // Extremely large container
+      },
+      borderWidth: {
+        '3': '3px',         // More precise border options
+      }
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

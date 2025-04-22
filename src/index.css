@@ -1,4 +1,8 @@
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer utilities {
   /* Whitespace Utilities */
   .space-y-tight {
